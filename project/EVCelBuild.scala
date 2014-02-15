@@ -136,7 +136,9 @@ object EVCelBuild extends Build {
   ).dependsOn(instrument, eventstore % "compile->compile;test->test")
 
   lazy val server = module("server").settings(
-    libraryDependencies ++= Seq()
+    libraryDependencies ++= Seq(),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(maths, daterange, quantity, eventstore, calendar, tradestore, referencedatastore, xl, instrument, marketdatastore)
 
   def module(name: String) = {
