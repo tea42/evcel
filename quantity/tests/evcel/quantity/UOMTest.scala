@@ -38,7 +38,7 @@ class UOMTest extends FunSuite with Matchers {
   test("asPrimeMap") {
     val first = USD / MT
     val second = MT
-    val newUOM = UOM(first.dimension * second.dimension, first.secondary * second.secondary)
+    val newUOM = UOM.buildUOM(first.dimension * second.dimension, first.secondary * second.secondary)
     newUOM.asPrimeMap shouldEqual Map(USD.secondary.num -> 1, MT.secondary.num -> 0)
   }
 
@@ -124,5 +124,11 @@ class UOMTest extends FunSuite with Matchers {
     (GBP/USD).toString shouldEqual "USDGBP"
     (GBP/US_CENT).toString shouldEqual "¢GBP" // bit weird this one. but we should never see it unless we have a bug.
     (USD/GBP/DAY).toString shouldEqual "USD/DayGBP"
+  }
+
+  test("Arithmetic caching") {
+    USD.invert.invert should be theSameInstanceAs (USD)
+    (USD / MT) should be theSameInstanceAs ((MT / USD).invert)
+    ((USD / MT) * MT) should be theSameInstanceAs (USD)
   }
 }

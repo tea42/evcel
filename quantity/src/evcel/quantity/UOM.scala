@@ -11,7 +11,7 @@ import scala.math.BigDecimal
 import scala.util.{Either, Left, Right}
 import scala.collection.immutable.Nil
 
-case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
+case class UOM private (dimension: UOMRatio, secondary: UOMRatio) {
   /**
    * @return Some(magnitude) or None if not a valid addition.
    *         magnitude is the value to divide the second component by.
@@ -30,7 +30,7 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   def /(other: UOM): UOM = mult(other.invert)._1
 
   def mult(other: UOM): (UOM, BigDecimal) = UOM.multCache.memoize((this, other)) {
-    val newUOM = UOM(dimension * other.dimension, secondary * other.secondary)
+    val newUOM = UOM.buildUOM(dimension * other.dimension, secondary * other.secondary)
     val dimGCD = newUOM.dimension.gcd
     // if the dimension has a gcd > 1 then we have some redundancy in the UOM, something like
     // USDBBL/CENT. We need to reduce this to BBL
@@ -66,7 +66,9 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
 
   def div(other: UOM) = mult(other.invert)
 
-  def invert = UOM(dimension.invert, secondary.invert)
+  def invert = UOM.invertCache.memoize(this){
+    UOM.buildUOM(dimension.invert, secondary.invert)
+  }
 
   def magnitude: BigDecimal = {
     asPrimeMap.foldLeft(Qty.bdOne) {
@@ -136,8 +138,8 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
     }
   }
 
-  private def intern = {
-    UOM.instances.getOrElse(this, this)
+  def intern : UOM = {
+    UOM.interningCache.memoize(this){this}
   }
 
   override def toString = string
@@ -188,8 +190,18 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
 }
 
 object UOM extends Enumerate[UOM](classOf[UOM], _.allNames){
+  /*
+   * All UOM construction should be done through this method 
+   * to guarantee interning
+   */
+  def buildUOM(dimension: UOMRatio, secondary: UOMRatio) : UOM = {
+    UOM(dimension, secondary).intern
+  }
+
   private val primesIterator = Primes.primes()
   private val multCache = Cache.createStaticCache("UOMCache.mult")
+  private val invertCache = Cache.createStaticCache("UOMCache.invert")
+  private val interningCache = Cache.createStaticCache("UOM.intern")
 
   case class UOMData(dimension: Int, secondary: Int, magnitude: BigDecimal, strs: List[String], uom: UOM)
   private var uomData: List[UOMData] = Nil
@@ -234,14 +246,14 @@ object UOM extends Enumerate[UOM](classOf[UOM], _.allNames){
 
   private def apply(dimension: UnitDimension, magnitude: BigDecimal, strs: String*) = UOM.synchronized {
     val prime = primesIterator.next()
-    val uom = new UOM(UOMRatio(dimension.prime, 1), UOMRatio(prime, 1))
+    val uom = UOM.buildUOM(UOMRatio(dimension.prime, 1), UOMRatio(prime, 1))
     val data = UOMData(dimension.prime, prime, magnitude, strs.toList, uom)
     uomData ::= data
     uom
   }
 
   private def apply(dimension: Int, secondary: Int, str: String) = UOM.synchronized {
-    val uom = new UOM(UOMRatio(dimension, 1), UOMRatio(secondary, 1))
+    val uom = UOM.buildUOM(UOMRatio(dimension, 1), UOMRatio(secondary, 1))
     val data = UOMData(dimension, secondary, 1.0, str :: Nil, uom)
     uomData ::= data
     uom

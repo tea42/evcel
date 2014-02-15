@@ -81,7 +81,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
 
     def read(value: JsValue) = value match {
       case JsArray(dimensionJson :: secondaryJson :: Nil) =>
-        UOM(dimensionJson.convertTo[UOMRatio], secondaryJson.convertTo[UOMRatio])
+        UOM.buildUOM(dimensionJson.convertTo[UOMRatio], secondaryJson.convertTo[UOMRatio])
       case _ => deserializationError("UOM expected")
     }
   }
