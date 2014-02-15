@@ -13,8 +13,14 @@ import evcel.referencedata.market._
 import spray.json._
 import scala.math.BigDecimal
 import scala.collection.immutable.Nil
+import java.util.concurrent.ConcurrentHashMap
 
 object EventStoreJsonProtocol extends DefaultJsonProtocol {
+  private val stringInterner = new ConcurrentHashMap[String, String]()
+  private def internString(s : String) = {
+    stringInterner.putIfAbsent(s, s)
+    stringInterner.get(s)
+  }
   abstract class NamedFormat[T] extends RootJsonFormat[T] {
     val name: String
   }
@@ -264,12 +270,50 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
       classOf[SpotPricesIdentifier] -> spotPricesIdentifierFormat
     )
 
-  implicit val futuresPricesFormat = named(MarketData.FUTURES_PRICES, jsonFormat1(FuturesPriceData.apply))
+  implicit val futuresPricesFormat = named(
+    MarketData.FUTURES_PRICES, 
+    new RootJsonFormat[FuturesPriceData] {
+      def write(data : FuturesPriceData) = JsArray(
+        data.uom.toJson,
+        data.months.toJson,
+        data.compressedPrices.toJson
+      )
+      def read(value: JsValue) = value match{
+        case JsArray(uomJson :: monthsJson :: pricesJson :: Nil) =>
+          FuturesPriceData(
+            uomJson.convertTo[Option[UOM]],
+            monthsJson.convertTo[Array[Month]],
+            pricesJson.convertTo[Array[String]].map(internString)
+          )
+        case _ => 
+          deserializationError(s"futuresPriceData expected - got $value")
+      }
+    }
+  )
   implicit val priceFixingsFormat = named(MarketData.PRICE_FIXINGS, jsonFormat1(PriceFixingData.apply))
   implicit val discountRateFormat = named(MarketData.ZERO_RATES, jsonFormat2(ZeroRateData.apply))
   implicit val spotFXFormat = named(MarketData.SPOT_FX, jsonFormat1(SpotFXData.apply))
   implicit val futuresVolFormat = named(MarketData.FUTURES_VOLS, jsonFormat1(FuturesVolData.apply))
-  implicit val spotPriceDataFormat = named(MarketData.SPOT_PRICES, jsonFormat1(SpotPriceData))
+  implicit val spotPriceDataFormat = named(
+    MarketData.SPOT_PRICES, 
+    new RootJsonFormat[SpotPriceData] {
+      def write(data : SpotPriceData) = JsArray(
+        data.uom.toJson,
+        data.periods.toJson,
+        data.compressedPrices.toJson
+      )
+      def read(value: JsValue) = value match{
+        case JsArray(uomJson :: periodsJson :: compressedPricesJson :: Nil) =>
+          SpotPriceData(
+            uomJson.convertTo[Option[UOM]],
+            periodsJson.convertTo[Array[DateRange]],
+            compressedPricesJson.convertTo[Array[String]].map(internString)
+          )
+        case _ => 
+          deserializationError(s"futuresPriceData expected - got $value")
+      }
+    }
+  )
 
   implicit val marketDataFormat = new TraitFormat[MarketData](
     classOf[FuturesPriceData] -> futuresPricesFormat,

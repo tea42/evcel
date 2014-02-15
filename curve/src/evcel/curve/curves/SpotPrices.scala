@@ -9,22 +9,32 @@ import evcel.quantity.Qty
 import evcel.utils.EitherUtils._
 import scala.util.{Either, Left}
 import evcel.referencedata.market.SpotMarket
+import java.util.{TreeMap => JavaTreeMap}
 
-case class SpotPrices(market: String, marketDay: MarketDay, prices: Map[DateRange, Qty]) extends Curve {
-  def isMonthly = prices.keys.forall(_.isInstanceOf[Month])
-  def isDaily = prices.keys.forall(_.isInstanceOf[Day])
-  require(isDaily || isMonthly, s"Invalid mixed data: ${prices.keys}")
+case class SpotPrices(market: String, marketDay: MarketDay, prices: JavaTreeMap[Day, Qty]) extends Curve {
+
+  private def checkDayIsValid(day : Day) {
+    if (day < marketDay.day ||
+        day == marketDay.day && marketDay.timeOfDay.fixingsShouldExist)
+      throw new IllegalStateException(
+        s"Code error: Asked for spot price for day: $day on marketDay: $marketDay"
+      )
+  }
 
   def apply(point: Any): Either[AtomicEnvironmentFail, Qty] = {
     point match {
-      case d: Day if isMonthly => price(d.containingMonth)
-      case d: Day => price(d)
+      case day: Day =>
+        checkDayIsValid(day)
+        val maybeValue : Option[Qty] = Option(
+          prices.headMap(day, /* inclusive = */ true)
+        ).flatMap{
+          tailMap => 
+            Option(tailMap.lastEntry).map(_.getValue)
+        }
+        maybeValue.toRight(GeneralAtomicEnvironmentFail(s"No spot prices for $market, $marketDay, day: $day"))
+        
       case _ => Left(GeneralAtomicEnvironmentFail(s"Unexpected point $point"))
     }
-  }
-
-  def price(dr: DateRange) = {
-    prices.get(dr).toRight(left = MissingCurveData(s"SpotPrices - $market, $marketDay", dr))
   }
 }
 
