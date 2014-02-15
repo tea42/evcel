@@ -71,7 +71,7 @@ class PivotReportTests extends FunSpec with Matchers with MarketDataTest{
         """|           ||  2014-09$
            |RiskMarket || Position$
            |-----------||---------$
-           | Nymex WTI || 50.0 BBL$""".stripMargin.replace("$", "")
+           | Nymex WTI || 50.0 bbl$""".stripMargin.replace("$", "")
  
       assert(actual === expected)
     }
@@ -89,7 +89,7 @@ class PivotReportTests extends FunSpec with Matchers with MarketDataTest{
         """|                          ||  2014-09$
            |Counterparty | RiskMarket || Position$
            |--------------------------||---------$
-           |        Acme |  Nymex WTI || 50.0 BBL$""".stripMargin.replace("$", "")
+           |        Acme |  Nymex WTI || 50.0 bbl$""".stripMargin.replace("$", "")
       assert(actual === expected)
     }
 
@@ -125,7 +125,7 @@ class PivotReportTests extends FunSpec with Matchers with MarketDataTest{
         """|                          ||        2014-09      $
            |Counterparty | RiskMarket ||    MTM    | Position$
            |--------------------------||---------------------$
-           |        Acme |  Nymex WTI || 100.0 USD | 50.0 BBL$""".stripMargin.replace("$", "")
+           |        Acme |  Nymex WTI || 100.0 USD | 50.0 bbl$""".stripMargin.replace("$", "")
         
       assert(actual === expected)
     }
@@ -148,9 +148,9 @@ class PivotReportTests extends FunSpec with Matchers with MarketDataTest{
         """|                          ||        2014-09       |         2014-10       $
            |Counterparty | RiskMarket ||    MTM    | Position |     MTM    |  Position$
            |--------------------------||----------------------------------------------$
-           |        Acme |  ICE Brent || 600.0 USD | 50.0 BBL |            |          $
-           |             |  Nymex WTI || 100.0 USD | 50.0 BBL |            |          $
-           |    OIL_R_US |  Nymex WTI ||           |          | 1400.0 USD | 100.0 BBL$""".stripMargin.replace("$", "")
+           |        Acme |  ICE Brent || 600.0 USD | 50.0 bbl |            |          $
+           |             |  Nymex WTI || 100.0 USD | 50.0 bbl |            |          $
+           |    OIL_R_US |  Nymex WTI ||           |          | 1400.0 USD | 100.0 bbl$""".stripMargin.replace("$", "")
 
       assert(actual === expected)
     }

@@ -14,8 +14,8 @@ class UOMTest extends FunSuite with Matchers {
       test(USD, USD) shouldEqual Right(None)
       test(USD, US_CENT) shouldEqual Right(Some(BigDecimal(100)))
       test(US_CENT, USD) shouldEqual Right(Some(BigDecimal(.01)))
-      test(US_CENT, BBL) shouldEqual Left("Can't add ¢ and BBL")
-      test(BBL, USD) shouldEqual Left("Can't add BBL and USD")
+      test(US_CENT, BBL) shouldEqual Left("Can't add ¢ and bbl")
+      test(BBL, USD) shouldEqual Left("Can't add bbl and USD")
     }
   }
 
@@ -23,7 +23,7 @@ class UOMTest extends FunSuite with Matchers {
     (USD * USD * BBL).div(US_CENT * GAL) match {
       case (USD, bd) => bd shouldEqual 100 * BigDecimal(42)
     }
-    USD.mult(BBL).toString shouldEqual "(BBLUSD,1.0)"
+    USD.mult(BBL).toString shouldEqual "(bblUSD,1.0)"
     USD.mult(USD).toString shouldEqual "(USD^2,1.0)"
     USD.div(US_CENT).toString shouldEqual "(,1.0E+2)"
     USD.mult(USD)._1.div(US_CENT).toString shouldEqual "(USD,1.0E+2)"
@@ -47,7 +47,7 @@ class UOMTest extends FunSuite with Matchers {
     SCALAR.toString shouldEqual ""
     USD.toString shouldEqual "USD"
     (USD * USD).toString shouldEqual "USD^2"
-    (BBL / (USD * USD)).toString shouldEqual "BBL/USD^2"
+    (BBL / (USD * USD)).toString shouldEqual "bbl/USD^2"
     (SCALAR / USD).toString shouldEqual "USD^-1"
     (SCALAR / (USD * USD)).toString shouldEqual "USD^-2"
     (USD / SCALAR).toString shouldEqual "USD"

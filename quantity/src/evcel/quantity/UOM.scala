@@ -215,8 +215,8 @@ object UOM extends Enumerate[UOM](classOf[UOM], _.allNames){
   val MXN = UOM(UnitDimension.MXN, 1.0, "MXN")
 
   // oil
-  val BBL = UOM(UnitDimension.OilVolume, 1.0, "BBL")
-  val GAL = UOM(UnitDimension.OilVolume, 1 / BigDecimal(42.0), "GAL")
+  val BBL = UOM(UnitDimension.OilVolume, 1.0, "bbl")
+  val GAL = UOM(UnitDimension.OilVolume, 1 / BigDecimal(42.0), "gal")
 
   // gas
   val THM = UOM(UnitDimension.GasVolume, 1.0, "THM")
