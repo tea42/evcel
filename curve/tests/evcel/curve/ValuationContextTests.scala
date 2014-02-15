@@ -1,7 +1,6 @@
 package evcel.curve
 
 
-import evcel.curve.environment.MarketDay._
 import evcel.curve.marketdata._
 import evcel.daterange.DateRangeSugar._
 import evcel.daterange.{Month, Day}
@@ -13,8 +12,10 @@ import org.scalatest.{Matchers, FunSuite, FunSpecLike}
 import evcel.quantity.utils.QuantityTestUtils._
 import scala.language.reflectiveCalls
 import evcel.utils.EitherTestPimps
+import evcel.curve.environment.{MarketDay, MarketDayPimps, TimeOfDay}
 
-class ValuationContextTests extends FunSuite with MarketDataTest with Matchers with EitherTestPimps{
+class ValuationContextTests extends FunSuite with MarketDataTest with Matchers
+  with EitherTestPimps with MarketDayPimps {
 
   val vc = UnitTestingEnvironment.fromMarketData(
     (10 / Sep / 2014).endOfDay,

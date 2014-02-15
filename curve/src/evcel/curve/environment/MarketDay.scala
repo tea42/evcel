@@ -1,4 +1,5 @@
 package evcel.curve.environment
+
 import evcel.daterange.Day
 
 case class MarketDay(day: Day, timeOfDay: TimeOfDay) extends Ordered[MarketDay] {
@@ -10,7 +11,7 @@ case class MarketDay(day: Day, timeOfDay: TimeOfDay) extends Ordered[MarketDay] 
   def nextDay = copy(day = day.next)
 }
 
-object MarketDay {
+trait MarketDayPimps {
   implicit class DayToMarketDay(day: Day) {
     def endOfDay = MarketDay(day, TimeOfDay.end)
     def startOfDay = MarketDay(day, TimeOfDay.start)

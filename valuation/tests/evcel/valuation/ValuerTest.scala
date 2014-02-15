@@ -3,7 +3,6 @@ package evcel.valuation
 import evcel.curve.{RichFuturesMarket, UnitTestingEnvironment}
 import evcel.curve.curves.{FuturesVolIdentifier, DiscountRateIdentifier, FuturesPriceIdentifier}
 import evcel.daterange.DateRangeSugar.{Oct, Nov}
-import evcel.curve.environment.MarketDay._
 import evcel.daterange.Month
 import evcel.instrument.{CommoditySwap, FuturesOption}
 import evcel.maths.{EuropeanOption, Call}
@@ -14,8 +13,10 @@ import evcel.quantity.UOM._
 import scala.language.reflectiveCalls
 import org.scalatest.Matchers
 import evcel.utils.EitherTestPimps
+import evcel.curve.environment.MarketDayPimps
 
-class ValuerTest extends FunSuite with Matchers with EitherTestPimps {
+class ValuerTest extends FunSuite with Matchers with 
+  EitherTestPimps with MarketDayPimps {
 
   test("test key recording for futures") {
     val vc = UnitTestingEnvironment.Null((1 / Oct / 2014).endOfDay)

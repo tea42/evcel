@@ -1,22 +1,24 @@
 package evcel.curve
 
 import evcel.curve.curves.PriceFixingIdentifier
-import evcel.curve.environment.MarketDay._
 import evcel.curve.marketdata._
 import evcel.daterange.DateRangeSugar._
 import evcel.quantity.{Percent, Qty}
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._
-import evcel.referencedata.market.{TestMarkets, FuturesFrontPeriodIndexLabel, FuturesFrontPeriodIndex, FXPair}
+import evcel.referencedata.market._
 import org.scalatest._
 import scala.language.reflectiveCalls
 import scala.math._
 import evcel.daterange._
 import evcel.utils.EitherTestPimps
+import evcel.curve.environment.MarketDayPimps
 
 
-class UnitTestingEnvironmentTests extends MarketDataTest with FunSpecLike with Matchers with
-EitherValues with EitherTestPimps {
+class UnitTestingEnvironmentTests extends 
+  MarketDataTest with FunSpecLike with Matchers with
+  EitherValues with EitherTestPimps with 
+  MarketDayPimps {
   describe("UnitTestingEnvironment") {
     it("Should work") {
       val env = UnitTestingEnvironment.fromMarketData(

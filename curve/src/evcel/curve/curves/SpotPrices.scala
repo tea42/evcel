@@ -3,7 +3,6 @@ package evcel.curve.curves
 import evcel.curve.ValuationContext
 import evcel.referencedata.ReferenceData
 import evcel.curve.environment._
-import evcel.curve.environment.MarketDay._
 import evcel.daterange._
 import evcel.quantity.Qty
 import evcel.utils.EitherUtils._
@@ -38,7 +37,7 @@ case class SpotPrices(market: String, marketDay: MarketDay, prices: JavaTreeMap[
   }
 }
 
-case class SpotPriceIdentifier(market: SpotMarket, day: Day) extends PriceIdentifier {
+case class SpotPriceIdentifier(market: SpotMarket, day: Day) extends PriceIdentifier with MarketDayPimps{
   val curveIdentifier = SpotPricesIdentifier(market.name)
   val point = day
   override def nullValue = {
