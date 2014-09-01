@@ -1,6 +1,6 @@
 package com.evcel.core.util
 
-import org.apache.commons.math3.primes.{Primes => APrimes}
+import org.apache.commons.math3.primes.{ Primes => APrimes }
 import scala.annotation.tailrec
 
 object Primes {
@@ -15,7 +15,7 @@ object Primes {
       factors
     } else {
       possiblePrimes.find(prime => n % prime == 0) match {
-        case Some(factor) => find(n / factor, factor::factors)
+        case Some(factor) => find(n / factor, factor :: factors)
         case _ => Nil
       }
     }

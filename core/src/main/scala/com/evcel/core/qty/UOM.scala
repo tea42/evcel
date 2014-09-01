@@ -19,6 +19,7 @@ case class UOM(private val dimension: UOMRatio, private val secondary: UOMRatio)
   def subtract(other: UOM) = add(other)
 
   def *(other: UOM): UOM = mult(other)._1
+
   def /(other: UOM): UOM = mult(other.invert)._1
 
   def mult(other: UOM): (UOM, BigDecimal) = {
@@ -46,8 +47,6 @@ case class UOM(private val dimension: UOMRatio, private val secondary: UOMRatio)
     } else {
       (newUOM, 1.0)
     }
-
-
   }
 
   def div(other: UOM) = mult(other.invert)
@@ -56,7 +55,7 @@ case class UOM(private val dimension: UOMRatio, private val secondary: UOMRatio)
 
   def magnitude: BigDecimal = {
     asPrimeMap.foldLeft(BigDecimal(1.0)) {
-      case (bd, (prime, power)) => bd * UOM.conversions(prime).pow(power)
+      case (bd, (prime, power)) => bd * UOM.conversionToDimensionBase(prime).pow(power)
     }
   }
 
@@ -66,18 +65,49 @@ case class UOM(private val dimension: UOMRatio, private val secondary: UOMRatio)
     num ++ den
   }
 
-  def asSymbolMap: Map[String, Int] = {
-    asPrimeMap.map { case (k, v) => UOM.symbolFor(k) -> v}
+  def in(other: UOM, conversions: Option[QtyConversions] = None): Option[BigDecimal] = if (this == other) {
+    Some(BigDecimal(1.0))
+  } else {
+    def toUOMAndPower(single: Map[Int, Int]) = {
+      require(single.size == 1, "Can't convert from/to: " + (this, other, single))
+      val (prime, power) = single.head
+      (UOM.primeToUOM(prime), power)
+    }
+    val (oldUOM, power) = toUOMAndPower(asPrimeMap -- other.asPrimeMap.keySet)
+    val (newUOM, powerN) = toUOMAndPower(other.asPrimeMap -- asPrimeMap.keySet)
+    require(power == powerN, "Powers should match: " + (power, powerN))
+
+    oldUOM.div(newUOM) match {
+      case (UOM.SCALAR, scale) => Some(scale.pow(power))
+      case _ => // custom conversion
+        conversions.flatMap(_.rate(oldUOM, newUOM)).map(r => r.pow(power))
+    }
   }
 
   private lazy val string = {
+    def formatPower(reduced: UOMRatio, primes: List[Int], negate: Boolean) = reduced match {
+      case UOMRatio(i, 1) if i < 2 => UOM.symbols(i.toInt).head :: Nil // special case for null and scalar
+      case _ =>
+        primes.groupBy(identity).map {
+          case (prime, all) =>
+            val size = all.size
+            if (size == 1) {
+              UOM.symbolFor(prime) + (if (negate) "^-1" else "")
+            } else {
+              UOM.symbolFor(prime) + (if (negate) "^-" else "^") + size
+            }
+        }
+    }
+
     // we only care about the secondary type for string representation
     val reduced = secondary.reduce
     val num = reduced.factorNum
     val den = reduced.factorDen
-    val numString = num.map(UOM.symbolFor).mkString("")
-    if (den.nonEmpty)
-      numString + "/" + den.map(UOM.symbolFor).mkString("")
+    val numString = formatPower(reduced, num, negate = false).mkString("")
+    if (den.nonEmpty && numString.isEmpty)
+      formatPower(reduced, den, negate = true).mkString("")
+    else if (den.nonEmpty)
+      numString + "/" + formatPower(reduced, den, negate = false).mkString("")
     else
       numString
   }
@@ -90,10 +120,10 @@ case class UOM(private val dimension: UOMRatio, private val secondary: UOMRatio)
 object UOM {
   private var symbols = Map[Int, List[String]]()
   private var byDimension = Map[Int, List[UOM]]()
-  private var uomMap = Map[Int, UOM]()
+  private var primeToUOM = Map[Int, UOM]()
   private var uoms = Map[UOM, UOM]()
-  private val primes = Primes.primes()
-  private var conversions = Map[Int, BigDecimal]()
+  private val primesIterator = Primes.primes()
+  private var conversionToDimensionBase = Map[Int, BigDecimal]()
 
   val NULL = UOM(0, 0, "NULL")
   val SCALAR = UOM(1, 1, "")
@@ -104,22 +134,23 @@ object UOM {
 
   // oil
   val BBL = UOM(UnitDimension.OilVolume, 1.0, "BBL")
-  val GAL = UOM(UnitDimension.OilVolume, 42.0, "GAL")
+  val GAL = UOM(UnitDimension.OilVolume, 1 / BigDecimal(42.0), "GAL")
+
+  // mass
+  val G = UOM(UnitDimension.Mass, 1.0, "G")
+  val MT = UOM(UnitDimension.Mass, 1e6, "MT")
 
   private def symbolFor(prime: Int) = symbols(prime).head
 
-  private def symbolsFor(prime: Int) = symbols(prime)
-
-  lazy val primesUsed = (symbols++byDimension).keys.toList.filter(_ >= 2).sortWith(_ > _)
-  lazy val symbolMap = symbols.flatMap { case (p, syms) => syms.map(s => s -> uomMap(p))}.toMap
+  lazy val primesUsed = (symbols ++ byDimension).keys.toList.filter(_ >= 2).sortWith(_ > _)
 
   private def apply(dimension: UnitDimension, magnitude: BigDecimal, strs: String*) = UOM.synchronized {
-    val prime = primes.next()
+    val prime = primesIterator.next()
     val uom = new UOM(UOMRatio(dimension.prime, 1), UOMRatio(prime, 1))
     symbols += prime -> strs.toList
     byDimension += dimension.prime -> (uom :: byDimension.getOrElse(dimension.prime, Nil))
-    conversions += prime -> magnitude
-    uomMap += prime -> uom
+    conversionToDimensionBase += prime -> magnitude
+    primeToUOM += prime -> uom
     uoms += (uom -> uom)
     uom
   }
@@ -128,14 +159,8 @@ object UOM {
     val uom = new UOM(UOMRatio(dimension, 1), UOMRatio(secondary, 1))
     symbols += secondary -> (str :: Nil)
     byDimension += dimension -> (uom :: byDimension.getOrElse(dimension, Nil))
-    uomMap += secondary -> uom
+    primeToUOM += secondary -> uom
     uom
-  }
-
-  private def fromSymbolMap(symbols: Map[String, Int]) = {
-    symbols.foldLeft(SCALAR) {
-      case (uom, (sym, power)) => uom.mult(symbolMap(sym))._1
-    }
   }
 }
 
@@ -172,8 +197,8 @@ case class UOMRatio(num: Long, den: Long) {
 
   def invert = UOMRatio(den, num)
 
-  def factorNum = if (num == 1) Nil else Primes.factor(num, UOM.primesUsed)
+  def factorNum = if (num <= 1) Nil else Primes.factor(num, UOM.primesUsed)
 
-  def factorDen = if (den == 1) Nil else Primes.factor(den, UOM.primesUsed)
+  def factorDen = if (den <= 1) Nil else Primes.factor(den, UOM.primesUsed)
 }
 

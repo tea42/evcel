@@ -1,6 +1,6 @@
 package com.evcel.core.util
 
-import org.scalatest.{ShouldMatchers, FunSuite}
+import org.scalatest.{ ShouldMatchers, FunSuite }
 
 class PrimesTest extends FunSuite with ShouldMatchers {
 
@@ -12,7 +12,8 @@ class PrimesTest extends FunSuite with ShouldMatchers {
 
   test("Primes.primes should generate primes") {
     // sanity check taken from http://en.wikipedia.org/wiki/List_of_prime_numbers
-    Primes.primes(1).take(20).toList shouldEqual List(2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71)
+    Primes.primes(1).take(20).toList shouldEqual
+      List(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71)
 
     // test against different generator
     Primes.primes(1).take(5000).toList shouldEqual primes.take(5000).toList
@@ -34,9 +35,17 @@ class PrimesTest extends FunSuite with ShouldMatchers {
     Primes.factor(first10.foldLeft(1l)(_ * _), first50).toSet shouldEqual first10.toSet
   }
 
-  test("?") {
-    val a = 243000000l
-    val b = Primes.factor(a, primes.take(5).toList)
-    println("?" + b)
+  test("can fail to factor if not given the right primes") {
+    Primes.factor(25, List(2, 3)) shouldEqual Nil
+  }
+
+  test("2^6 × 3^5 × 5^6 = 243,000,000") {
+    Primes.factor(243000000l, primes.take(5).toList) shouldEqual List(5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2)
+  }
+
+  test("fail with 1") {
+    intercept[IllegalArgumentException] {
+      Primes.factor(1, Nil)
+    }
   }
 }
