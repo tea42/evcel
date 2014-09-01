@@ -1,0 +1,8 @@
+
+#idea stuff
+.idea_modules/
+.idea/
+*.iml
+target/
+test-output/
+

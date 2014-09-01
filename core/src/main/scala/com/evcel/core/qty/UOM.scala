@@ -1,0 +1,179 @@
+package com.evcel.core.qty
+
+import org.apache.commons.math3.util.ArithmeticUtils
+import com.evcel.core.util.Primes
+import scala.concurrent.SyncVar
+
+case class UOM(private val dimension: UOMRatio, private val secondary: UOMRatio) {
+  /**
+   * @return Some(magnitude) or None if not a valid addition.
+   *         magnitude is the value to divide the second component by.
+   *         e.g. if you had USD.add(USC) you would be returned 100.0
+   */
+  def add(other: UOM): Option[BigDecimal] = other match {
+    case UOM(`dimension`, `secondary`) => Some(1.0)
+    case UOM(`dimension`, _) => Some(magnitude / other.magnitude)
+    case _ => None
+  }
+
+  def subtract(other: UOM) = add(other)
+
+  def *(other: UOM): UOM = mult(other)._1
+  def /(other: UOM): UOM = mult(other.invert)._1
+
+  def mult(other: UOM): (UOM, BigDecimal) = {
+    val newUOM = UOM(dimension * other.dimension, secondary * other.secondary)
+    val dimGCD = newUOM.dimension.gcd
+    // if the dimension has a gcd > 1 then we have some redundancy in the UOM, something like
+    // USDBBL/CENT. We need to reduce this to BBL
+    if (dimGCD > 1) {
+      // reduce the dimension component, e.g. MASSVOLUME/VOLUME => MASS
+      val uomReducedDimensions = newUOM.copy(dimension = newUOM.dimension.reduce)
+
+      // now reduce the secondary component, e.g. MTBBL/BBL => MT
+      val redundantPrimes = newUOM.dimension.redundantPrimes
+      val secondaryPrimes = redundantPrimes.flatMap(p => UOM.byDimension(p).map(u => u.secondary.num.toInt))
+      val numDivisible = secondaryPrimes.filter(p => newUOM.secondary.num % p == 0)
+      val denDivisible = secondaryPrimes.filter(p => newUOM.secondary.den % p == 0)
+
+      val uomReducedSecondary = numDivisible.zip(denDivisible).foldLeft(uomReducedDimensions) {
+        case (uom, (p1, p2)) =>
+          val newRatio = UOMRatio(uom.secondary.num / p1, uom.secondary.den / p2)
+          uom.copy(secondary = newRatio)
+      }
+
+      (uomReducedSecondary.intern, newUOM.magnitude / uomReducedSecondary.magnitude)
+    } else {
+      (newUOM, 1.0)
+    }
+
+
+  }
+
+  def div(other: UOM) = mult(other.invert)
+
+  def invert = UOM(dimension.invert, secondary.invert)
+
+  def magnitude: BigDecimal = {
+    asPrimeMap.foldLeft(BigDecimal(1.0)) {
+      case (bd, (prime, power)) => bd * UOM.conversions(prime).pow(power)
+    }
+  }
+
+  def asPrimeMap: Map[Int, Int] = {
+    val num = secondary.factorNum.groupBy(identity).mapValues(a => a.size)
+    val den = secondary.factorDen.groupBy(identity).mapValues(_.size * -1)
+    num ++ den
+  }
+
+  def asSymbolMap: Map[String, Int] = {
+    asPrimeMap.map { case (k, v) => UOM.symbolFor(k) -> v}
+  }
+
+  private lazy val string = {
+    // we only care about the secondary type for string representation
+    val reduced = secondary.reduce
+    val num = reduced.factorNum
+    val den = reduced.factorDen
+    val numString = num.map(UOM.symbolFor).mkString("")
+    if (den.nonEmpty)
+      numString + "/" + den.map(UOM.symbolFor).mkString("")
+    else
+      numString
+  }
+
+  private def intern = UOM.uoms.getOrElse(this, this)
+
+  override def toString = string
+}
+
+object UOM {
+  private var symbols = Map[Int, List[String]]()
+  private var byDimension = Map[Int, List[UOM]]()
+  private var uomMap = Map[Int, UOM]()
+  private var uoms = Map[UOM, UOM]()
+  private val primes = Primes.primes()
+  private var conversions = Map[Int, BigDecimal]()
+
+  val NULL = UOM(0, 0, "NULL")
+  val SCALAR = UOM(1, 1, "")
+
+  // ccys
+  val USD = UOM(UnitDimension.USD, 1.0, "USD")
+  val US_CENT = UOM(UnitDimension.USD, 0.01, "¢", "USC")
+
+  // oil
+  val BBL = UOM(UnitDimension.OilVolume, 1.0, "BBL")
+  val GAL = UOM(UnitDimension.OilVolume, 42.0, "GAL")
+
+  private def symbolFor(prime: Int) = symbols(prime).head
+
+  private def symbolsFor(prime: Int) = symbols(prime)
+
+  lazy val primesUsed = (symbols++byDimension).keys.toList.filter(_ >= 2).sortWith(_ > _)
+  lazy val symbolMap = symbols.flatMap { case (p, syms) => syms.map(s => s -> uomMap(p))}.toMap
+
+  private def apply(dimension: UnitDimension, magnitude: BigDecimal, strs: String*) = UOM.synchronized {
+    val prime = primes.next()
+    val uom = new UOM(UOMRatio(dimension.prime, 1), UOMRatio(prime, 1))
+    symbols += prime -> strs.toList
+    byDimension += dimension.prime -> (uom :: byDimension.getOrElse(dimension.prime, Nil))
+    conversions += prime -> magnitude
+    uomMap += prime -> uom
+    uoms += (uom -> uom)
+    uom
+  }
+
+  private def apply(dimension: Int, secondary: Int, str: String) = UOM.synchronized {
+    val uom = new UOM(UOMRatio(dimension, 1), UOMRatio(secondary, 1))
+    symbols += secondary -> (str :: Nil)
+    byDimension += dimension -> (uom :: byDimension.getOrElse(dimension, Nil))
+    uomMap += secondary -> uom
+    uom
+  }
+
+  private def fromSymbolMap(symbols: Map[String, Int]) = {
+    symbols.foldLeft(SCALAR) {
+      case (uom, (sym, power)) => uom.mult(symbolMap(sym))._1
+    }
+  }
+}
+
+/*
+ * Based on prime factorisation
+ * If we want to represent BBL^2USD, and BBL => 3, USD => 5, we have 3 * 3 * 5 => 45
+ * 45 can only be factored back into 3,3,5 (using primes) so we can recover the unit.
+ * For BBl^2/USD we set num => 3*3, den => 5
+*/
+case class UOMRatio(num: Long, den: Long) {
+
+  def redundantPrimes: List[Int] = if (num == 0) {
+    Nil
+  } else {
+    var gcd = ArithmeticUtils.gcd(num, den)
+    var reduced = this
+    var primes = List[Int]()
+    while (gcd > 1) {
+      reduced = copy(num / gcd, den / gcd)
+      primes :::= Primes.factor(gcd, UOM.primesUsed)
+      gcd = ArithmeticUtils.gcd(reduced.num, reduced.den)
+    }
+    primes
+  }
+
+  // reduces something like USDBBL/USD to BBL
+  def reduce: UOMRatio = redundantPrimes.foldLeft(this)((u, p) => u.copy(u.num / p, u.den / p))
+
+  def gcd = ArithmeticUtils.gcd(num, den)
+
+  def *(other: UOMRatio) = UOMRatio(num * other.num, den * other.den)
+
+  def /(other: UOMRatio) = this * other.invert
+
+  def invert = UOMRatio(den, num)
+
+  def factorNum = if (num == 1) Nil else Primes.factor(num, UOM.primesUsed)
+
+  def factorDen = if (den == 1) Nil else Primes.factor(den, UOM.primesUsed)
+}
+
