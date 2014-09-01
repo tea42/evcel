@@ -109,9 +109,9 @@ class BDQty private[qty] (private val value: BigDecimal, val uom: UOM) extends Q
 object Qty {
   def apply(value: Double, uom: UOM): Qty = new DblQty(value, uom)
 
-  def apply(value: String, uom: UOM): Qty = apply(BigDecimal(value), uom)
+  def apply(value: String, uom: UOM): BDQty = apply(BigDecimal(value), uom)
 
-  def apply(value: BigDecimal, uom: UOM): Qty = new BDQty(value, uom)
+  def apply(value: BigDecimal, uom: UOM): BDQty = new BDQty(value, uom)
 
   // we don't have a double to scalar to avoid people accidentally using a double like .1
   // and losing precision.

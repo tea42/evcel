@@ -18,20 +18,25 @@ object EVCelBuild extends Build {
     scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
   ) ++ SbtScalariform.buildSettings
 
-
-  lazy val coreDependencies = Seq(
-    "colt" % "colt" % "1.2.0",
-    "org.scalanlp" %% "breeze-math" % "0.4",
-    "org.apache.commons" % "commons-math3" % "3.3",
-    "commons-io" % "commons-io" % "2.4",
-    "org.scalatest" %% "scalatest" % "2.0" % "test"
+  lazy val core = module("core").settings(
+    libraryDependencies ++= Seq(
+      "colt" % "colt" % "1.2.0",
+      "org.scalanlp" %% "breeze-math" % "0.4",
+      "org.apache.commons" % "commons-math3" % "3.3",
+      "commons-io" % "commons-io" % "2.4",
+      "org.scalatest" %% "scalatest" % "2.0" % "test"
+    )
   )
 
+  lazy val server = module("server").settings(
+    libraryDependencies ++= Seq()
+  ).dependsOn(core)
 
-  lazy val core = Project(
-    id = "core",
-    base = file("core"),
-    settings = buildSettings ++
-      Seq(libraryDependencies ++= coreDependencies)
-  ).settings(instrumentSettings: _*).settings(scalariformSettings:_*)
+  def module(name: String) = {
+    Project(
+      id = name,
+      base = file(name),
+      settings = buildSettings
+    ).settings(instrumentSettings: _*).settings(scalariformSettings: _*)
+  }
 }
