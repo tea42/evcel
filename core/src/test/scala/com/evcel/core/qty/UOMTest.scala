@@ -23,7 +23,7 @@ class UOMTest extends FunSuite with ShouldMatchers {
     (USD * USD * BBL).div(US_CENT * GAL) match {
       case (USD, bd) => bd shouldEqual 100 * BigDecimal(42)
     }
-    USD.mult(BBL).toString shouldEqual "(USDBBL,1.0)"
+    USD.mult(BBL).toString shouldEqual "(BBLUSD,1.0)" // the order of the string isn't defined
     USD.mult(USD).toString shouldEqual "(USD^2,1.0)"
     USD.div(US_CENT).toString shouldEqual "(,1.0E+2)"
     USD.mult(USD)._1.div(US_CENT).toString shouldEqual "(USD,1.0E+2)"
