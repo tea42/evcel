@@ -59,6 +59,24 @@ class QtyTest extends FunSuite with ShouldMatchers {
     Qty(1, BBL) / Qty(1, GAL) shouldEqual Qty(42, SCALAR)
   }
 
+  test("percentage") {
+    Qty(100, USD) / Qty(1, PERCENTAGE) shouldEqual Qty(10000, USD)
+    Qty(1, PERCENTAGE) * Qty(100, USD) shouldEqual Qty(1, USD)
+    Qty(100, USD) * Qty(1, PERCENTAGE) shouldEqual Qty(1, USD)
+    Qty(100, USD) * (Qty(1, PERCENTAGE) * Qty(1, PERCENTAGE)) shouldEqual Qty(.01, USD)
+
+    Qty(100, SCALAR) / Qty(1, PERCENTAGE) shouldEqual Qty(10000, SCALAR)
+    Qty(100, SCALAR) * Qty(1, PERCENTAGE) shouldEqual Qty(1, SCALAR)
+
+    Qty(10, PERCENTAGE) * Qty(1, SCALAR) shouldEqual Qty(10, PERCENTAGE)
+    Qty(10, PERCENTAGE) * Qty(10, PERCENTAGE) * Qty(1, SCALAR) shouldEqual Qty(1, PERCENTAGE)
+    Qty(100, PERCENTAGE) / Qty(1, SCALAR) shouldEqual Qty(100, PERCENTAGE)
+    Qty(100, PERCENTAGE) / Qty(2, SCALAR) shouldEqual Qty(50, PERCENTAGE)
+    (Qty(100, PERCENTAGE) * Qty(100, PERCENTAGE)) / Qty(2, SCALAR) shouldEqual Qty(50, PERCENTAGE)
+
+    Qty(100, PERCENTAGE) / Qty(1, PERCENTAGE) shouldEqual Qty(10000, PERCENTAGE)
+  }
+
   test("equals and hashcode") {
     Qty(2, USD) shouldEqual Qty(2, USD)
     Qty(2, USD).hashCode() shouldEqual Qty(2, USD).hashCode()
@@ -69,6 +87,9 @@ class QtyTest extends FunSuite with ShouldMatchers {
     Qty("2", USD).hashCode() shouldEqual Qty("2", USD).hashCode()
     Qty(2, USD) shouldNot be(2.0)
     Qty("2", USD) shouldNot be(2.0)
+    Qty("2", PERCENTAGE) shouldEqual (Qty(4.0, PERCENTAGE) * Qty(50.0, PERCENTAGE))
+    Qty("2", PERCENTAGE) shouldNot be(2.0)
+    Qty("2", PERCENTAGE) shouldNot be(Qty(2.0, SCALAR))
   }
 
   test("to string") {
@@ -76,6 +97,11 @@ class QtyTest extends FunSuite with ShouldMatchers {
     Qty(2, USD / BBL).toString shouldEqual "2.0 USD/BBL"
     Qty(2, USD * USD / BBL).toString shouldEqual "2.0 USD^2/BBL"
     Qty(-2, USD * USD / (BBL * BBL)).toString shouldEqual "-2.0 USD^2/BBL^2"
+
+    Qty(100, PERCENTAGE).toString shouldEqual "100.0 %"
+    (Qty(100, PERCENTAGE) * Qty(100, PERCENTAGE)).toString shouldEqual "100.0 %"
+    (Qty(100, PERCENTAGE) * Qty(1, PERCENTAGE)).toString shouldEqual "1.0 %"
+    (Qty(100, PERCENTAGE) / Qty(1, PERCENTAGE)).toString shouldEqual "10000.0 %"
   }
 
   test("implicits") {

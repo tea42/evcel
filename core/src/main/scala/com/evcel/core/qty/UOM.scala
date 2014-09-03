@@ -44,6 +44,14 @@ case class UOM(private val dimension: UOMRatio, private val secondary: UOMRatio)
       }
 
       (uomReducedSecondary.intern, newUOM.magnitude / uomReducedSecondary.magnitude)
+    } else if (this.isPercent && other.isScalar) {
+      (this, 1.0)
+    } else if (this.isPercent && other.isPercent) {
+      (this, other.magnitude)
+    } else if (this.isPercent) {
+      (other, this.magnitude)
+    } else if (other.isPercent) {
+      (this, other.magnitude)
     } else {
       (newUOM, 1.0)
     }
@@ -115,6 +123,9 @@ case class UOM(private val dimension: UOMRatio, private val secondary: UOMRatio)
   private def intern = UOM.uoms.getOrElse(this, this)
 
   override def toString = string
+
+  lazy val isScalar = this == UOM.SCALAR
+  lazy val isPercent = asPrimeMap.keySet == UOM.PERCENTAGE.asPrimeMap.keySet
 }
 
 object UOM {
@@ -127,6 +138,7 @@ object UOM {
 
   val NULL = UOM(0, 0, "NULL")
   val SCALAR = UOM(1, 1, "")
+  val PERCENTAGE = UOM(UnitDimension.SCALAR, 0.01, "%")
 
   // ccys
   val USD = UOM(UnitDimension.USD, 1.0, "USD")
