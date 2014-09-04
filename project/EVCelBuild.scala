@@ -37,6 +37,15 @@ object EVCelBuild extends Build {
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
   )
+
+  lazy val quantity = module("quantity").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(maths)
+
   lazy val core = module("core").settings(
     libraryDependencies ++= Seq(
       "org.apache.commons" % "commons-math3" % "3.3",
@@ -51,7 +60,7 @@ object EVCelBuild extends Build {
 
   lazy val server = module("server").settings(
     libraryDependencies ++= Seq()
-  ).dependsOn(maths, core, daterange)
+  ).dependsOn(maths, core, daterange, quantity)
 
   def module(name: String) = {
     Project(

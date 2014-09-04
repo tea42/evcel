@@ -1,7 +1,6 @@
 package evcel.daterange
 
 import scala.language.implicitConversions
-import scala.language.reflectiveCalls
 
 /**
  * Syntactic sugar for constructing date ranges and days in tests
