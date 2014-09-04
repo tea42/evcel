@@ -1,6 +1,6 @@
 package evcel.curve.marketdata
 
-import evcel.quantity.Qty
+import evcel.quantity.BDQty
 import evcel.daterange.Month
 import scala.collection.SortedMap
 import evcel.daterange.Day

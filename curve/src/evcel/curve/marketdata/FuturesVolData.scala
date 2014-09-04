@@ -1,6 +1,6 @@
 package evcel.curve.marketdata
 
-import evcel.quantity.Percentage
+import evcel.quantity.BDQty
 import evcel.daterange.Month
 import evcel.daterange.Day
 

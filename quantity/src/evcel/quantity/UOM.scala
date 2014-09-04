@@ -3,7 +3,7 @@ package evcel.quantity
 import org.apache.commons.math3.util.ArithmeticUtils
 import scala.concurrent.SyncVar
 
-case class UOM(private val dimension: UOMRatio, private val secondary: UOMRatio) {
+case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   /**
    * @return Some(magnitude) or None if not a valid addition.
    *         magnitude is the value to divide the second component by.

@@ -107,6 +107,7 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
 }
 
 object Qty {
+  val NULL = Qty(BigDecimal(0), UOM.NULL)
   def apply(value: Double, uom: UOM): Qty = new DblQty(value, uom)
 
   def apply(value: String, uom: UOM): BDQty = apply(BigDecimal(value), uom)

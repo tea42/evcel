@@ -10,6 +10,7 @@ object EVCelBuild extends Build {
   val buildOrganisation = "com.evcel"
   val buildVersion = "0.1"
   val buildScalaVersion = "2.10.4"
+  val buildScalaMajorVersion = "2.10"
 
   lazy val buildSettings = Defaults.defaultSettings ++ Seq(
     organization := buildOrganisation,
@@ -54,6 +55,17 @@ object EVCelBuild extends Build {
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(quantity, daterange)
 
+  lazy val eventstore = module("eventstore").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test",
+      "org.apache.kafka" % s"kafka_$buildScalaMajorVersion" % "0.8.1.1",
+      "org.apache.zookeeper" % "zookeeper" % "3.4.6",
+      "io.spray" % s"spray-json_$buildScalaMajorVersion" % "1.2.6"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(curve, quantity)
+
   lazy val core = module("core").settings(
     libraryDependencies ++= Seq(
       "org.apache.commons" % "commons-math3" % "3.3",
@@ -68,7 +80,7 @@ object EVCelBuild extends Build {
 
   lazy val server = module("server").settings(
     libraryDependencies ++= Seq()
-  ).dependsOn(maths, core, daterange, quantity)
+  ).dependsOn(maths, core, daterange, quantity, eventstore)
 
   def module(name: String) = {
     Project(
