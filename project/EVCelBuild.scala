@@ -25,7 +25,9 @@ object EVCelBuild extends Build {
       "org.apache.commons" % "commons-math3" % "3.3",
       "commons-io" % "commons-io" % "2.4",
       "org.scalatest" %% "scalatest" % "2.0" % "test"
-    )
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
   )
 
   lazy val server = module("server").settings(
