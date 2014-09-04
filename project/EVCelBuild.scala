@@ -18,21 +18,32 @@ object EVCelBuild extends Build {
     scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
   ) ++ SbtScalariform.buildSettings
 
+  lazy val maths = module("maths").settings(
+    libraryDependencies ++= Seq(
+      "org.apache.commons" % "commons-math3" % "3.3",
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test",
+      "com.opengamma" % "og-analytics" % "2.0.0-alpha-12",
+      "com.opengamma" % "og-util" % "2.0.0-alpha-12" 
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests",
+    resolvers += "opengamma" at "http://maven.opengamma.com/nexus/content/groups/public/"
+  )
   lazy val core = module("core").settings(
     libraryDependencies ++= Seq(
+      "org.apache.commons" % "commons-math3" % "3.3",
       "colt" % "colt" % "1.2.0",
       "org.scalanlp" %% "breeze-math" % "0.4",
-      "org.apache.commons" % "commons-math3" % "3.3",
       "commons-io" % "commons-io" % "2.4",
-      "org.scalatest" %% "scalatest" % "2.0" % "test"
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  )
+  ).dependsOn(maths)
 
   lazy val server = module("server").settings(
     libraryDependencies ++= Seq()
-  ).dependsOn(core)
+  ).dependsOn(maths, core)
 
   def module(name: String) = {
     Project(

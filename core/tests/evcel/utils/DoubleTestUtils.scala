@@ -1,6 +1,6 @@
 package com.evcel.utils
 
-import org.scalautils.Equality
+import org.scalactic.Equality
 
 object DoubleTestUtils {
 
