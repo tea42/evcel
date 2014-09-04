@@ -46,6 +46,14 @@ object EVCelBuild extends Build {
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(maths)
 
+  lazy val curve = module("curve").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(quantity, daterange)
+
   lazy val core = module("core").settings(
     libraryDependencies ++= Seq(
       "org.apache.commons" % "commons-math3" % "3.3",

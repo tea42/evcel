@@ -125,11 +125,15 @@ object UOM {
   private var conversionToDimensionBase = Map[Int, BigDecimal]()
 
   val NULL = UOM(0, 0, "NULL")
-  val SCALAR = UOM(1, 1, "")
+
+  val SCALAR = UOM(UnitDimension.Scalar, 1, "")
+  val PERCENT = UOM(UnitDimension.Scalar, 0.01, "%")
 
   // ccys
   val USD = UOM(UnitDimension.USD, 1.0, "USD")
   val US_CENT = UOM(UnitDimension.USD, 0.01, "¢", "USC")
+  val GBP = UOM(UnitDimension.GBP, 1.0, "GBP")
+  val EUR = UOM(UnitDimension.EUR, 1.0, "EUR")
 
   // oil
   val BBL = UOM(UnitDimension.OilVolume, 1.0, "BBL")
