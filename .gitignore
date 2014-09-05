@@ -5,4 +5,25 @@
 *.iml
 target/
 test-output/
+#maker stuff
+scala-libs
+*/.maker
+*/module-vim-compile-output
+*/target-maker
+*/lib_managed
+.maker.vim/
+*-classpath.sh
+*/logback-vim.xml
+*/lib_src_managed/
+*/module-vim-test-compile-output
+tags
+*.pid
+kafka-test-data
+maker-test-output
+zookeeper-test-data
 
+
+kafka-data
+zookeeper-data
+maker*.log
+logs
