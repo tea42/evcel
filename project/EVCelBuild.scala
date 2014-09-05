@@ -58,13 +58,29 @@ object EVCelBuild extends Build {
   lazy val eventstore = module("eventstore").settings(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.0" % "test",
-      "org.apache.kafka" % s"kafka_$buildScalaMajorVersion" % "0.8.1.1",
-      "org.apache.zookeeper" % "zookeeper" % "3.4.6",
+      "org.apache.kafka" % s"kafka_$buildScalaMajorVersion" % "0.8.1.1" exclude ("org.slf4j", "slf4j-log4j12"),
+      "org.apache.zookeeper" % "zookeeper" % "3.4.6" exclude ("org.slf4j", "slf4j-log4j12"),
       "io.spray" % s"spray-json_$buildScalaMajorVersion" % "1.2.6"
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(curve, quantity)
+
+  lazy val calendar = module("calendar").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(daterange)
+
+  lazy val calendarstore = module("calendarstore").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(calendar, eventstore)
 
   lazy val core = module("core").settings(
     libraryDependencies ++= Seq(
@@ -80,7 +96,7 @@ object EVCelBuild extends Build {
 
   lazy val server = module("server").settings(
     libraryDependencies ++= Seq()
-  ).dependsOn(maths, core, daterange, quantity, eventstore)
+  ).dependsOn(maths, core, daterange, quantity, eventstore, calendar, calendarstore)
 
   def module(name: String) = {
     Project(
