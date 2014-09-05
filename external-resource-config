@@ -1,0 +1,30 @@
+# Configures where external resources are obtained from, and what versions
+# are used. Note that a project will have its own resource config file, 
+# distinct from maker's own. Both can be overridden independently when launching 
+# maker
+#
+# Only lines that begin with one of 'resolver:', 'version:' matter - all others 
+# are treated as comments
+
+#----------------------------------------------------------------------------
+# resolver:
+# 'default' is used for all resources that don't specify a particular resolver
+#----------------------------------------------------------------------------
+resolver: default http://repo1.maven.org/maven2/
+resolver: opengamma http://maven.opengamma.com/nexus/content/groups/public/
+
+#----------------------------------------------------------------------------
+# version:
+# Used in each module's external-resources file
+# versions _can_ be hard coded in external-resources if
+# there is a good reason
+#----------------------------------------------------------------------------
+version: scalatest_version 2.2.0
+version: scala_version 2.10.4
+version: scala_version_base 2.10
+version: scalameter_version 0.5-M2
+version: spring_version 4.0.5.RELEASE
+version: slf4j_version 1.7.7
+version: ch.qos.logback_version 1.0.6
+version: guava_version 17.0
+version: sbt_version 0.13.5

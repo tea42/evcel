@@ -1,0 +1,18 @@
+#kafka
+org.apache.kafka kafka_{scala_version_base} 0.8.1.1
+org.apache.zookeeper zookeeper 3.4.6
+com.101tec zkclient 0.3
+com.yammer.metrics metrics-core 2.2.0
+net.sf.jopt-simple jopt-simple 4.7
+
+#spray
+io.spray spray-json_{scala_version_base} 1.2.6
+org.parboiled parboiled-scala_{scala_version_base} 1.1.6
+org.parboiled parboiled-core 1.1.6
+
+#logback
+ch.qos.logback logback-classic {ch.qos.logback_version}
+ch.qos.logback logback-core {ch.qos.logback_version}
+org.slf4j slf4j-api {slf4j_version}
+org.slf4j log4j-over-slf4j {slf4j_version}
+org.slf4j jcl-over-slf4j {slf4j_version}
