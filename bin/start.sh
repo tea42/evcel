@@ -34,6 +34,7 @@ process_options() {
           display_usage; 
           exit 0;;
       -t | --test-mode ) 
+          LOGBACK_CONFIG=config/logback-unit-tests.xml;
           ZOOKEEPER_CONFIG=config/zookeeper.test.properties; 
           KAFKA_CONFIG=config/kafka.test.properties; 
           shift;;
@@ -41,6 +42,7 @@ process_options() {
           break;;
     esac
   done
+  LOGBACK_CONFIG=${LOGBACK_CONFIG-config/logback.xml}
   KAFKA_CONFIG=${KAFKA_CONFIG-config/kafka.properties}
   ZOOKEEPER_CONFIG=${ZOOKEEPER_CONFIG-config/zookeeper.properties}
 }
@@ -65,18 +67,18 @@ EOF
 
 launch_zookeeper(){
   echo "Launching zookeeper"
-  nohup java -cp "$(classpath)" -Dzookeeper.jmx.log4j.disable=true -Dlogback.configurationFile=logback.xml org.apache.zookeeper.server.quorum.QuorumPeerMain $ZOOKEEPER_CONFIG > $ZOOKEEPER_LOG 2>&1 < /dev/null &
+  nohup java -cp "$(classpath)" -Dzookeeper.jmx.log4j.disable=true -Dlogback.configurationFile=$LOGBACK_CONFIG org.apache.zookeeper.server.quorum.QuorumPeerMain $ZOOKEEPER_CONFIG > $ZOOKEEPER_LOG 2>&1 < /dev/null &
   echo $! > zookeeper.pid
 }
 
 launch_kafka(){
   echo "Launching kafka"
-  nohup java -cp "$(classpath)" -Dlogback.configurationFile=logback.xml kafka.Kafka $KAFKA_CONFIG > $KAFKA_LOG 2>&1 < /dev/null &
+  nohup java -cp "$(classpath)" -Dlogback.configurationFile=$LOGBACK_CONFIG kafka.Kafka $KAFKA_CONFIG > $KAFKA_LOG 2>&1 < /dev/null &
   echo $! > kafka.pid
   echo "Creating Calendars topic"
   sleep 2
-  java -cp "$(classpath)" -Dzookeeper.jmx.log4j.disable=true -Dlogback.configurationFile=logback.xml kafka.admin.TopicCommand --zookeeper localhost:2181 --create --topic Calendars --partitions 1 --replication-factor 1
-  java -cp "$(classpath)" -Dzookeeper.jmx.log4j.disable=true -Dlogback.configurationFile=logback.xml kafka.admin.TopicCommand --zookeeper localhost:2181 --create --topic "CalendarStore2Tests.oneWrite" --partitions 1 --replication-factor 1
+  java -cp "$(classpath)" -Dzookeeper.jmx.log4j.disable=true -Dlogback.configurationFile=$LOGBACK_CONFIG kafka.admin.TopicCommand --zookeeper localhost:2181 --create --topic Calendars --partitions 1 --replication-factor 1
+  java -cp "$(classpath)" -Dzookeeper.jmx.log4j.disable=true -Dlogback.configurationFile=$LOGBACK_CONFIG kafka.admin.TopicCommand --zookeeper localhost:2181 --create --topic "CalendarStore2Tests.oneWrite" --partitions 1 --replication-factor 1
 }
 
 process_options $*

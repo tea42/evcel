@@ -9,7 +9,7 @@ object UnitDimension {
     new UnitDimension(primes.next(), names.toList)
   }
 
-  val Scalar = UnitDimension("Scalar")
+  val SCALAR = new UnitDimension(1, "SCALAR" :: Nil)
   val Mass = UnitDimension("Mass")
   val Volume = UnitDimension("Volume")
   val Time = UnitDimension("Time")

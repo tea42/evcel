@@ -5,13 +5,19 @@ import maker.task.BuildResult
 import maker.task.Dependency
 import maker.utils.os.Command
 import maker.utils.os.CommandOutputHandler
+import maker.MakerProps
 
 Properties.setProp("scala.usejavacp", "false")
 Properties.setProp("log4j.ignoreTCL", "true")
 Properties.clearProp("scala.home")
-
+val makerProps = MakerProps("LogbackTestConfigFile", "config/logback-unit-tests.xml")
 def module(name : String, upstream : Module*) = {
-  new Module(root = new File(name), name = name, immediateUpstreamModules = upstream.toList)
+  new Module(
+    root = new File(name), 
+    name = name, 
+    immediateUpstreamModules = upstream.toList,
+    props = makerProps
+    )
 }
 
 val maths = module("maths")
@@ -24,7 +30,8 @@ val calendarstore = module("calendarstore", calendar, eventstore)
 val evcel = new Project(
   name = "evcel",
   root = new File("."),
-  immediateUpstreamModules = List(calendarstore)
+  immediateUpstreamModules = List(calendarstore),
+  props = makerProps
 ){
   def launchTestKafka() = {
     Command("bin/start.sh", "-t").exec == 0
