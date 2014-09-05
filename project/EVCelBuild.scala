@@ -1,8 +1,6 @@
 import sbt._
 import Keys._
 
-import com.typesafe.sbt.SbtScalariform
-import com.typesafe.sbt.SbtScalariform._
 import scoverage.ScoverageSbtPlugin._
 
 object EVCelBuild extends Build {
@@ -17,7 +15,7 @@ object EVCelBuild extends Build {
     version := buildVersion,
     scalaVersion := buildScalaVersion,
     scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
-  ) ++ SbtScalariform.buildSettings
+  ) 
 
   lazy val maths = module("maths").settings(
     libraryDependencies ++= Seq(
@@ -103,6 +101,6 @@ object EVCelBuild extends Build {
       id = name,
       base = file(name),
       settings = buildSettings
-    ).settings(instrumentSettings: _*).settings(scalariformSettings: _*)
+    ).settings(instrumentSettings: _*)
   }
 }
