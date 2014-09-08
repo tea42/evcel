@@ -45,6 +45,30 @@ object EVCelBuild extends Build {
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(maths)
 
+  lazy val instrument = module("instrument").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(curve)
+
+  lazy val reports = module("reports").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(instrument, curve % "test->test")
+
+  lazy val xl = module("xl").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(reports)
+
   lazy val curve = module("curve").settings(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.0" % "test"
@@ -80,21 +104,9 @@ object EVCelBuild extends Build {
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(calendar, eventstore)
 
-  lazy val core = module("core").settings(
-    libraryDependencies ++= Seq(
-      "org.apache.commons" % "commons-math3" % "3.3",
-      "colt" % "colt" % "1.2.0",
-      "org.scalanlp" %% "breeze-math" % "0.4",
-      "commons-io" % "commons-io" % "2.4",
-      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
-    ),
-    scalaSource in Compile := baseDirectory.value / "src",
-    scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(maths)
-
   lazy val server = module("server").settings(
     libraryDependencies ++= Seq()
-  ).dependsOn(maths, core, daterange, quantity, eventstore, calendar, calendarstore)
+  ).dependsOn(maths, daterange, quantity, eventstore, calendar, calendarstore, xl, instrument)
 
   def module(name: String) = {
     Project(

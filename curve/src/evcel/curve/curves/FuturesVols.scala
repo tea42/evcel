@@ -4,11 +4,11 @@ import evcel.curve.environment.Curve
 import evcel.daterange.Month
 import evcel.curve.environment.MarketDay
 import evcel.curve.environment.CurveIdentifier
+import evcel.maths.models.BlackScholes
 import evcel.quantity.Percentage
 import evcel.quantity.Qty
 import evcel.quantity.UOM._
 import evcel.curve.environment.AtomicDatumIdentifier
-import evcel.maths.BlackScholes
 import evcel.maths.Call
 import evcel.curve.marketdata.Act365
 import evcel.curve.marketdata.FuturesVolData
@@ -38,7 +38,7 @@ case class FuturesVols(
     val T = Act365.timeBetween(
       marketDay.day, expiryRule.optionExpiryDay(month)
     )
-    val deltaOfStrike = BlackScholes(F, X, Call, T, atmVol).analyticDelta
+    val deltaOfStrike = new BlackScholes(Call, F, X, T, atmVol).analyticDelta
     surface(month, deltaOfStrike)
   }
 }
@@ -66,7 +66,7 @@ object FuturesVols {
       val smile = smiles.getOrElse(month, throw new RuntimeException(s"No smile data for $data.market/$month"))
       smile(delta)
     }
-    FuturesVols(data.market, marketDay, expiryRule, surface _)
+    FuturesVols(data.market, marketDay, expiryRule, surface)
   }
 }
 case class FuturesVolIdentifier(
