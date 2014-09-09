@@ -8,9 +8,8 @@ class Day private (val year: Int, val month: Int, val dayNumber: Int) extends Da
   val julianDayNumber = Day.julianDayNumber(year, month, dayNumber)
   override def hashCode = julianDayNumber
   override def equals(that: Any) = that match {
-    case other: Day => {
+    case other: Day =>
       other.getClass == getClass && other.julianDayNumber == julianDayNumber
-    }
     case _ => false
   }
 
@@ -39,13 +38,17 @@ class Day private (val year: Int, val month: Int, val dayNumber: Int) extends Da
 
   def addWeekdays(n: Int) = {
     var d = this
-    var n_ = n
+    var n_ = n.abs
     while (n_ > 0) {
-      d = d.nextWeekday
-      n_ = n_ - 1
+      d = d + n / n.abs
+      if(d.isWeekday)
+        n_ = n_ - 1
     }
     d
   }
+
+  def isWeekday = !isWeekend
+  def isWeekend = (julianDayNumber % 7) > 4
 
   override def toString = f"$year%4d-$month%02d-$dayNumber%02d"
 }

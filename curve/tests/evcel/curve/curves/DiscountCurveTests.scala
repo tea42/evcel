@@ -5,7 +5,7 @@ import org.scalatest.Matchers
 import evcel.daterange.DateRangeSugar._
 import evcel.quantity.UOM._
 import evcel.curve.marketdata.Act365
-import evcel.quantity.Percentage
+import evcel.quantity.Percent
 import scala.math._
 import evcel.daterange.Day
 import evcel.curve.environment.MarketDay
@@ -33,7 +33,7 @@ class DiscountCurveTests extends FunSpec with Matchers {
         GBP,
         marketDay,
         Act365,
-        rates = List((marketDay + 10, Percentage(zeroRate * 100.0)))
+        rates = List((marketDay + 10, Percent(zeroRate * 100.0)))
       )
       curve.discountRate(marketDay) should equal(1.0)
       curve.discountRate(marketDay + 10) should equal(exp(-zeroRate * 10.0 / 365.0) +- 1e-9)
@@ -46,15 +46,15 @@ class DiscountCurveTests extends FunSpec with Matchers {
         GBP,
         marketDay,
         Act365,
-        rates = List((marketDay + 10, Percentage(zeroRate * 100.0)))
+        rates = List((marketDay + 10, Percent(zeroRate * 100.0)))
       )
       val twoPointCurve = DiscountCurve(
         GBP,
         marketDay,
         Act365,
         rates = List(
-          (marketDay + 10, Percentage(zeroRate * 100.0)),
-          (marketDay + 50, Percentage(zeroRate * 100.0))
+          (marketDay + 10, Percent(zeroRate * 100.0)),
+          (marketDay + 50, Percent(zeroRate * 100.0))
         )
       )
 
@@ -76,9 +76,9 @@ class DiscountCurveTests extends FunSpec with Matchers {
         marketDay,
         Act365,
         rates = List(
-          (d1, Percentage(z1 * 100)),
-          (d2, Percentage(z2 * 100)),
-          (d3, Percentage(z3 * 100))
+          (d1, Percent(z1 * 100)),
+          (d2, Percent(z2 * 100)),
+          (d3, Percent(z3 * 100))
         )
       )
       def fwdRate(from: Day, to: Day) = {

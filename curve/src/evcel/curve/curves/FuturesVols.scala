@@ -5,7 +5,7 @@ import evcel.daterange.Month
 import evcel.curve.environment.MarketDay
 import evcel.curve.environment.CurveIdentifier
 import evcel.maths.models.BlackScholes
-import evcel.quantity.Percentage
+import evcel.quantity.Percent
 import evcel.quantity.Qty
 import evcel.quantity.UOM._
 import evcel.curve.environment.AtomicDatumIdentifier
@@ -23,12 +23,12 @@ case class FuturesVols(
     marketDay: MarketDay,
     expiryRule: FuturesExpiryRule,
     surface: (Month, Double) => Double) extends Curve {
-  def apply(point: Any) = {
+  def apply(point: Any): Qty = {
     point match {
       case (month: Month, strike: Qty, forwardPrice: Qty) =>
         require(strike.uom == forwardPrice.uom, s"Mismatching strike/forward prices $strike/$forwardPrice")
         val vol = interpolateVol(month, strike.doubleValue, forwardPrice.doubleValue)
-        Percentage(vol * 100.0)
+        Percent(vol * 100.0)
     }
   }
   private[curves] def interpolateVol(month: Month, X: Double, F: Double) = {

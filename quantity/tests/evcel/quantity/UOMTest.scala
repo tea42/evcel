@@ -66,4 +66,29 @@ class UOMTest extends FunSuite with Matchers {
     BBL in (MT, Some(conv)) shouldEqual Some(1 / BigDecimal(7.45))
     MT in (BBL, Some(conv)) shouldEqual Some(BigDecimal(7.45))
   }
+
+  test("numerator") {
+    (USD/BBL).numerator shouldEqual USD
+    (BBL/USD).numerator shouldEqual BBL
+    (BBL*BBL/USD).numerator shouldEqual BBL*BBL
+    (BBL*GAL/USD).numerator shouldEqual BBL*GAL
+    SCALAR.numerator shouldEqual SCALAR
+  }
+
+  test("denominator") {
+    (USD/BBL).denominator shouldEqual BBL
+    (BBL/USD).denominator shouldEqual USD
+    (BBL*BBL/USD).denominator shouldEqual USD
+    (BBL/(USD*USD)).denominator shouldEqual USD*USD
+    (BBL/(G*USD)).denominator shouldEqual G*USD
+    (SCALAR/USD).denominator shouldEqual USD
+  }
+
+  test("pow") {
+    USD.pow(0) shouldEqual SCALAR
+    USD.pow(1) shouldEqual USD
+    USD.pow(2) shouldEqual USD*USD
+    USD.pow(-1) shouldEqual SCALAR/USD
+    USD.pow(-2) shouldEqual SCALAR/(USD*USD)
+  }
 }

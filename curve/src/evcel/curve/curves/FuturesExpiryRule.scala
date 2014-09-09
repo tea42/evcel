@@ -11,3 +11,7 @@ case class FuturesExpiryRule(market: String, optionExpiries: Map[Month, Day]) {
     optionExpiries.getOrElse(month, throw new RuntimeException("No known option expiry for $market/$month"))
 }
 
+class FuturesExpiryRules(rules: Map[String, FuturesExpiryRule]) {
+  def expiryRule(market: String) = rules.get(market)
+}
+

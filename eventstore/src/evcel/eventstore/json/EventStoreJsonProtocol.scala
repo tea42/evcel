@@ -2,7 +2,7 @@ package evcel.eventstore.json
 
 import evcel.curve.marketdata.{ DayCount, FuturesPriceData, FuturesVolData, ZeroRateData }
 import evcel.daterange.{ Day, Month }
-import evcel.quantity.{ Percentage, Qty, UOM, UOMRatio, BDQty }
+import evcel.quantity.{ Percent, Qty, UOM, UOMRatio, BDQty }
 import spray.json._
 import evcel.curve.curves.FuturesExpiryRule
 
@@ -60,9 +60,8 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
         Map[Month, Day]() ++ pairs.map {
           case JsArray(List(mJson, dJson)) => (mJson.convertTo[Month], dJson.convertTo[Day])
         }
-      case other => {
+      case other =>
         deserializationError("Map expected")
-      }
     }
   }
 

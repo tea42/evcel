@@ -1,6 +1,6 @@
 package evcel.report
 
-import evcel.curve.Environment
+import evcel.curve.ValuationContext
 import evcel.instrument.Instrument
 
 trait PivotRow {
@@ -16,7 +16,7 @@ trait PivotReport {
 }
 
 trait PivotReportType {
-  def create(env: Environment): PivotReport
+  def create(vc: ValuationContext): PivotReport
 
   def fields: List[PivotField]
 }

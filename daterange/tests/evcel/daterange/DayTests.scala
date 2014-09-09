@@ -23,7 +23,14 @@ class DayTests extends FunSpec with Matchers {
       saturday.nextWeekday should equal(monday)
       sunday.nextWeekday should equal(monday)
       monday.nextWeekday should equal(tuesday)
+    }
 
+    it("should add weekdays") {
+      val friday = 25 / Jul / 2014
+      friday.addWeekdays(- 1) shouldEqual(24 / Jul / 2014)
+      friday.addWeekdays(- 2) shouldEqual(23 / Jul / 2014)
+      friday.addWeekdays(1) shouldEqual(28 / Jul / 2014)
+      friday.addWeekdays(2) shouldEqual(29 / Jul / 2014)
     }
 
     it("Should format days according to http://en.wikipedia.org/wiki/ISO_8601"){

@@ -15,7 +15,7 @@ import evcel.curve.marketdata.FuturesPriceData
 import evcel.daterange.Month
 import evcel.curve.marketdata.ZeroRateData
 import evcel.curve.marketdata.Act365
-import evcel.quantity.Percentage
+import evcel.quantity.Percent
 import evcel.curve.marketdata.FuturesVolData
 import evcel.curve.curves.FuturesExpiryRule
 import scala.language.reflectiveCalls
@@ -71,8 +71,8 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
         10 / Aug / 2014,
         Act365,
         List(
-          (11 / Aug / 14, Percentage("5")),
-          (15 / Aug / 14, Percentage("50"))
+          (11 / Aug / 14, Percent("5")),
+          (15 / Aug / 14, Percent("50"))
         )
       )
       data.toJson.prettyPrint.parseJson.convertTo[ZeroRateData] should equal(data)
@@ -83,8 +83,8 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
         "WTI",
         10 / Aug / 2014,
         List(
-          (Sep / 2014, List((0.5, Percentage("20")), (0.2, Percentage("10")))),
-          (Dec / 2014, List((0.2, Percentage("20")))),
+          (Sep / 2014, List((0.5, Percent("20")), (0.2, Percent("10")))),
+          (Dec / 2014, List((0.2, Percent("20")))),
           (Jan / 2014, Nil)
         )
       )

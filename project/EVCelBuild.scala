@@ -82,7 +82,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(quantity, daterange)
+  ).dependsOn(quantity, daterange, calendar % "compile->compile;test->test")
 
   lazy val eventstore = module("eventstore").settings(
     libraryDependencies ++= Seq(

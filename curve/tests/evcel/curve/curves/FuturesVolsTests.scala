@@ -7,7 +7,7 @@ import evcel.curve.marketdata.FuturesVolData
 import evcel.daterange.DateRangeSugar._
 import evcel.curve.environment.TimeOfDay
 import evcel.daterange.Month
-import evcel.quantity.Percentage
+import evcel.quantity.Percent
 import evcel.quantity.Qty
 import evcel.quantity.BDQty
 import evcel.quantity.Qty._
@@ -26,7 +26,7 @@ class FuturesVolsTests extends FunSpec with Matchers {
       marketDay,
       FuturesExpiryRule(
         "WTI",
-        (Sep / 2014 to Sep / 2015).map { m => (m -> (m.lastDay - 10)) }.toMap
+        (Sep / 2014 to Sep / 2015).map { m => m -> (m.lastDay - 10) }.toMap
       )
     )
   }
@@ -34,10 +34,10 @@ class FuturesVolsTests extends FunSpec with Matchers {
   describe("FuturesVols") {
     it("Should handle flat vol") {
       val vols = makeFuturesVols(
-        (Dec / 2014, List((0.5, Percentage("20"))))
+        (Dec / 2014, List((0.5, Percent("20"))))
       )
       vols.interpolateVol(Dec / 2014, X = 100.0, F = 110.0) should equal(0.2 +- 1e-6)
-      vols.apply((Dec/2014, 100.0(USD/MT), 110.0(USD/MT))).asInstanceOf[Qty].checkedDouble(PERCENT) should 
+      vols.apply((Dec/2014, 100.0(USD/MT), 110.0(USD/MT))).checkedDouble(PERCENT) should
         equal(20.0 +- 1e-6)
     }
 
@@ -45,8 +45,8 @@ class FuturesVolsTests extends FunSpec with Matchers {
       val vols = makeFuturesVols(
         (Dec / 2014,
           List(
-            (0.3, Percentage("20")),
-            (0.7, Percentage("50"))))
+            (0.3, Percent("20")),
+            (0.7, Percent("50"))))
       )
       // Deep OTM call
       vols.interpolateVol(Dec / 2014, X = 100.0, F = 1.0) should equal(0.2 +- 1e-6)

@@ -1,6 +1,6 @@
 package evcel.curve.curves
 
-import evcel.quantity.Percentage
+import evcel.quantity.Percent
 import evcel.daterange.Day
 import evcel.quantity.UOM
 import evcel.quantity.UOM._
@@ -79,7 +79,7 @@ object DiscountCurve {
         UndiscountedDiscountCurve(marketDay, currency)
       case _ =>
         var fromDiscount = 1.0
-        val sortedRates = ((marketDay, Percentage(0)) :: rates).sortWith(_._1 < _._1)
+        val sortedRates = ((marketDay, Percent(0)) :: rates).sortWith(_._1 < _._1)
 
         val forwardRates = sortedRates.zip(sortedRates.tail).map {
           case ((fromDay, _), (toDay, toRate)) =>

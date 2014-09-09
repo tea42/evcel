@@ -1,6 +1,5 @@
 package evcel.curve.marketdata
 
-import evcel.quantity.Percentage
 import evcel.daterange.Day
 import evcel.quantity.UOM
 import evcel.curve.marketdata.MarketData._

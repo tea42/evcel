@@ -14,6 +14,10 @@ trait Qty {
     require(this.uom == uom, "UOMs don't match: " + (this.uom, uom))
     doubleValue
   }
+  def checkedPercent: Double = {
+    require(this.uom == UOM.PERCENT, "Not a percent")
+    doubleValue / 100.0
+  }
   def bdValue: BigDecimal
   def checkedBDValue(uom: UOM): BigDecimal = {
     require(this.uom == uom, "UOMs don't match: " + (this.uom, uom))
@@ -24,7 +28,7 @@ trait Qty {
   def negate: Qty
   def invert: Qty
   def in(other: UOM, conv: Option[QtyConversions] = None): Option[Qty]
-  override def toString() = doubleValue + " " + uom
+  override def toString = doubleValue + " " + uom
 
   def isFixedPoint: Boolean
   def ensuringFixedPoint: Qty

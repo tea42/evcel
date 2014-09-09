@@ -1,7 +1,7 @@
 package evcel.quantity
 
 import org.apache.commons.math3.util.ArithmeticUtils
-import scala.concurrent.SyncVar
+import scala.annotation.tailrec
 
 case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   /**
@@ -125,6 +125,25 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
 
   lazy val isScalar = this == UOM.SCALAR
   lazy val isPercent = asPrimeMap.keySet == UOM.PERCENT.asPrimeMap.keySet
+
+  lazy val numerator = secondary.factorNum.groupBy(identity).map{
+    case (prime, instances) => UOM.primeToUOM(prime).pow(instances.size)
+  }.foldLeft(UOM.SCALAR)(_*_)
+  lazy val denominator = invert.numerator
+
+  def pow(n: Int) = {
+    @tailrec
+    def rec(uom: UOM, rem: Int): UOM = if (rem == 0)
+      UOM.SCALAR
+    else if (rem == 1)
+      uom
+    else
+      rec(uom * uom, rem - 1)
+    if(n < 0)
+      rec(this, n.abs).invert
+    else
+      rec(this, n)
+  }
 }
 
 object UOM {
