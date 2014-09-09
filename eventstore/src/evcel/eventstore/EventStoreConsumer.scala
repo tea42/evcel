@@ -2,15 +2,18 @@ package evcel.eventstore
 import kafka.consumer.SimpleConsumer
 import kafka.api.FetchRequestBuilder
 
-case class EventStoreConsumer(topic: String, groupID: String, kafkaPort: Int) {
+case class EventStoreConsumer(topic: String, kafkaPort: Int) {
   var offset: Long = 0
   val partition = 0
+  val groupID = "0"
   private val consumer = new SimpleConsumer(
     "localhost", kafkaPort,
     soTimeout = 100000,
     bufferSize = 64 * 1024,
-    groupID
+    clientId = groupID
   )
+
+  def close = consumer.close()
 
   def read(): List[String] = {
     var collected: List[String] = Nil
