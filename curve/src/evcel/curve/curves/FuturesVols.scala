@@ -1,5 +1,6 @@
 package evcel.curve.curves
 
+import evcel.curve.ReferenceData
 import evcel.curve.environment.Curve
 import evcel.daterange.Month
 import evcel.curve.environment.MarketDay
@@ -36,7 +37,7 @@ case class FuturesVols(
     // to any trader
     val atmVol = surface(month, 0.5)
     val T = Act365.timeBetween(
-      marketDay.day, expiryRule.optionExpiryDay(month)
+      marketDay.day, expiryRule.optionExpiryDayOrThrow(month)
     )
     val deltaOfStrike = new BlackScholes(Call, F, X, T, atmVol).analyticDelta
     surface(month, deltaOfStrike)
@@ -77,6 +78,7 @@ case class FuturesVolIdentifier(
     extends AtomicDatumIdentifier {
   def curveIdentifier = FuturesVolsIdentifier(market)
   def point = (month, strike, forwardPrice)
+  override def nullValue(refData: ReferenceData) = Percent(10)
 }
 case class FuturesVolsIdentifier(market: String) extends CurveIdentifier
 

@@ -1,7 +1,7 @@
 package evcel.curve.environment
 
-import evcel.curve.curves.MissingCurve
-import evcel.curve.curves.MissingCurveData
+import evcel.curve.curves.MissingCurveException
+import evcel.curve.curves.MissingCurveDataException
 
 case class CurveBasedAtomicEnvironment(
   marketDay: MarketDay,
@@ -11,7 +11,7 @@ case class CurveBasedAtomicEnvironment(
     val point = identifier.point
     curves.get(identifier.curveIdentifier) match {
       case Some(curve) => curve(point)
-      case None => throw new MissingCurve(identifier.curveIdentifier.toString, point)
+      case None => throw new MissingCurveException(identifier.curveIdentifier.toString, point)
     }
   }
 }

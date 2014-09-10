@@ -5,7 +5,7 @@ import evcel.curve.markets.TestMarkets
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import evcel.daterange.DateRangeSugar._
-import evcel.curve.curves.{TestFuturesExpiryRules, FuturesPrices, MissingCurveData, FuturesPricesIdentifier}
+import evcel.curve.curves.{TestFuturesExpiryRules, FuturesPrices, MissingCurveDataException, FuturesPricesIdentifier}
 import evcel.quantity.UOM._
 import evcel.quantity.Qty._
 import evcel.curve.{EnvironmentParams, ReferenceData, ValuationContext}
@@ -32,7 +32,7 @@ class CurveBasedAtomicEnvironmentTests extends FunSpec with Matchers {
       val env = ValuationContext(atomic, testRefData, EnvironmentParams.Default)
       env.futuresPrice("WTI", Jan / 2015) should be(100.0(USD / MT))
       info("Should throw MissingCurveData if price is missing")
-      intercept[MissingCurveData] {
+      intercept[MissingCurveDataException] {
         env.futuresPrice("WTI", Feb / 2015)
       }
     }

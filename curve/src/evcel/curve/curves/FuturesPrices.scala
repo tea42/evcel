@@ -1,8 +1,9 @@
 package evcel.curve.curves
 
+import evcel.curve.ReferenceData
 import evcel.daterange.Day
 import evcel.daterange.Month
-import evcel.quantity.Qty
+import evcel.quantity.{UOM, Qty}
 import evcel.curve.environment.Curve
 import evcel.curve.environment.CurveIdentifier
 import evcel.curve.environment.AtomicDatumIdentifier
@@ -17,13 +18,17 @@ case class FuturesPrices(market: String, marketDay: MarketDay, prices: Map[Month
   }
 
   def price(m: Month): Qty = {
-    prices.getOrElse(m, throw MissingCurveData(s"FuturesPrices - $market, $marketDay", m))
+    prices.getOrElse(m, throw MissingCurveDataException(s"FuturesPrices - $market, $marketDay", m))
   }
 }
 
 case class FuturesPriceIdentifier(market: String, month: Month) extends AtomicDatumIdentifier {
   val curveIdentifier = FuturesPricesIdentifier(market)
   val point = month
+  override def nullValue(refData: ReferenceData) = {
+    val priceUOM = refData.markets.futuresMarketOrThrow(market).priceUOM
+    Qty("123", priceUOM)
+  }
 }
 
 case class FuturesPricesIdentifier(market: String) extends CurveIdentifier

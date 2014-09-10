@@ -119,4 +119,19 @@ class QtyTest extends FunSuite with Matchers {
     1(MT) in BBL shouldEqual None
     1(MT).in(BBL, Some(conv)) shouldEqual Some(7.45(BBL))
   }
+
+  test("abs") {
+    1(USD).abs shouldEqual 1(USD)
+    Qty("-1", USD).abs shouldEqual 1(USD)
+  }
+
+  test("compare") {
+    1(USD) shouldBe < (2(USD))
+    2(USD) shouldBe > (1(USD))
+    2(USD) shouldBe > (1(SCALAR))
+    2(USD) shouldBe > (Qty.NULL: Qty)
+    intercept[RuntimeException] {
+      2(USD) shouldBe > (0(BBL))
+    }
+  }
 }

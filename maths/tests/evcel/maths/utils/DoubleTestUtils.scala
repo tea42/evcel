@@ -3,7 +3,6 @@ package evcel.maths.utils
 import org.scalactic.Equality
 
 object DoubleTestUtils {
-
   class AlmostEqualsPC(tolPC: Double = 1e-9,
       min: Double = 1e-9,
       minNumbersSignsMayDiffer: Boolean = true) extends Equality[Double] {
@@ -15,5 +14,4 @@ object DoubleTestUtils {
         case _ => false
       }
   }
-
 }

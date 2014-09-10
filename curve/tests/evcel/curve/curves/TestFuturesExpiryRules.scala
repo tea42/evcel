@@ -1,16 +1,15 @@
 package evcel.curve.curves
 
-import evcel.daterange.DateRangeSugar.{Dec, Oct, Nov}
+import evcel.daterange.DateRangeSugar.Sep
+
 import scala.language.reflectiveCalls
 
 object TestFuturesExpiryRules {
   val Test = new FuturesExpiryRules(
     Map("Nymex WTI" ->
       FuturesExpiryRule("Nymex WTI",
-        Map(
-          Nov / 2014 -> 14 / Oct / 2014,
-          Dec / 2014 -> 14 / Nov / 2014
-        )
+        (Sep / 2014 to Sep / 2015).map { m => m -> (m.firstDay - 9)}.toMap,
+        (Sep / 2014 to Sep / 2015).map { m => m -> (m.firstDay - 10)}.toMap
       )
     )
   )

@@ -6,9 +6,14 @@ import evcel.daterange.Month
 /**
  * Part of versioned reference data
  */
-case class FuturesExpiryRule(market: String, optionExpiries: Map[Month, Day]) {
-  def optionExpiryDay(month: Month): Day = 
-    optionExpiries.getOrElse(month, throw new RuntimeException("No known option expiry for $market/$month"))
+case class FuturesExpiryRule(market: String, futureExpiries: Map[Month, Day], optionExpiries: Map[Month, Day]) {
+  def futureExpiryDay(month: Month): Option[Day] = futureExpiries.get(month)
+  def futureExpiryDayOrThrow(month: Month): Day =
+    futureExpiryDay(month).getOrElse(sys.error("No known option expiry for $market/$month"))
+  def optionExpiryDay(month: Month): Option[Day] =
+    optionExpiries.get(month)
+  def optionExpiryDayOrThrow(month: Month): Day =
+    optionExpiryDay(month).getOrElse(sys.error("No known option expiry for $market/$month"))
 }
 
 class FuturesExpiryRules(rules: Map[String, FuturesExpiryRule]) {

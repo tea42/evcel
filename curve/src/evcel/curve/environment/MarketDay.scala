@@ -3,6 +3,13 @@ import evcel.daterange.Day
 
 case class MarketDay(day: Day, timeOfDay: TimeOfDay)
 
+object MarketDay {
+  implicit class DayToMarketDay(day: Day) {
+    def endOfDay = MarketDay(day, TimeOfDay.end)
+    def startOfDay = MarketDay(day, TimeOfDay.start)
+  }
+}
+
 case class TimeOfDay(
     pricesCanMove: Boolean,
     fixingsShouldExist: Boolean) {

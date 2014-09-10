@@ -1,6 +1,11 @@
 package evcel.curve
 
-case class EnvironmentParams(showEqFutures: Boolean = false)
+import evcel.quantity.UOM
+
+case class EnvironmentParams(
+  showEqFutures: Boolean = false,
+  valuationCcy: UOM = UOM.USD
+  )
 
 object EnvironmentParams {
   val Default = new EnvironmentParams()

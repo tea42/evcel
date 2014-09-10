@@ -1,17 +1,14 @@
 package evcel.curve.curves
 
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
-import evcel.curve.environment.MarketDay
+import evcel.curve.environment.{MarketDay, TimeOfDay}
 import evcel.curve.marketdata.FuturesVolData
 import evcel.daterange.DateRangeSugar._
-import evcel.curve.environment.TimeOfDay
 import evcel.daterange.Month
-import evcel.quantity.Percent
-import evcel.quantity.Qty
-import evcel.quantity.BDQty
+import evcel.quantity.{BDQty, Percent}
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._
+import org.scalatest.{FunSpec, Matchers}
+
 import scala.language.reflectiveCalls
 
 class FuturesVolsTests extends FunSpec with Matchers {
@@ -26,7 +23,8 @@ class FuturesVolsTests extends FunSpec with Matchers {
       marketDay,
       FuturesExpiryRule(
         "WTI",
-        (Sep / 2014 to Sep / 2015).map { m => m -> (m.lastDay - 10) }.toMap
+        (Sep / 2014 to Sep / 2015).map { m => m -> (m.firstDay - 9) }.toMap,
+        (Sep / 2014 to Sep / 2015).map { m => m -> (m.firstDay - 10) }.toMap
       )
     )
   }

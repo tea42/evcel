@@ -4,15 +4,15 @@ import evcel.calendar.TestCalendars
 import evcel.curve.curves.TestFuturesExpiryRules
 import evcel.curve.environment.{AtomicDatumIdentifier, AtomicEnvironment, MarketDay}
 import evcel.curve.markets.TestMarkets
-import evcel.daterange.Day
 
 object UnitTestingEnvironment {
+  def testRefData = ReferenceData(
+    TestFuturesExpiryRules.Test,
+    TestCalendars.Empty,
+    TestMarkets.Default
+  )
+
   def apply(marketDay_ : MarketDay, data: PartialFunction[AtomicDatumIdentifier, Any]): ValuationContext = {
-    val testRefData = ReferenceData(
-      TestFuturesExpiryRules.Test,
-      TestCalendars.Empty,
-      TestMarkets.Default
-    )
     new ValuationContext(
       new AtomicEnvironment {
         def marketDay = marketDay_
@@ -25,4 +25,8 @@ object UnitTestingEnvironment {
       EnvironmentParams.Default
     )
   }
+
+  def Null(marketDay: MarketDay) = apply(marketDay, {
+    case a => a.nullValue(testRefData)
+  })
 }

@@ -3,7 +3,7 @@ package evcel.quantity
 import scala.language.implicitConversions
 import UOM._
 
-trait Qty {
+trait Qty extends Ordered[Qty] {
   def +(other: Qty): Qty
   def -(other: Qty): Qty
   def *(other: Qty): Qty
@@ -27,17 +27,23 @@ trait Qty {
   def uom: UOM
   def negate: Qty
   def invert: Qty
+  def abs: Qty
   def in(other: UOM, conv: Option[QtyConversions] = None): Option[Qty]
   override def toString = doubleValue + " " + uom
 
   def isFixedPoint: Boolean
   def ensuringFixedPoint: Qty
+  def isScalar = uom == UOM.SCALAR
+  def isNull = uom == UOM.NULL
 }
 
 class DblQty private[quantity] (private val value: Double, val uom: UOM) extends Qty {
-  def +(other: Qty) = uom.add(other.uom).map(
-    scale => new DblQty(value + (other.doubleValue / scale.doubleValue()), uom)
-  ).getOrElse(throw new RuntimeException("Can't add uoms: " + (uom, other.uom)))
+  def +(other: Qty) = (this, other) match {
+    case (_, Qty.NULL) => this
+    case _ => uom.add(other.uom).map(
+      scale => new DblQty(value + (other.doubleValue / scale.doubleValue()), uom)
+    ).getOrElse(throw new RuntimeException("Can't add uoms: " +(uom, other.uom)))
+  }
 
   def -(other: Qty) = this.+(other.negate)
 
@@ -49,6 +55,7 @@ class DblQty private[quantity] (private val value: Double, val uom: UOM) extends
 
   def negate = new DblQty(value * -1, uom)
   def invert = new DblQty(1 / value, uom.invert)
+  def abs = new DblQty(math.abs(value), uom)
 
   override def in(other: UOM, conv: Option[QtyConversions]) = {
     uom.in(other, conv).map(scale => Qty(this.value * scale, other))
@@ -66,11 +73,18 @@ class DblQty private[quantity] (private val value: Double, val uom: UOM) extends
 
   override def isFixedPoint = false
   def ensuringFixedPoint: Qty = throw new RuntimeException("Not fixed point Qty: " + this)
+
+  override def compare(that: Qty) = {
+    require(that.isScalar || that.isNull || that.uom == this.uom, "UOMs don't match: $this, $that")
+    this.value.compare(that.doubleValue)
+  }
 }
 
 class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) extends Qty {
-  def +(other: Qty) = other match {
-    case _: DblQty => dblQty.+(other)
+  def +(other: Qty) = (this, other) match {
+    case (Qty.NULL, _) => other
+    case (_, Qty.NULL) => this
+    case (_, _: DblQty) => dblQty.+(other)
     case _ => uom.add(other.uom).map(
       scale => new BDQty(value + (other.bdValue / scale), uom)
     ).getOrElse(throw new RuntimeException("Can't add uoms: " + (uom, other.uom)))
@@ -89,6 +103,7 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
 
   def negate = new BDQty(value * BigDecimal(-1), uom)
   def invert = new BDQty(BigDecimal("1") / value, uom.invert)
+  def abs = new BDQty(value.abs, uom)
 
   override def in(other: UOM, conv: Option[QtyConversions]) = {
     uom.in(other, conv).map(scale => Qty(this.value * scale, other))
@@ -108,6 +123,11 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
 
   override def isFixedPoint = true
   def ensuringFixedPoint: Qty = this
+
+  override def compare(that: Qty) = {
+    require(that.isScalar || that.isNull || that.uom == this.uom, "UOMs don't match: $this, $that")
+    this.value.compare(that.bdValue)
+  }
 }
 
 object Qty {
@@ -118,6 +138,10 @@ object Qty {
 
   def apply(value: BigDecimal, uom: UOM): BDQty = new BDQty(value, uom)
 
+  def average(qtys: Iterable[Qty]) = {
+    qtys.foldLeft[Qty](NULL)(_+_) / Qty(BigDecimal(qtys.size), SCALAR)
+  }
+
   // we don't have a double to scalar to avoid people accidentally using a double like .1
   // and losing precision.
   // if you want to divide by a scalar double then write it out long form.
@@ -127,6 +151,8 @@ object Qty {
 
   implicit class RichDblQty(value: Double) {
     def apply(uom: UOM) = Qty(value, uom)
+
+    def toQty = Qty(value, UOM.SCALAR)
   }
 }
 

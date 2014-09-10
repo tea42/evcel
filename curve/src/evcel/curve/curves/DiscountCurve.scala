@@ -1,5 +1,6 @@
 package evcel.curve.curves
 
+import evcel.curve.ReferenceData
 import evcel.quantity.Percent
 import evcel.daterange.Day
 import evcel.quantity.UOM
@@ -52,6 +53,7 @@ case class DiscountCurveIdentifier(currency: UOM) extends CurveIdentifier
 case class DiscountRateIdentifier(currency: UOM, day: Day) extends AtomicDatumIdentifier {
   def curveIdentifier = DiscountCurveIdentifier(currency)
   def point = day
+  override def nullValue(refData: ReferenceData) = 1.0
 }
 
 object DiscountCurve {

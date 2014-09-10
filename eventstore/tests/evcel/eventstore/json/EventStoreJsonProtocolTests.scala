@@ -1,23 +1,15 @@
 package evcel.eventstore.json
 
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
-import EventStoreJsonProtocol._
-import evcel.daterange.DateRangeSugar._
-import spray.json._
-import evcel.daterange.Day
-import evcel.quantity.Qty._
-import evcel.quantity.Qty
-import evcel.quantity.BDQty
-import evcel.quantity.UOM._
-import evcel.quantity.UOM
-import evcel.curve.marketdata.FuturesPriceData
-import evcel.daterange.Month
-import evcel.curve.marketdata.ZeroRateData
-import evcel.curve.marketdata.Act365
-import evcel.quantity.Percent
-import evcel.curve.marketdata.FuturesVolData
 import evcel.curve.curves.FuturesExpiryRule
+import evcel.curve.marketdata.{Act365, FuturesPriceData, FuturesVolData, ZeroRateData}
+import evcel.daterange.DateRangeSugar._
+import evcel.daterange.{Day, Month}
+import evcel.eventstore.json.EventStoreJsonProtocol._
+import evcel.quantity.{BDQty, Percent, Qty}
+import evcel.quantity.UOM._
+import org.scalatest.{FunSpec, Matchers}
+import spray.json._
+
 import scala.language.reflectiveCalls
 
 class EventStoreJsonProtocolTests extends FunSpec with Matchers {
@@ -92,7 +84,9 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
     }
 
     it("Should round trip expiry rule data") {
-      val expiries = FuturesExpiryRule("WTI", Map[Month, Day](Jun / 2014 -> 30 / May / 2014))
+      val expiries = FuturesExpiryRule("WTI",
+        Map[Month, Day](Jun / 2014 -> 30 / May / 2014),
+        Map[Month, Day](Jul / 2014 -> 29 / May / 2014))
       expiries.toJson.prettyPrint.parseJson.convertTo[FuturesExpiryRule] should equal(expiries)
     }
   }
