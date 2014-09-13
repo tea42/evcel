@@ -6,23 +6,21 @@ import evcel.daterange.Day
 import evcel.quantity.UOM
 import evcel.quantity.UOM._
 import evcel.curve.marketdata.DayCount
-import evcel.curve.environment.Curve
-import evcel.curve.environment.CurveIdentifier
+import evcel.curve.environment._
 import scala.math._
 import evcel.curve.marketdata.ZeroRateData
-import evcel.curve.environment.AtomicDatumIdentifier
 import evcel.quantity.Qty
 
 abstract class DiscountCurve extends Curve {
   private[curves] def discountRate(day: Day): Double
   def currency: UOM
   def marketDay: Day
-  def apply(point: Any) = {
+  def apply(point: Any): Either[AtomicEnvironmentFail, Double] with Product with Serializable = {
     point match {
       case day: Day =>
         require(day >= marketDay, s"Asked for discount rate for $day - market day is $marketDay")
-        discountRate(day)
-      case _ => throw new RuntimeException(s"Unexpected point passed to discount curve $currency")
+        Right(discountRate(day))
+      case _ => Left(GeneralAtomicEnvironmentFail(s"Unexpected point passed to discount curve $currency"))
     }
   }
 }

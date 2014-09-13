@@ -7,6 +7,7 @@ object TestMarkets {
   val Default = new Markets(Map(
     "Nymex WTI" -> new FuturesMarket("Nymex WTI", "NYM", USD/BBL)
   ),
-    Map.empty
-  )
+    Map(
+      "Singapore Gasoil 0.05" -> new SpotMarket("Singapore Gasoil 0.05", "Platts Asia", USD/MT)
+  ))
 }

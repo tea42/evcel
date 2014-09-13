@@ -1,8 +1,9 @@
 package evcel.quantity
 
+import evcel.quantity.Qty._
+import evcel.quantity.UOM._
 import org.scalatest._
-import UOM._
-import Qty._
+import evcel.quantity.utils.QuantityTestUtils._
 
 class QtyTest extends FunSuite with Matchers {
 
@@ -41,7 +42,7 @@ class QtyTest extends FunSuite with Matchers {
     Qty(".1", USD) + Qty("3", USD) shouldEqual Qty("3.1", USD).ensuringFixedPoint
     Qty("1", USD) - Qty("3", USD) shouldEqual Qty("-2", USD).ensuringFixedPoint
     assert((Qty(".1", USD) + Qty("3", USD)).isFixedPoint === true)
-    assert((Qty(".1", USD) + Qty(3, USD)).isFixedPoint === false)
+    assert((Qty(".1", USD) + Qty(3.0, USD)).isFixedPoint === false)
     assert((Qty(.1, USD) + Qty(3, USD)).isFixedPoint === false)
     assert((Qty(.1, USD) + Qty("3", USD)).isFixedPoint === false)
 
@@ -55,8 +56,8 @@ class QtyTest extends FunSuite with Matchers {
     Qty(2, USD) / Qty(4, BBL) shouldEqual Qty(.5, USD / BBL)
     Qty("2", USD) * Qty("3", USD) shouldEqual Qty("6", USD * USD).ensuringFixedPoint
     Qty("2", USD) / Qty("4", BBL) shouldEqual Qty(".5", USD / BBL).ensuringFixedPoint
-    (Qty(1, USD) * Qty(4, GAL)) / Qty(4, BBL) shouldEqual Qty(1.0 / 42, USD)
-    Qty(1, BBL) / Qty(1, GAL) shouldEqual Qty(42, SCALAR)
+    (Qty(1, USD) * Qty(4, GAL)) / Qty(4, BBL) should matchQty (Qty(1.0 / 42, USD))
+    Qty(1, BBL) / Qty(1, GAL) should matchQty (Qty(42, SCALAR))
   }
 
   test("percentage") {

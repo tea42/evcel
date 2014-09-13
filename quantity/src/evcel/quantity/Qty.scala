@@ -75,7 +75,7 @@ class DblQty private[quantity] (private val value: Double, val uom: UOM) extends
   def ensuringFixedPoint: Qty = throw new RuntimeException("Not fixed point Qty: " + this)
 
   override def compare(that: Qty) = {
-    require(that.isScalar || that.isNull || that.uom == this.uom, "UOMs don't match: $this, $that")
+    require(that.isScalar || that.isNull || that.uom == this.uom, s"UOMs don't match: $this, $that")
     this.value.compare(that.doubleValue)
   }
 }
@@ -125,13 +125,16 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
   def ensuringFixedPoint: Qty = this
 
   override def compare(that: Qty) = {
-    require(that.isScalar || that.isNull || that.uom == this.uom, "UOMs don't match: $this, $that")
+    require(that.isScalar || that.isNull || that.uom == this.uom, s"UOMs don't match: $this, $that")
     this.value.compare(that.bdValue)
   }
 }
 
 object Qty {
   val NULL = Qty(BigDecimal(0), UOM.NULL)
+
+  def apply(value: Int, uom: UOM): Qty = new BDQty(value, uom)
+
   def apply(value: Double, uom: UOM): Qty = new DblQty(value, uom)
 
   def apply(value: String, uom: UOM): BDQty = apply(BigDecimal(value), uom)

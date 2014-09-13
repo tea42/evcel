@@ -35,7 +35,7 @@ class FuturesVolsTests extends FunSpec with Matchers {
         (Dec / 2014, List((0.5, Percent("20"))))
       )
       vols.interpolateVol(Dec / 2014, X = 100.0, F = 110.0) should equal(0.2 +- 1e-6)
-      vols.apply((Dec/2014, 100.0(USD/MT), 110.0(USD/MT))).checkedDouble(PERCENT) should
+      vols.apply((Dec/2014, 100.0(USD/MT), 110.0(USD/MT))).right.get.checkedDouble(PERCENT) should
         equal(20.0 +- 1e-6)
     }
 

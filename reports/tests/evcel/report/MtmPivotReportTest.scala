@@ -1,11 +1,11 @@
 package evcel.report
 
-import evcel.curve.UnitTestingEnvironment
 import evcel.curve.curves.{DiscountRateIdentifier, FuturesPriceIdentifier, FuturesVolIdentifier, TestFuturesExpiryRules}
 import evcel.curve.environment.{MarketDay, TimeOfDay}
 import evcel.curve.marketdata.Act365
-import evcel.daterange.{Day, Month}
-import evcel.instrument.valuation.FuturesFrontPeriodIndex
+import evcel.curve.{UnitTestingEnvironment, ValuationContext}
+import evcel.daterange.{DateRange, Day, Month}
+import evcel.instrument.valuation.TestInstrumentValuationContext
 import evcel.instrument.{CommoditySwap, EuropeanOption, Future, FuturesOption}
 import evcel.maths.Call
 import evcel.maths.models.BlackScholes
@@ -13,10 +13,10 @@ import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 import evcel.quantity.utils.QuantityTestUtils
 import evcel.quantity.{Percent, Qty}
-import org.scalactic.Equality
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class MtmPivotReportTest extends FunSuite with ShouldMatchers {
+  val ivc = TestInstrumentValuationContext.Test
 
   test("mtm report on european option matches black scholes") {
     val month = Month(2014, 12)
@@ -34,8 +34,7 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
       case FuturesPriceIdentifier(`market`, `month`) => F
       case DiscountRateIdentifier(USD, day) => math.exp(-r * T)
       case FuturesVolIdentifier(`market`, `month`, K, _) => Percent("20")
-      case other => sys.error("invalid req: " + other)
-    }))
+    }), ivc)
 
     val bsValue = new BlackScholes(Call, F.doubleValue, K.doubleValue, .2, T).undiscountedValue * math.exp(-r * T)
     val rows = pr.rows(option)
@@ -53,7 +52,7 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
     val marketDay = MarketDay(Day(2014, 6, 1), TimeOfDay.end)
     val vc = UnitTestingEnvironment.Null(marketDay)
     val F = vc.futuresPrice(market, month)
-    val pr = new MtmPivotReport(vc)
+    val pr = new MtmPivotReport(vc, ivc)
     val rows = pr.rows(future)
     rows.size shouldBe 1
     rows.head.value(MtmPivotReportType.MtmField) shouldEqual (F - K) * Qty("1", BBL)
@@ -77,19 +76,26 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
       case FuturesPriceIdentifier(`market`, `dec`) => Fdec
       case other => sys.error("invalid req: " + other)
     })
-    val pr = new MtmPivotReport(vc)
+    val pr = new MtmPivotReport(vc, ivc)
     val rows = pr.rows(swap)
     rows.size shouldBe 1
 
+    def observedDaysToMonth(vc: ValuationContext, delivery: DateRange): Map[Day, Month] = {
+      val fm = vc.futuresMarketOrThrow(market)
+      val calendar = vc.futuresCalendarOrThrow(market)
+      val observationDays = oct.days.filter(calendar.isBusinessDay).toIterable
+      observationDays.map(d => d -> fm.frontMonth(vc.refData, d)).toMap
+    }
+
     val weights = {
-      val observed = FuturesFrontPeriodIndex.unapply(index).get.observed(vc, oct).groupBy(_._2).mapValues(_.size)
+      val observed = observedDaysToMonth(vc, oct).groupBy(_._2).mapValues(_.size)
       observed.mapValues(i => BigDecimal(i) / BigDecimal(observed.values.sum))
     }
 
-    val expected = ((Fnov * weights(nov) + Fdec * weights(dec)) - K) * Qty("1", BBL)
-    val actual = rows.head.value(MtmPivotReportType.MtmField)
+    val expected: Qty = ((Fnov * weights(nov) + Fdec * weights(dec)) - K) * Qty("1", BBL)
+    val actual: Qty = rows.head.value(MtmPivotReportType.MtmField)
 
-    implicit val equality: Equality[Any] = new QuantityTestUtils.EssentiallyEqual()
+    implicit val equality = new QuantityTestUtils.EssentiallyEqual()
     actual shouldEqual expected
   }
 }

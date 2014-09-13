@@ -26,7 +26,7 @@ class ValuerTest extends FunSuite with ShouldMatchers {
     val F = vc.futuresPrice(market, month)
     val expiryDay = vc.optionExpiryDay(market, month).get
     val settlementDay = vc.futuresCalendar(market).map(_.addBusinessDays(expiryDay, 7)).get
-    val keys = Valuer.keys(vc, opt)
+    val keys = new DefaultValuer().keys(vc, opt)
     val expected = Set(
       FuturesPriceIdentifier(market, month),
       DiscountRateIdentifier(USD, settlementDay),
@@ -46,7 +46,7 @@ class ValuerTest extends FunSuite with ShouldMatchers {
       index, oct, K, Qty("1", BBL)
     )
     val vc = UnitTestingEnvironment.Null((1 / Oct / 2014).endOfDay)
-    val keys = Valuer.keys(vc, swap)
+    val keys = new DefaultValuer().keys(vc, swap)
     val expected = Set(
       FuturesPriceIdentifier(market, nov),
       FuturesPriceIdentifier(market, dec)

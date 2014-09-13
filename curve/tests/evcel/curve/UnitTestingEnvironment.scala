@@ -2,7 +2,7 @@ package evcel.curve
 
 import evcel.calendar.TestCalendars
 import evcel.curve.curves.TestFuturesExpiryRules
-import evcel.curve.environment.{AtomicDatumIdentifier, AtomicEnvironment, MarketDay}
+import evcel.curve.environment._
 import evcel.curve.markets.TestMarkets
 
 object UnitTestingEnvironment {
@@ -17,8 +17,11 @@ object UnitTestingEnvironment {
       new AtomicEnvironment {
         def marketDay = marketDay_
 
-        def apply(point: AtomicDatumIdentifier): Any = {
-          data(point)
+        def apply(point: AtomicDatumIdentifier): Either[AtomicEnvironmentFail, Any]  = {
+          if(data.isDefinedAt(point))
+            Right(data(point))
+          else
+            Left(GeneralAtomicEnvironmentFail(s"Missing market data for $point"))
         }
       },
       testRefData,

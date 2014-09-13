@@ -5,8 +5,12 @@ import evcel.curve.environment.AtomicDatumIdentifier
 import evcel.instrument.{CommoditySwap, Future, FuturesOption, Instrument}
 import evcel.quantity.Qty
 
+trait Valuer {
+  def value(vc: ValuationContext, instr: Instrument): Qty
+  def keys(vc: ValuationContext, instr: Instrument): Set[AtomicDatumIdentifier]
+}
 
-object Valuer { // maybe an instance should be passed around with a valuation context? object for now
+class DefaultValuer extends Valuer {
   def value(vc: ValuationContext, instr: Instrument): Qty = instr match {
     case fo: FuturesOption => new OptionOnFutureValuer(fo).value(vc)
     case f: Future => SwapLikeValuer(vc, f).value(vc)

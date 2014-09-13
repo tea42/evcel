@@ -2,8 +2,8 @@ package evcel.curve.environment
 
 import com.google.common.collect.Sets
 import evcel.curve.ReferenceData
-import evcel.curve.curves.{MissingCurveDataException, MissingCurveException}
 import scala.collection.JavaConverters._
+import evcel.utils.EitherUtils._
 
 abstract class DerivedAtomicEnvironment(original: AtomicEnvironment)
   extends AtomicEnvironment {
@@ -15,7 +15,10 @@ case class PerturbedAtomicEnvironment(
   perturbation: PartialFunction[AtomicDatumIdentifier, Any])
     extends DerivedAtomicEnvironment(original) {
 
-  def apply(k: AtomicDatumIdentifier) = perturbation.applyOrElse(k, original.apply)
+  def apply(k: AtomicDatumIdentifier) = if(perturbation.isDefinedAt(k))
+    Right(perturbation.apply(k))
+  else
+    original.apply(k)
 }
 
 case class KeyRecordingAtomicEnvironment(original: AtomicEnvironment, refData: ReferenceData)
@@ -26,11 +29,6 @@ case class KeyRecordingAtomicEnvironment(original: AtomicEnvironment, refData: R
 
   def apply(k: AtomicDatumIdentifier) = {
     identifiers.add(k)
-    try {
-      original(k)
-    } catch {
-      case _: MissingCurveException => k.nullValue(refData)
-      case _: MissingCurveDataException => k.nullValue(refData)
-    }
+    original.apply(k).recover { case _ => k.nullValue(refData)}
   }
 }
