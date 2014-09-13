@@ -1,14 +1,12 @@
 package evcel.curve.curves
 
-import evcel.curve.environment.Curve
+import evcel.curve.ReferenceData
+import evcel.curve.environment._
 import evcel.daterange.Month
-import evcel.curve.environment.MarketDay
-import evcel.curve.environment.CurveIdentifier
 import evcel.maths.models.BlackScholes
-import evcel.quantity.Percentage
+import evcel.quantity.Percent
 import evcel.quantity.Qty
 import evcel.quantity.UOM._
-import evcel.curve.environment.AtomicDatumIdentifier
 import evcel.maths.Call
 import evcel.curve.marketdata.Act365
 import evcel.curve.marketdata.FuturesVolData
@@ -23,12 +21,12 @@ case class FuturesVols(
     marketDay: MarketDay,
     expiryRule: FuturesExpiryRule,
     surface: (Month, Double) => Double) extends Curve {
-  def apply(point: Any) = {
+  def apply(point: Any): Either[AtomicEnvironmentFail, Qty] = {
     point match {
       case (month: Month, strike: Qty, forwardPrice: Qty) =>
         require(strike.uom == forwardPrice.uom, s"Mismatching strike/forward prices $strike/$forwardPrice")
         val vol = interpolateVol(month, strike.doubleValue, forwardPrice.doubleValue)
-        Percentage(vol * 100.0)
+        Right(Percent(vol * 100.0))
     }
   }
   private[curves] def interpolateVol(month: Month, X: Double, F: Double) = {
@@ -36,7 +34,7 @@ case class FuturesVols(
     // to any trader
     val atmVol = surface(month, 0.5)
     val T = Act365.timeBetween(
-      marketDay.day, expiryRule.optionExpiryDay(month)
+      marketDay.day, expiryRule.optionExpiryDayOrThrow(month)
     )
     val deltaOfStrike = new BlackScholes(Call, F, X, T, atmVol).analyticDelta
     surface(month, deltaOfStrike)
@@ -77,6 +75,7 @@ case class FuturesVolIdentifier(
     extends AtomicDatumIdentifier {
   def curveIdentifier = FuturesVolsIdentifier(market)
   def point = (month, strike, forwardPrice)
+  override def nullValue(refData: ReferenceData) = Percent(10)
 }
 case class FuturesVolsIdentifier(market: String) extends CurveIdentifier
 

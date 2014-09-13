@@ -1,7 +1,5 @@
 package evcel.curve.environment
 
-import evcel.daterange.Day
-
 trait Curve {
-  def apply(point: Any): Any
+  def apply(point: Any): Either[AtomicEnvironmentFail, Any]
 }

@@ -17,7 +17,7 @@ object EVCelBuild extends Build {
     version := buildVersion,
     scalaVersion := buildScalaVersion,
     scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
-  ) 
+  )
 
   lazy val utils = module("utils").settings(
     scalaSource in Compile := baseDirectory.value / "src",
@@ -58,7 +58,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(curve)
+  ).dependsOn(curve % "compile->compile;test->test", quantity % "test->test")
 
   lazy val reports = module("reports").settings(
     libraryDependencies ++= Seq(
@@ -66,7 +66,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(instrument, curve % "test->test")
+  ).dependsOn(instrument % "compile->compile;test->test", curve % "test->test", quantity % "test->test")
 
   lazy val xl = module("xl").settings(
     libraryDependencies ++= Seq(
@@ -82,7 +82,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(quantity, daterange)
+  ).dependsOn(utils, quantity, daterange, calendar % "compile->compile;test->test")
 
   lazy val eventstore = module("eventstore").settings(
     libraryDependencies ++= Seq(

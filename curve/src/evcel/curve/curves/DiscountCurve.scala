@@ -1,27 +1,26 @@
 package evcel.curve.curves
 
-import evcel.quantity.Percentage
+import evcel.curve.ReferenceData
+import evcel.quantity.Percent
 import evcel.daterange.Day
 import evcel.quantity.UOM
 import evcel.quantity.UOM._
 import evcel.curve.marketdata.DayCount
-import evcel.curve.environment.Curve
-import evcel.curve.environment.CurveIdentifier
+import evcel.curve.environment._
 import scala.math._
 import evcel.curve.marketdata.ZeroRateData
-import evcel.curve.environment.AtomicDatumIdentifier
 import evcel.quantity.Qty
 
 abstract class DiscountCurve extends Curve {
   private[curves] def discountRate(day: Day): Double
   def currency: UOM
   def marketDay: Day
-  def apply(point: Any) = {
+  def apply(point: Any): Either[AtomicEnvironmentFail, Double] with Product with Serializable = {
     point match {
       case day: Day =>
         require(day >= marketDay, s"Asked for discount rate for $day - market day is $marketDay")
-        discountRate(day)
-      case _ => throw new RuntimeException(s"Unexpected point passed to discount curve $currency")
+        Right(discountRate(day))
+      case _ => Left(GeneralAtomicEnvironmentFail(s"Unexpected point passed to discount curve $currency"))
     }
   }
 }
@@ -52,6 +51,7 @@ case class DiscountCurveIdentifier(currency: UOM) extends CurveIdentifier
 case class DiscountRateIdentifier(currency: UOM, day: Day) extends AtomicDatumIdentifier {
   def curveIdentifier = DiscountCurveIdentifier(currency)
   def point = day
+  override def nullValue(refData: ReferenceData) = 1.0
 }
 
 object DiscountCurve {
@@ -79,7 +79,7 @@ object DiscountCurve {
         UndiscountedDiscountCurve(marketDay, currency)
       case _ =>
         var fromDiscount = 1.0
-        val sortedRates = ((marketDay, Percentage(0)) :: rates).sortWith(_._1 < _._1)
+        val sortedRates = ((marketDay, Percent(0)) :: rates).sortWith(_._1 < _._1)
 
         val forwardRates = sortedRates.zip(sortedRates.tail).map {
           case ((fromDay, _), (toDay, toRate)) =>

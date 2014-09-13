@@ -1,5 +1,4 @@
 package evcel.daterange
-import scala.util.matching.Regex
 
 case class Month(year: Int, monthNumber: Int) extends DateRange with Ordered[Month] {
   def firstDay = Day(year, monthNumber, 1)
@@ -24,6 +23,16 @@ case class Month(year: Int, monthNumber: Int) extends DateRange with Ordered[Mon
       monthNumber - rhs.monthNumber
     else
       year - rhs.year
+  }
+
+  def +(n: Int) = {
+    var m = this
+    var n_ = n.abs
+    while (n_ > 0) {
+      m = if(n < 0) m.previous else m.next
+      n_ -= 1
+    }
+    m
   }
 
   def to(rhs: Month): List[Month] = {
