@@ -20,7 +20,8 @@ case class FuturesVols(
     market: String,
     marketDay: MarketDay,
     expiryRule: FuturesExpiryRule,
-    surface: (Month, Double) => Double) extends Curve {
+    atmVols : Month => Double,
+    deltaSpreads: (Month, Double) => Double) extends Curve {
   def apply(point: Any): Either[AtomicEnvironmentFail, Qty] = {
     point match {
       case (month: Month, strike: Qty, forwardPrice: Qty) =>
@@ -30,26 +31,28 @@ case class FuturesVols(
     }
   }
   private[curves] def interpolateVol(month: Month, X: Double, F: Double) = {
-    // ATM delta isn't exactly 0.5, however the difference isn't likely to be of use
-    // to any trader
-    val atmVol = surface(month, 0.5)
+    val atmVol = atmVols(month)
     val T = Act365.timeBetween(
       marketDay.day, expiryRule.optionExpiryDayOrThrow(month)
     )
     val deltaOfStrike = new BlackScholes(Call, F, X, T, atmVol).analyticDelta
-    surface(month, deltaOfStrike)
+    val spread = deltaSpreads(month, deltaOfStrike)
+    atmVol + spread
   }
 }
 
 object FuturesVols {
   def apply(
+    market : String,
     data: FuturesVolData,
     marketDay: MarketDay,
     expiryRule: FuturesExpiryRule): FuturesVols = {
-    require(marketDay.day == data.marketDay, "Market day mismatch")
-    val smiles: Map[Month, Double => Double] = {
+    val atmVols = data.data.map{
+      case (month, atmVol, _) => (month, atmVol.checkedDouble(PERCENT) / 100.0)
+    }.toMap
+    val spreadsByMonth: Map[Month, Double => Double] = {
       data.data.map {
-        case (month: Month, volsByDelta: List[(Double, Qty)]) =>
+        case (month: Month, _ : Qty, volsByDelta: List[(Double, Qty)]) =>
           val givenXs = volsByDelta.map(_._1)
 
           val givenYs = volsByDelta.map(_._2.checkedDouble(PERCENT) / 100.0)
@@ -60,13 +63,14 @@ object FuturesVols {
           month -> { x: Double => new ConstrainedCubicSplineInterpolator().interpolate(xs, ys, x) }
       }.toMap
     }
-    def surface(month: Month, delta: Double) = {
-      val smile = smiles.getOrElse(month, throw new RuntimeException(s"No smile data for $data.market/$month"))
-      smile(delta)
+    def deltaSpreads(month: Month, delta: Double) = {
+      val spreads = spreadsByMonth.getOrElse(month, throw new RuntimeException(s"No smile data for $data.market/$month"))
+      spreads(delta)
     }
-    FuturesVols(data.market, marketDay, expiryRule, surface)
+    FuturesVols(market, marketDay, expiryRule, atmVols, deltaSpreads _)
   }
 }
+
 case class FuturesVolIdentifier(
   market: String,
   month: Month,
@@ -77,5 +81,5 @@ case class FuturesVolIdentifier(
   def point = (month, strike, forwardPrice)
   override def nullValue(refData: ReferenceData) = Percent(10)
 }
-case class FuturesVolsIdentifier(market: String) extends CurveIdentifier
+
 

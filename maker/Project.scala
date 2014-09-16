@@ -29,15 +29,20 @@ val utils = module("utils")
 val maths = module("maths")
 val daterange = module("daterange", maths)
 val quantity = module("quantity", maths)
-val curve = module("curve", quantity, daterange)
-val eventstore = module("eventstore", curve, utils)
 val calendar = module("calendar", daterange)
+val curve = module_("curve", List(quantity, daterange, calendar, utils), List(calendar))
+val eventstore = module("eventstore", curve, utils)
+val marketdatastore = module_("marketdatastore", List(eventstore), List(eventstore))
 val calendarstore = module_("calendarstore", List(calendar, eventstore), List(eventstore))
+val instrument = module_("instrument", List(curve), List(curve, quantity))
+val reports = module_("reports", List(instrument), List(curve, instrument))
+val xl = module("xl", reports)
+val server = module("server", calendarstore, marketdatastore, xl)
+
 val evcel = new Project(
   name = "evcel",
   root = new File("."),
-  immediateUpstreamModules = List(calendarstore),
+  immediateUpstreamModules = List(server),
   props = makerProps
 )
-
 import evcel._

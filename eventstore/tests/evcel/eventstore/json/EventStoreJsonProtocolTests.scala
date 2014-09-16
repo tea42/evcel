@@ -1,9 +1,9 @@
 package evcel.eventstore.json
 
 import evcel.curve.curves.FuturesExpiryRule
-import evcel.curve.marketdata.{Act365, FuturesPriceData, FuturesVolData, ZeroRateData}
+import evcel.curve.marketdata._
 import evcel.daterange.DateRangeSugar._
-import evcel.daterange.{Day, Month}
+import evcel.daterange.{SimpleDateRange, DateRange, Day, Month}
 import evcel.eventstore.json.EventStoreJsonProtocol._
 import evcel.quantity.{BDQty, Percent, Qty}
 import evcel.quantity.UOM._
@@ -48,39 +48,47 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
 
     it("Should round trip futures prices") {
       val prices = FuturesPriceData(
-        10 / Aug / 2014,
-        "WTI",
         List(
           (Jun / 2014, Qty("100.0", USD / MT))
         )
       )
       prices.toJson.prettyPrint.parseJson.convertTo[FuturesPriceData] should equal(prices)
+
+      info("Also when type is MarketData")
+      val marketData : MarketData = prices
+      marketData.toJson.prettyPrint.parseJson.convertTo[MarketData] should equal(marketData)
     }
 
-    it("Should round trip ZeroRateData") {
-      val data = ZeroRateData(
-        GBP,
-        10 / Aug / 2014,
+    it("Should round trip zero rates") {
+      val zeros = ZeroRateData(
         Act365,
         List(
           (11 / Aug / 14, Percent("5")),
           (15 / Aug / 14, Percent("50"))
         )
       )
-      data.toJson.prettyPrint.parseJson.convertTo[ZeroRateData] should equal(data)
+      zeros.toJson.prettyPrint.parseJson.convertTo[ZeroRateData] should equal(zeros)
+
+      info("Also when type is MarketData")
+      val marketData : MarketData = zeros
+      marketData.toJson.prettyPrint.parseJson.convertTo[MarketData] should equal(marketData)
+
     }
 
     it("Should round trip futures vols") {
-      val data = FuturesVolData(
-        "WTI",
-        10 / Aug / 2014,
+      val vols = FuturesVolData(
         List(
-          (Sep / 2014, List((0.5, Percent("20")), (0.2, Percent("10")))),
-          (Dec / 2014, List((0.2, Percent("20")))),
-          (Jan / 2014, Nil)
+          (Sep / 2014, Percent("20"), List((0.5, Percent("20")), (0.2, Percent("10")))),
+          (Dec / 2014, Percent("20"), List((0.2, Percent("20")))),
+          (Jan / 2014, Percent("20"), Nil)
         )
       )
-      data.toJson.prettyPrint.parseJson.convertTo[FuturesVolData] should equal(data)
+      vols.toJson.prettyPrint.parseJson.convertTo[FuturesVolData] should equal(vols)
+
+      info("Also when type is MarketData")
+      val marketData : MarketData = vols
+      marketData.toJson.prettyPrint.parseJson.convertTo[MarketData] should equal(marketData)
+
     }
 
     it("Should round trip expiry rule data") {
@@ -88,6 +96,14 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
         Map[Month, Day](Jun / 2014 -> 30 / May / 2014),
         Map[Month, Day](Jul / 2014 -> 29 / May / 2014))
       expiries.toJson.prettyPrint.parseJson.convertTo[FuturesExpiryRule] should equal(expiries)
+    }
+
+    it("Should round trip abstract date ranges"){
+      val dateRanges : List[DateRange] = List(May / 2014, 15 / May / 2014, SimpleDateRange(15 / May / 2014, 20 / May / 2014))
+      dateRanges.foreach{
+        case dr =>
+            dr.toJson.prettyPrint.parseJson.convertTo[DateRange] should equal(dr)
+      }
     }
   }
 }

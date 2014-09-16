@@ -32,5 +32,4 @@ case class SpotPriceIdentifier(market: String, day: Day) extends PriceIdentifier
   }
 }
 
-case class SpotPricesIdentifier(market: String) extends CurveIdentifier
 

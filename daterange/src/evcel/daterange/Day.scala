@@ -1,6 +1,7 @@
 package evcel.daterange
 
 class Day private (val year: Int, val month: Int, val dayNumber: Int) extends DateRange with Ordered[Day] {
+
   def firstDay = this
   def lastDay = this
 

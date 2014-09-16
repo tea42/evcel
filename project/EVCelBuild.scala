@@ -20,6 +20,10 @@ object EVCelBuild extends Build {
   )
 
   lazy val utils = module("utils").settings(
+    libraryDependencies ++= Seq(
+      "com.github.stacycurl" % "pimpathon-core_2.10" % "1.1.0",
+      "org.scalaz" % "scalaz-core_2.10" % "7.1.0"
+    ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
   )
@@ -117,9 +121,17 @@ object EVCelBuild extends Build {
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(calendar, eventstore % "compile->compile;test->test")
 
+  lazy val marketdatastore = module("marketdatastore").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(eventstore % "compile->compile;test->test")
+
   lazy val server = module("server").settings(
     libraryDependencies ++= Seq()
-  ).dependsOn(maths, daterange, quantity, eventstore, calendar, calendarstore, xl, instrument)
+  ).dependsOn(maths, daterange, quantity, eventstore, calendar, calendarstore, xl, instrument, marketdatastore)
 
   def module(name: String) = {
     Project(

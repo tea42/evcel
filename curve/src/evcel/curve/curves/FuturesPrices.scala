@@ -27,5 +27,4 @@ case class FuturesPriceIdentifier(market: String, month: Month) extends PriceIde
   }
 }
 
-case class FuturesPricesIdentifier(market: String) extends CurveIdentifier
 

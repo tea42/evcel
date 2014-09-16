@@ -1,8 +1,9 @@
 package evcel.eventstore.json
 
 import evcel.curve.curves.FuturesExpiryRule
-import evcel.curve.marketdata.{DayCount, FuturesPriceData, FuturesVolData, ZeroRateData}
-import evcel.daterange.{Day, Month}
+import evcel.curve.environment._
+import evcel.curve.marketdata._
+import evcel.daterange.{SimpleDateRange, DateRange, Day, Month}
 import evcel.quantity.{BDQty, Qty, UOM, UOMRatio}
 import spray.json._
 
@@ -48,9 +49,83 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     }
   }
   implicit val monthFormat = jsonFormat2(Month.apply)
-  implicit val futuresPricesFormat = jsonFormat3(FuturesPriceData)
-  implicit val discountRateFormat = jsonFormat4(ZeroRateData)
-  implicit val futuresVolFormat = jsonFormat3(FuturesVolData)
+
+  implicit object DateRangeFormat extends RootJsonFormat[DateRange]{
+    override def write(dateRange: DateRange): JsValue = {
+      dateRange match {
+        case day : Day =>
+            JsArray(DateRange.DAY.toJson, day.toJson)
+        case month : Month =>
+          JsArray(DateRange.MONTH.toJson, month.toJson)
+        case simple : SimpleDateRange =>
+          JsArray(DateRange.SIMPLE.toJson, simple.firstDay.toJson, simple.lastDay.toJson)
+
+        case _                        =>        throw new RuntimeException("Unrecognized date range " + dateRange)
+      }
+    }
+
+    override def read(json: JsValue): DateRange = {
+      json match {
+        case JsArray(JsString(DateRange.DAY)::json::Nil) => json.convertTo[Day]
+        case JsArray(JsString(DateRange.MONTH)::json::Nil) => json.convertTo[Month]
+        case JsArray(JsString(DateRange.SIMPLE)::fromJson::toJson::Nil) => SimpleDateRange(fromJson.convertTo[Day], toJson.convertTo[Day])
+
+        case _                                                => throw new RuntimeException("Unrecognized date range json " + json)
+      }
+    }
+  }
+  implicit val zeroRateIdentifierFormat = jsonFormat1(ZeroRatesIdentifier)
+  implicit val futuresPricesIdentifierFormat = jsonFormat1(FuturesPricesIdentifier)
+  implicit val futuresVolsIdentifierFormat = jsonFormat1(FuturesVolsIdentifier)
+  implicit val spotPricesIdentifierFormat = jsonFormat1(SpotPricesIdentifier)
+  implicit object MarketDataIdentifierFormat extends RootJsonFormat[MarketDataIdentifier]{
+    import MarketData._
+    override def write(identifier: MarketDataIdentifier): JsValue = identifier match {
+      case id : FuturesPricesIdentifier   => JsArray(JsString(FUTURES_PRICES), id.toJson)
+      case id : FuturesVolsIdentifier     => JsArray(JsString(FUTURES_VOLS), id.toJson)
+      case id : ZeroRatesIdentifier   => JsArray(JsString(ZERO_RATES), id.toJson)
+      case id : SpotPricesIdentifier      => JsArray(JsString(SPOT_PRICES), id.toJson)
+
+      case _                        =>        throw new RuntimeException("Unrecognized market data identifier " + identifier)
+    }
+
+    override def read(json: JsValue): MarketDataIdentifier = {
+      json match {
+        case JsArray(JsString(FUTURES_PRICES) ::json_  ::Nil) => json_.convertTo[FuturesPricesIdentifier]
+        case JsArray(JsString(ZERO_RATES)     ::json_  ::Nil) => json_.convertTo[ZeroRatesIdentifier]
+        case JsArray(JsString(FUTURES_VOLS)   ::json_  ::Nil) => json_.convertTo[FuturesVolsIdentifier]
+        case JsArray(JsString(SPOT_PRICES)    ::json_  ::Nil) => json_.convertTo[SpotPricesIdentifier]
+
+        case _                                                => throw new RuntimeException("Unrecognized market data identifier json " + json)
+      }
+    }
+  }
+
+  implicit val futuresPricesFormat = jsonFormat1(FuturesPriceData.apply)
+  implicit val discountRateFormat = jsonFormat2(ZeroRateData)
+  implicit val futuresVolFormat = jsonFormat1(FuturesVolData)
+  implicit val spotPriceDataFormat = jsonFormat1(SpotPriceData)
+
+  implicit object MarketDataFormat extends RootJsonFormat[MarketData]{
+    import MarketData._
+    override def write(data: MarketData): JsValue = data match {
+      case fp : FuturesPriceData    =>        JsArray(JsString(FUTURES_PRICES), fp.toJson)
+      case zr : ZeroRateData        =>        JsArray(JsString(ZERO_RATES), zr.toJson)
+      case fv : FuturesVolData      =>        JsArray(JsString(FUTURES_VOLS), fv.toJson)
+      case sp : SpotPriceData       =>        JsArray(JsString(SPOT_PRICES), sp.toJson)
+
+      case _                        =>        throw new RuntimeException("Unrecognized market data type " + data)
+    }
+
+    override def read(json: JsValue): MarketData = json match {
+      case JsArray(JsString(FUTURES_PRICES) ::json_  ::Nil) => json_.convertTo[FuturesPriceData]
+      case JsArray(JsString(ZERO_RATES)     ::json_  ::Nil) => json_.convertTo[ZeroRateData]
+      case JsArray(JsString(FUTURES_VOLS)   ::json_  ::Nil) => json_.convertTo[FuturesVolData]
+      case JsArray(JsString(SPOT_PRICES)    ::json_  ::Nil) => json_.convertTo[SpotPriceData]
+
+      case _                                                => throw new RuntimeException("Unrecognized market data json " + json)
+    }
+  }
   implicit object MapMonthDayFormat extends RootJsonFormat[Map[Month, Day]] {
     def write(map: Map[Month, Day]) = JsArray(map.toList.map {
       case (k, v) => JsArray(monthFormat.write(k), DayJsonFormat.write(v))
@@ -64,6 +139,5 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
         deserializationError("Map expected")
     }
   }
-
   implicit val futuresExpiryRuleFormat = jsonFormat3(FuturesExpiryRule.apply)
 }
