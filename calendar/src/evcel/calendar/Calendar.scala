@@ -18,9 +18,13 @@ trait Calendar {
     d
   }
 }
+object Calendar{
+  case class CalendarName(name : String) extends AnyVal
+  case class Holidays(days : Set[Day]) extends AnyVal
+}
 
-case class SimpleCalendar(holidays: Set[Day]) extends Calendar {
-  def isHoliday(day: Day) = holidays.contains(day)
+case class SimpleCalendar(holidays: Calendar.Holidays) extends Calendar {
+  def isHoliday(day: Day) = holidays.days.contains(day)
 }
 
 class Calendars(map: Map[String, Calendar]) {

@@ -12,12 +12,11 @@ import org.scalatest.{FunSpec, Matchers}
 import scala.language.reflectiveCalls
 
 class FuturesVolsTests extends FunSpec with Matchers {
-  private def makeFuturesVols(smiles: (Month, List[(Double, BDQty)])*) = {
+  private def makeFuturesVols(smiles: (Month, BDQty, List[(Double, BDQty)])*) = {
     val marketDay = MarketDay(10 / Aug / 2014, TimeOfDay.end)
     FuturesVols(
+      "WTI",
       FuturesVolData(
-        "WTI",
-        marketDay.day,
         smiles.toList
       ),
       marketDay,
@@ -32,19 +31,20 @@ class FuturesVolsTests extends FunSpec with Matchers {
   describe("FuturesVols") {
     it("Should handle flat vol") {
       val vols = makeFuturesVols(
-        (Dec / 2014, List((0.5, Percent("20"))))
+        (Dec / 2014, Percent("20"), List((0.5, Percent("25"))))
       )
-      vols.interpolateVol(Dec / 2014, X = 100.0, F = 110.0) should equal(0.2 +- 1e-6)
+      vols.interpolateVol(Dec / 2014, X = 100.0, F = 110.0) should equal(0.45 +- 1e-6)
       vols.apply((Dec/2014, 100.0(USD/MT), 110.0(USD/MT))).right.get.checkedDouble(PERCENT) should
-        equal(20.0 +- 1e-6)
+        equal(45.0 +- 1e-6)
     }
 
     it("Should be flat beyond boundary of supplied data") {
       val vols = makeFuturesVols(
         (Dec / 2014,
+          Percent("25"),
           List(
-            (0.3, Percent("20")),
-            (0.7, Percent("50"))))
+            (0.3, Percent("-5")),
+            (0.7, Percent("25"))))
       )
       // Deep OTM call
       vols.interpolateVol(Dec / 2014, X = 100.0, F = 1.0) should equal(0.2 +- 1e-6)

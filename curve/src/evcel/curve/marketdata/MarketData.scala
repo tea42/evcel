@@ -1,22 +1,17 @@
 package evcel.curve.marketdata
 
+import evcel.curve.ReferenceData
+import evcel.curve.environment.{MarketDataIdentifier, MarketDay, Curve}
 import evcel.daterange.Day
 import evcel.quantity.UOM
 
-trait MarketData {
-  def eventStoreKey: MarketData.EventStoreKey
-  def marketDay: Day = eventStoreKey.marketDay
+trait MarketData
+
+object MarketData{
+  case class CantBuildCurve(identifier : MarketDataIdentifier, marketDay : MarketDay, reason : String)
+  val FUTURES_PRICES = "Futures Prices"
+  val ZERO_RATES = "Zero Rates"
+  val FUTURES_VOLS = "Futures Vols"
+  val SPOT_PRICES = "Spot Prices"
 }
 
-object MarketData {
-
-  sealed trait EventStoreKey {
-    def marketDay: Day
-  }
-
-  case class FuturesPricesKey(market: String, marketDay: Day) extends EventStoreKey
-
-  case class ZeroRateDataKey(currency: UOM, marketDay: Day) extends EventStoreKey
-
-  case class FuturesVolKey(market: String, marketDay: Day) extends EventStoreKey
-}

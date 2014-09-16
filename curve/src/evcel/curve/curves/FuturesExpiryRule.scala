@@ -20,3 +20,7 @@ class FuturesExpiryRules(rules: Map[String, FuturesExpiryRule]) {
   def expiryRule(market: String) = rules.get(market)
 }
 
+object FuturesExpiryRules{
+  case class NotFound(market : String)
+}
+

@@ -5,11 +5,12 @@ import evcel.quantity.Percent
 import evcel.daterange.Day
 import evcel.quantity.UOM
 import evcel.quantity.UOM._
-import evcel.curve.marketdata.DayCount
+import evcel.curve.marketdata._
 import evcel.curve.environment._
 import scala.math._
-import evcel.curve.marketdata.ZeroRateData
 import evcel.quantity.Qty
+import evcel.utils.EitherUtils._
+import evcel.curve.ReferenceData
 
 abstract class DiscountCurve extends Curve {
   private[curves] def discountRate(day: Day): Double
@@ -47,9 +48,8 @@ case class UndiscountedDiscountCurve(marketDay: Day, currency: UOM) extends Disc
   private[curves] def discountRate(day: Day) = 1.0
 }
 
-case class DiscountCurveIdentifier(currency: UOM) extends CurveIdentifier
 case class DiscountRateIdentifier(currency: UOM, day: Day) extends AtomicDatumIdentifier {
-  def curveIdentifier = DiscountCurveIdentifier(currency)
+  def curveIdentifier = ZeroRatesIdentifier(currency)
   def point = day
   override def nullValue(refData: ReferenceData) = 1.0
 }
@@ -57,13 +57,8 @@ case class DiscountRateIdentifier(currency: UOM, day: Day) extends AtomicDatumId
 object DiscountCurve {
   case class ForwardRateData(fromDay: Day, toDay: Day, fromDiscount: Double, toDiscount: Double, forwardRate: Double)
 
-  def apply(zeroRateData: ZeroRateData): DiscountCurve = {
-    import zeroRateData._
-    apply(currency, marketDay, dayCount, rates)
-  }
-
-  private[curves] def apply(
-    currency: UOM, 
+  def apply(
+    currency: UOM,
     marketDay: Day, 
     dayCount: DayCount, 
     rates: List[(Day, Qty)]): DiscountCurve = 

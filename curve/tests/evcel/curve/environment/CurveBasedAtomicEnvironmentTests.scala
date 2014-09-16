@@ -5,7 +5,7 @@ import evcel.curve.markets.TestMarkets
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import evcel.daterange.DateRangeSugar._
-import evcel.curve.curves.{TestFuturesExpiryRules, FuturesPrices, FuturesPricesIdentifier}
+import evcel.curve.curves.{TestFuturesExpiryRules, FuturesPrices}
 import evcel.quantity.UOM._
 import evcel.quantity.Qty._
 import evcel.curve.{EnvironmentParams, ReferenceData, ValuationContext}

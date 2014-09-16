@@ -1,6 +1,7 @@
 package evcel.daterange
 
 case class Month(year: Int, monthNumber: Int) extends DateRange with Ordered[Month] {
+
   def firstDay = Day(year, monthNumber, 1)
   def lastDay = next.firstDay.previous
   def next = {

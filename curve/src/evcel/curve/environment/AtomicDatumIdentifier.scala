@@ -4,7 +4,7 @@ import evcel.curve.ReferenceData
 import evcel.daterange.DateRange
 
 trait AtomicDatumIdentifier {
-  def curveIdentifier: CurveIdentifier
+  def curveIdentifier: MarketDataIdentifier
   def point: Any
   def nullValue(refData: ReferenceData): Any
 }
