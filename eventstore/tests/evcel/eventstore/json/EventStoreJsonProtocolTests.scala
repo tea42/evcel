@@ -99,7 +99,9 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
     }
 
     it("Should round trip abstract date ranges"){
-      val dateRanges : List[DateRange] = List(May / 2014, 15 / May / 2014, SimpleDateRange(15 / May / 2014, 20 / May / 2014))
+      val dateRanges : List[DateRange] = List(
+        May / 2014, 15 / May / 2014, SimpleDateRange(15 / May / 2014, 20 / May / 2014)
+      )
       dateRanges.foreach{
         case dr =>
             dr.toJson.prettyPrint.parseJson.convertTo[DateRange] should equal(dr)

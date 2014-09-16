@@ -21,7 +21,9 @@ trait MarketDataSurface{
 object MarketDataSurface{
   case class NotFound(key : MarketDataIdentifier)
 
-  case class TestSurface(marketDay : MarketDay, surface : Map[MarketDataIdentifier, MarketData]) extends MarketDataSurface{
+  case class TestSurface(marketDay : MarketDay, surface : Map[MarketDataIdentifier, MarketData]) 
+    extends MarketDataSurface
+  {
     def data(key : MarketDataIdentifier) = surface.get(key) match {
       case Some(data) => Right(data)
       case None => Left(NotFound(key))

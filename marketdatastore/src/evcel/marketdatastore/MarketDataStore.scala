@@ -30,7 +30,13 @@ case class MarketDataStore(kafkaPort : Int)
   def write(marketDay : Day, key : MarketDataIdentifier, data : MarketData) : Future[Offset] = {
     write(Map((marketDay, key) -> data))
   }
-  def read(offset : Offset, marketDay : Day, key : MarketDataIdentifier) : Either[EventStore.NotFound[(Day, MarketDataIdentifier)], MarketData] = read(offset, (marketDay, key))
+  def read(
+    offset : Offset, 
+    marketDay : Day, 
+    key : MarketDataIdentifier
+  ) : Either[EventStore.NotFound[(Day, MarketDataIdentifier)], MarketData] = {
+    read(offset, (marketDay, key))
+  }
 }
 
 object MarketDataStore{

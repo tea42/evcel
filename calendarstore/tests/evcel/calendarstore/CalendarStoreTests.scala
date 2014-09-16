@@ -79,10 +79,18 @@ class CalendarStoreTests extends FunSpec with Matchers {
               )
           }
           holidays.foreach(cs.write _)
-          Await.result(cs.write(Map(CalendarName("UK") -> Holidays(Set.empty), CalendarName("US") -> Holidays(Set.empty))), 5 seconds) should equal(Offset(10))
+          Await.result(
+            cs.write(
+              Map(CalendarName("UK") -> Holidays(Set.empty), 
+                  CalendarName("US") -> Holidays(Set.empty))), 5 seconds
+          ) should equal(Offset(10))
           for (i <- 0 until 10){
-            cs.readCalendar(Offset(i), CalendarName("UK")) should equal(Right(SimpleCalendar(holidays(i)(CalendarName("UK")))))
-            cs.readCalendar(Offset(i), CalendarName("BLAH")) should equal (Left(EventStore.NotFound(CalendarStore.TOPIC, CalendarName("BLAH"), Offset(i))))
+            cs.readCalendar(
+              Offset(i), CalendarName("UK")
+            ) should equal(Right(SimpleCalendar(holidays(i)(CalendarName("UK")))))
+            cs.readCalendar(
+              Offset(i), CalendarName("BLAH")
+            ) should equal (Left(EventStore.NotFound(CalendarStore.TOPIC, CalendarName("BLAH"), Offset(i))))
           }
       }
     }

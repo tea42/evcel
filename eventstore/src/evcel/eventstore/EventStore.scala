@@ -138,8 +138,6 @@ object EventStore{
   case class Offset(value : Long) extends AnyVal with Ordered[Offset]{
     def compare(rhs : Offset) = value.compare(rhs.value)
   }
-  //case class UUID_String(value : String) extends AnyVal
-  //implicit val uuidStringFormat = jsonFormat1(UUID_String)
   case class NotFound[K](topic : String, key : K, offset : Offset)
 }
 

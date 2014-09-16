@@ -11,11 +11,11 @@ import evcel.daterange.Day
 case class FuturesPriceData(prices: List[(Month, BDQty)]) 
   extends MarketData
 {
-  def buildCurve(market : String, marketDay: MarketDay): Either[MarketData.CantBuildCurve, FuturesPrices] ={
+  def buildCurve(market : String, marketDay: MarketDay): Either[MarketData.CantBuildCurve, FuturesPrices] =
     Right(FuturesPrices(market, marketDay, prices.toMap))
-  }
 }
 
 object FuturesPriceData{
-  def apply(firstPrice : (Month, BDQty) , otherPrices : (Month, BDQty) *) : FuturesPriceData = FuturesPriceData(firstPrice :: otherPrices.toList)
+  def apply(firstPrice : (Month, BDQty) , otherPrices : (Month, BDQty) *) : FuturesPriceData = 
+    FuturesPriceData(firstPrice :: otherPrices.toList)
 }

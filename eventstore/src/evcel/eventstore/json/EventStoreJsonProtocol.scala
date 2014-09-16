@@ -68,9 +68,11 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
       json match {
         case JsArray(JsString(DateRange.DAY)::json::Nil) => json.convertTo[Day]
         case JsArray(JsString(DateRange.MONTH)::json::Nil) => json.convertTo[Month]
-        case JsArray(JsString(DateRange.SIMPLE)::fromJson::toJson::Nil) => SimpleDateRange(fromJson.convertTo[Day], toJson.convertTo[Day])
+        case JsArray(JsString(DateRange.SIMPLE)::fromJson::toJson::Nil) => 
+          SimpleDateRange(fromJson.convertTo[Day], toJson.convertTo[Day])
 
-        case _                                                => throw new RuntimeException("Unrecognized date range json " + json)
+        case _                                                => 
+          throw new RuntimeException("Unrecognized date range json " + json)
       }
     }
   }
@@ -86,7 +88,8 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
       case id : ZeroRatesIdentifier   => JsArray(JsString(ZERO_RATES), id.toJson)
       case id : SpotPricesIdentifier      => JsArray(JsString(SPOT_PRICES), id.toJson)
 
-      case _                        =>        throw new RuntimeException("Unrecognized market data identifier " + identifier)
+      case _                        =>        
+        throw new RuntimeException("Unrecognized market data identifier " + identifier)
     }
 
     override def read(json: JsValue): MarketDataIdentifier = {
@@ -96,7 +99,8 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
         case JsArray(JsString(FUTURES_VOLS)   ::json_  ::Nil) => json_.convertTo[FuturesVolsIdentifier]
         case JsArray(JsString(SPOT_PRICES)    ::json_  ::Nil) => json_.convertTo[SpotPricesIdentifier]
 
-        case _                                                => throw new RuntimeException("Unrecognized market data identifier json " + json)
+        case _                                                => 
+          throw new RuntimeException("Unrecognized market data identifier json " + json)
       }
     }
   }
@@ -123,7 +127,8 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
       case JsArray(JsString(FUTURES_VOLS)   ::json_  ::Nil) => json_.convertTo[FuturesVolData]
       case JsArray(JsString(SPOT_PRICES)    ::json_  ::Nil) => json_.convertTo[SpotPriceData]
 
-      case _                                                => throw new RuntimeException("Unrecognized market data json " + json)
+      case _                                                => 
+        throw new RuntimeException("Unrecognized market data json " + json)
     }
   }
   implicit object MapMonthDayFormat extends RootJsonFormat[Map[Month, Day]] {

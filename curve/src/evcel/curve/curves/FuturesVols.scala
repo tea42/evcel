@@ -48,14 +48,14 @@ object FuturesVols {
     marketDay: MarketDay,
     expiryRule: FuturesExpiryRule): FuturesVols = {
     val atmVols = data.data.map{
-      case (month, atmVol, _) => (month, atmVol.checkedDouble(PERCENT) / 100.0)
+      case (month, atmVol, _) => (month, atmVol.checkedPercent)
     }.toMap
     val spreadsByMonth: Map[Month, Double => Double] = {
       data.data.map {
         case (month: Month, _ : Qty, volsByDelta: List[(Double, Qty)]) =>
           val givenXs = volsByDelta.map(_._1)
 
-          val givenYs = volsByDelta.map(_._2.checkedDouble(PERCENT) / 100.0)
+          val givenYs = volsByDelta.map(_._2.checkedPercent)
           // Extend the data so as to force the interpolator to make a toilet-seat function
           val xs: Array[Double] = (-1.0 :: givenXs ::: List(2.0)).toArray
           val ys: Array[Double] = (givenYs.head :: givenYs ::: List(givenYs.last)).toArray
@@ -64,7 +64,8 @@ object FuturesVols {
       }.toMap
     }
     def deltaSpreads(month: Month, delta: Double) = {
-      val spreads = spreadsByMonth.getOrElse(month, throw new RuntimeException(s"No smile data for $data.market/$month"))
+      val spreads = 
+        spreadsByMonth.getOrElse(month, throw new RuntimeException(s"No smile data for $market/$month"))
       spreads(delta)
     }
     FuturesVols(market, marketDay, expiryRule, atmVols, deltaSpreads _)
