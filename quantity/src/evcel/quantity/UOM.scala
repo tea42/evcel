@@ -2,6 +2,7 @@ package evcel.quantity
 
 import org.apache.commons.math3.util.ArithmeticUtils
 import scala.annotation.tailrec
+import scalaz.Scalaz._
 
 case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   /**
@@ -69,7 +70,7 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   def asPrimeMap: Map[Int, Int] = {
     val num = secondary.factorNum.groupBy(identity).mapValues(a => a.size)
     val den = secondary.factorDen.groupBy(identity).mapValues(_.size * -1)
-    num ++ den
+    num.mappend(den)
   }
 
   def in(other: UOM, conversions: Option[QtyConversions] = None): Option[BigDecimal] = if (this == other) {

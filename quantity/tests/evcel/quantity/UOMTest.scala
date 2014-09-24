@@ -27,6 +27,16 @@ class UOMTest extends FunSuite with Matchers {
     USD.mult(USD).toString shouldEqual "(USD^2,1.0)"
     USD.div(US_CENT).toString shouldEqual "(,1.0E+2)"
     USD.mult(USD)._1.div(US_CENT).toString shouldEqual "(USD,1.0E+2)"
+    (USD / MT).mult(MT) match {
+      case (USD, bd) => bd shouldEqual BigDecimal(1.0)
+    }
+  }
+
+  test("asPrimeMap") {
+    val first = USD / MT
+    val second = MT
+    val newUOM = UOM(first.dimension * second.dimension, first.secondary * second.secondary)
+    newUOM.asPrimeMap shouldEqual Map(USD.secondary.num -> 1, MT.secondary.num -> 0)
   }
 
   test("toString") {
