@@ -60,6 +60,11 @@ class QtyTest extends FunSuite with Matchers {
     Qty(1, BBL) / Qty(1, GAL) should matchQty (Qty(42, SCALAR))
   }
 
+  test("more mult") {
+    Qty(1, USD/G) * Qty(1, MT) shouldEqual Qty(1e6, USD)
+    Qty(1, USD/MT) * Qty(1, MT) shouldEqual Qty(1, USD)
+  }
+
   test("percentage") {
     Qty(100, USD) / Qty(1, PERCENT) shouldEqual Qty(10000, USD)
     Qty(1, PERCENT) * Qty(100, USD) shouldEqual Qty(1, USD)

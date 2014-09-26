@@ -54,7 +54,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(maths)
+  ).dependsOn(maths, utils)
 
   lazy val instrument = module("instrument").settings(
     libraryDependencies ++= Seq(
