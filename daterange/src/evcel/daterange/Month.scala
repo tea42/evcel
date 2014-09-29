@@ -1,6 +1,8 @@
 package evcel.daterange
 
-case class Month(year: Int, monthNumber: Int) extends DateRange with Ordered[Month] {
+case class Month(year: Int, monthNumber: Int) extends DateRange {
+  require(year > 0 && year < 3000, s"Invalid year: $year")
+  require(monthNumber > 0 && monthNumber <= 12, s"Invalid month: $monthNumber")
 
   def firstDay = Day(year, monthNumber, 1)
   def lastDay = next.firstDay.previous
@@ -19,11 +21,13 @@ case class Month(year: Int, monthNumber: Int) extends DateRange with Ordered[Mon
 
   override def toString = f"$year%4d-$monthNumber%02d"
 
-  def compare(rhs: Month) = {
-    if (year == rhs.year)
-      monthNumber - rhs.monthNumber
-    else
-      year - rhs.year
+  override def compare(rhs: DateRange) = rhs match {
+    case m: Month =>
+      if (year == m.year)
+        monthNumber - m.monthNumber
+      else
+        year - m.year
+    case o => super.compare(o)
   }
 
   def +(n: Int) = {
@@ -46,4 +50,15 @@ case class Month(year: Int, monthNumber: Int) extends DateRange with Ordered[Mon
     }
     acc.reverse
   }
+}
+
+object Month extends TenorType {
+  val Format = """(\d{4})\-(\d{1,2})""".r
+
+  def unapply(str: String): Option[Month] = str match {
+    case Format(year, month) => Some(Month(year.toInt, month.toInt))
+    case _ => None
+  }
+
+  def parse(str: String) = unapply(str).getOrElse(sys.error("Invalid month: " + str))
 }

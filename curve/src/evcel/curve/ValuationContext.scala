@@ -2,8 +2,8 @@ package evcel.curve
 
 import evcel.calendar.Calendar
 import evcel.curve.curves._
-import evcel.curve.environment.{AtomicEnvironment, KeyRecordingAtomicEnvironment, PerturbedAtomicEnvironment}
-import evcel.daterange.{Day, Month}
+import evcel.curve.environment._
+import evcel.daterange.{DateRange, Day, Month}
 import evcel.quantity.{Qty, UOM}
 import evcel.utils.EitherUtils._
 
@@ -40,13 +40,31 @@ case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, p
   def futuresMarketOrThrow(name: String) = refData.markets.futuresMarketOrThrow(name)
   def spotMarket(name: String) = refData.markets.spotMarket(name)
 
+  def marketConversions(name: String) =
+    futuresMarket(name).flatMap(_.conversions).orElse(spotMarket(name).flatMap(_.conversions))
+
   def shiftFuturesPrice(market: String, month: Month, dP: Qty) = copy(atomic =
     PerturbedAtomicEnvironment(
     atomic, { case FuturesPriceIdentifier(`market`, `month`) => futuresPrice(market, month) + dP})
   )
 
+  def shiftSpotPrice(market: String, period: DateRange, dP: Qty) = copy(atomic =
+    PerturbedAtomicEnvironment(
+    atomic, { case SpotPriceIdentifier(`market`, day) if period.contains(day) => spotPrice(market, day) + dP})
+  )
+
+  def shiftPrice(pi: PriceIdentifier, dP: Qty) = pi match {
+    case SpotPriceIdentifier(market, day) => shiftSpotPrice(market, day, dP)
+    case FuturesPriceIdentifier(market, month) => shiftFuturesPrice(market, month, dP)
+    case o => sys.error("Invalid: " + o)
+  }
+
+  private def price(pi: PriceIdentifier) = atomic.qty(pi).getOrErrorLeft(_.s)
+
   def keyRecordingVC: (ValuationContext, KeyRecordingAtomicEnvironment) = {
     val record = KeyRecordingAtomicEnvironment(atomic, refData)
     (copy(atomic = record), record)
   }
+
+  def forwardState(forwardDay: MarketDay) = copy(atomic = ForwardStateEnvironment(refData, atomic, forwardDay))
 }

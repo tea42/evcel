@@ -1,7 +1,8 @@
 package evcel.curve.curves
 
-import evcel.curve.ReferenceData
+import evcel.curve.{ValuationContext, ReferenceData}
 import evcel.curve.environment._
+import evcel.curve.environment.MarketDay._
 import evcel.daterange.Month
 import evcel.quantity.Qty
 
@@ -24,6 +25,23 @@ case class FuturesPriceIdentifier(market: String, month: Month) extends PriceIde
   override def nullValue(refData: ReferenceData) = {
     val priceUOM = refData.markets.futuresMarketOrThrow(market).priceUOM
     Qty("123", priceUOM)
+  }
+
+  override def dP(vc: ValuationContext) = {
+    val priceUOM = vc.refData.markets.futuresMarketOrThrow(market).priceUOM
+    Qty(".25", priceUOM)
+  }
+
+  override def forwardStateValue(
+    refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay
+    ) = {
+    val ltd = refData.futuresExpiryRules.expiryRule(market).map(_.futureExpiryDayOrThrow(month)).getOrElse(
+      sys.error(s"Invalid market: $market")
+    )
+    if (forwardMarketDay >= ltd.endOfDay) {
+      sys.error(s"$this has expired on $forwardMarketDay")
+    }
+    original(this)
   }
 }
 

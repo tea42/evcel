@@ -11,11 +11,11 @@ class UOMTest extends FunSuite with Matchers {
         uom1.add(uom2)
       else
         uom1.subtract(uom2)
-      test(USD, USD) shouldEqual Some(BigDecimal(1))
-      test(USD, US_CENT) shouldEqual Some(BigDecimal(100))
-      test(US_CENT, USD) shouldEqual Some(BigDecimal(.01))
-      test(US_CENT, BBL) shouldEqual None
-      test(BBL, USD) shouldEqual None
+      test(USD, USD) shouldEqual Right(None)
+      test(USD, US_CENT) shouldEqual Right(Some(BigDecimal(100)))
+      test(US_CENT, USD) shouldEqual Right(Some(BigDecimal(.01)))
+      test(US_CENT, BBL) shouldEqual Left("Can't add ¢ and BBL")
+      test(BBL, USD) shouldEqual Left("Can't add BBL and USD")
     }
   }
 

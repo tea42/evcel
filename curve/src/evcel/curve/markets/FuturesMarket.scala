@@ -2,9 +2,16 @@ package evcel.curve.markets
 
 import evcel.curve.ReferenceData
 import evcel.daterange.{Month, Day}
-import evcel.quantity.UOM
+import evcel.quantity.{QtyConversions, UOM}
 
-case class FuturesMarket(name: String, calendarName: String, priceUOM: UOM) {
+case class FuturesMarket(
+  name: String, calendarName: String, priceUOM: UOM, conversions: Option[QtyConversions] = None) {
+
+  def lastTradingDay(refData: ReferenceData, month: Month) = {
+    val expiryRules = refData.futuresExpiryRules.expiryRule(name).getOrElse(sys.error(s"No expiry rule for $name"))
+    expiryRules.futureExpiryDayOrThrow(month)
+  }
+
   def frontMonth(refData: ReferenceData, day: Day): Month = {
     val expiryRules = refData.futuresExpiryRules.expiryRule(name).getOrElse(sys.error(s"No expiry rule for $name"))
     val month = Iterator.iterate(day.containingMonth)(m => m.next).find(

@@ -1,16 +1,14 @@
 package evcel.curve.curves
 
+import com.opengamma.analytics.math.interpolation.ConstrainedCubicSplineInterpolator
 import evcel.curve.ReferenceData
 import evcel.curve.environment._
+import evcel.curve.marketdata.{Act365, FuturesVolData}
 import evcel.daterange.Month
-import evcel.maths.models.BlackScholes
-import evcel.quantity.Percent
-import evcel.quantity.Qty
-import evcel.quantity.UOM._
 import evcel.maths.Call
-import evcel.curve.marketdata.Act365
-import evcel.curve.marketdata.FuturesVolData
-import com.opengamma.analytics.math.interpolation.ConstrainedCubicSplineInterpolator
+import evcel.maths.models.BlackScholes
+import evcel.quantity.{Percent, Qty}
+import evcel.curve.environment.MarketDay._
 
 /**
  * A non-sticky vol smile. Sticky might best be done by converting to a strike based
@@ -68,7 +66,7 @@ object FuturesVols {
         spreadsByMonth.getOrElse(month, throw new RuntimeException(s"No smile data for $market/$month"))
       spreads(delta)
     }
-    FuturesVols(market, marketDay, expiryRule, atmVols, deltaSpreads _)
+    FuturesVols(market, marketDay, expiryRule, atmVols, deltaSpreads)
   }
 }
 
@@ -81,6 +79,16 @@ case class FuturesVolIdentifier(
   def curveIdentifier = FuturesVolsIdentifier(market)
   def point = (month, strike, forwardPrice)
   override def nullValue(refData: ReferenceData) = Percent(10)
+
+  override def forwardStateValue(refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay) = {
+    val expiry = refData.futuresExpiryRules.expiryRule(market).map(_.optionExpiryDayOrThrow(month)).getOrElse(
+      sys.error(s"Invalid market: $market")
+    )
+    if (forwardMarketDay >= expiry.endOfDay) {
+      sys.error(s"$this has expired on $forwardMarketDay")
+    }
+    original(this)
+  }
 }
 
 

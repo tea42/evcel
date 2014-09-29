@@ -1,5 +1,6 @@
 package evcel.quantity
 
+import evcel.utils.Memoize
 import org.apache.commons.math3.util.ArithmeticUtils
 import scala.annotation.tailrec
 import scalaz.Scalaz._
@@ -10,10 +11,10 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
    *         magnitude is the value to divide the second component by.
    *         e.g. if you had USD.add(USC) you would be returned 100.0
    */
-  def add(other: UOM): Option[BigDecimal] = other match {
-    case UOM(`dimension`, `secondary`) => Some(1.0)
-    case UOM(`dimension`, _) => Some(magnitude / other.magnitude)
-    case _ => None
+  def add(other: UOM): Either[String, Option[BigDecimal]] = other match {
+    case UOM(`dimension`, `secondary`) => Right(None)
+    case UOM(`dimension`, _) => Right(Some(magnitude / other.magnitude))
+    case _ => Left(s"Can't add $this and $other")
   }
 
   def subtract(other: UOM) = add(other)
@@ -22,7 +23,9 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
 
   def /(other: UOM): UOM = mult(other.invert)._1
 
-  def mult(other: UOM): (UOM, BigDecimal) = {
+  def mult(other: UOM): (UOM, BigDecimal) = mmult(other)
+
+  private val mmult: Memoize[UOM, (UOM, BigDecimal)] = Memoize { (other: UOM) =>
     val newUOM = UOM(dimension * other.dimension, secondary * other.secondary)
     val dimGCD = newUOM.dimension.gcd
     // if the dimension has a gcd > 1 then we have some redundancy in the UOM, something like
@@ -45,7 +48,7 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
 
       (uomReducedSecondary.intern, newUOM.magnitude / uomReducedSecondary.magnitude)
     } else if (this.isPercent && other.isScalar) {
-      (this, 1.0)
+      (this, Qty.bdOne)
     } else if (this.isPercent && other.isPercent) {
       (this, other.magnitude)
     } else if (this.isPercent) {
@@ -53,7 +56,7 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
     } else if (other.isPercent) {
       (this, other.magnitude)
     } else {
-      (newUOM, 1.0)
+      (newUOM, Qty.bdOne)
     }
   }
 
@@ -62,7 +65,7 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   def invert = UOM(dimension.invert, secondary.invert)
 
   def magnitude: BigDecimal = {
-    asPrimeMap.foldLeft(BigDecimal(1.0)) {
+    asPrimeMap.foldLeft(Qty.bdOne) {
       case (bd, (prime, power)) => bd * UOM.conversionToDimensionBase(prime).pow(power)
     }
   }
@@ -74,7 +77,7 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   }
 
   def in(other: UOM, conversions: Option[QtyConversions] = None): Option[BigDecimal] = if (this == other) {
-    Some(BigDecimal(1.0))
+    Some(Qty.bdOne)
   } else {
     def toUOMAndPower(single: Map[Int, Int]) = {
       require(single.size == 1, "Can't convert from/to: " + (this, other, single))

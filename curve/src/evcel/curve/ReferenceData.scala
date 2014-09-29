@@ -1,6 +1,6 @@
 package evcel.curve
 
-import evcel.calendar.Calendars
+import evcel.calendar.{Calendar, Calendars}
 import evcel.curve.curves.FuturesExpiryRules
 import evcel.curve.markets.Markets
 

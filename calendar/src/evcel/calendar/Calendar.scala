@@ -1,6 +1,6 @@
 package evcel.calendar
 
-import evcel.daterange.Day
+import evcel.daterange.{DateRange, Day}
 
 trait Calendar {
   def isHoliday(day: Day): Boolean
