@@ -2,7 +2,7 @@ package evcel.calendar
 
 import evcel.daterange.DateRangeSugar._
 import evcel.daterange.DateRangeSugar.Jul
-import evcel.daterange.Day
+import evcel.daterange.{Month, SimpleDateRange, Day}
 import org.scalatest.{Matchers, FunSuite}
 
 import scala.language.reflectiveCalls

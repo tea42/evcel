@@ -1,5 +1,9 @@
 package evcel.instrument
 
-trait Instrument
+import evcel.quantity.BDQty
+
+trait Instrument {
+  def volume: BDQty
+}
 
 trait InstrumentType

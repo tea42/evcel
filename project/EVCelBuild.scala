@@ -33,7 +33,7 @@ object EVCelBuild extends Build {
       "org.apache.commons" % "commons-math3" % "3.3",
       "org.scalatest" %% "scalatest" % "2.2.0" % "test",
       "com.opengamma" % "og-analytics" % "2.0.0-alpha-12",
-      "com.opengamma" % "og-util" % "2.0.0-alpha-12" 
+      "com.opengamma" % "og-util" % "2.0.0-alpha-12"
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests",
@@ -62,7 +62,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(curve % "compile->compile;test->test", quantity % "test->test")
+  ).dependsOn(calendar, curve % "compile->compile;test->test", quantity % "test->test")
 
   lazy val reports = module("reports").settings(
     libraryDependencies ++= Seq(
@@ -94,7 +94,7 @@ object EVCelBuild extends Build {
       "org.apache.kafka" % s"kafka_$buildScalaMajorVersion" % "0.8.1.1" exclude ("org.slf4j", "slf4j-log4j12"),
       "org.apache.zookeeper" % "zookeeper" % "3.3.4" exclude ("org.slf4j", "slf4j-log4j12"),
       "io.spray" % s"spray-json_$buildScalaMajorVersion" % "1.2.6"
-    ).map( 
+    ).map(
       _.exclude ("com.sun.jdmk", "jmxtools")
     ).map(
       _.exclude("javax.jms", "jms")

@@ -1,7 +1,12 @@
 package evcel.curve.environment
 import evcel.daterange.Day
 
-case class MarketDay(day: Day, timeOfDay: TimeOfDay)
+case class MarketDay(day: Day, timeOfDay: TimeOfDay) extends Ordered[MarketDay] {
+  override def compare(that: MarketDay) = day.compare(that.day) match {
+    case 0 => timeOfDay.compare(that.timeOfDay)
+    case o => o
+  }
+}
 
 object MarketDay {
   implicit class DayToMarketDay(day: Day) {
@@ -12,7 +17,7 @@ object MarketDay {
 
 case class TimeOfDay(
     pricesCanMove: Boolean,
-    fixingsShouldExist: Boolean) {
+    fixingsShouldExist: Boolean)  extends Ordered[TimeOfDay] {
   def optionDaysUntil(rhs: TimeOfDay) = {
     (pricesCanMove, rhs.pricesCanMove) match {
       case (true, false) => 1.0
@@ -20,6 +25,8 @@ case class TimeOfDay(
       case _ => 0.0
     }
   }
+
+  override def compare(that: TimeOfDay) = optionDaysUntil(that).toInt
 }
 
 object TimeOfDay {

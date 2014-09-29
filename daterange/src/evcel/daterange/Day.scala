@@ -1,7 +1,6 @@
 package evcel.daterange
 
-class Day private (val year: Int, val month: Int, val dayNumber: Int) extends DateRange with Ordered[Day] {
-
+class Day private (val year: Int, val month: Int, val dayNumber: Int) extends DateRange {
   def firstDay = this
   def lastDay = this
 
@@ -22,7 +21,11 @@ class Day private (val year: Int, val month: Int, val dayNumber: Int) extends Da
   def next: Day = Day.dayFromJulianDayNumber(julianDayNumber + 1)
   def previous: Day = Day.dayFromJulianDayNumber(julianDayNumber - 1)
 
-  def compare(rhs: Day): Int = julianDayNumber - rhs.julianDayNumber
+  override def compare(rhs: DateRange): Int = rhs match {
+    case d: Day => julianDayNumber - d.julianDayNumber
+    case o => super.compare(o)
+  }
+
 
   def +(n: Int) = Day.dayFromJulianDayNumber(julianDayNumber + n)
   def -(n: Int): Day = this.+(-n)
@@ -52,9 +55,14 @@ class Day private (val year: Int, val month: Int, val dayNumber: Int) extends Da
   def isWeekend = (julianDayNumber % 7) > 4
 
   override def toString = f"$year%4d-$month%02d-$dayNumber%02d"
+
+  def to(day: Day): Seq[Day] = {
+    require(day >= this, s"Invalid: $this, $day")
+    (0 to (day - this)).map(this + _)
+  }
 }
 
-object Day {
+object Day extends TenorType {
 
   private val firstPermittedJuliandayNumber = julianDayNumber(1890, 1, 1) // before excel day 0 and epoch
   /** Flyweights to limit memory usage of Day objects */

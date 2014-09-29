@@ -1,8 +1,9 @@
 package evcel.curve.curves
 
-import evcel.curve.ReferenceData
+import evcel.curve.{ValuationContext, ReferenceData}
 import evcel.curve.environment._
-import evcel.daterange.{Day, DateRange, Month}
+import evcel.curve.environment.MarketDay._
+import evcel.daterange._
 import evcel.quantity.Qty
 
 case class SpotPrices(market: String, marketDay: MarketDay, prices: Map[DateRange, Qty]) extends Curve {
@@ -29,6 +30,20 @@ case class SpotPriceIdentifier(market: String, day: Day) extends PriceIdentifier
   override def nullValue(refData: ReferenceData) = {
     val priceUOM = refData.markets.spotMarketOrThrow(market).priceUOM
     Qty("321", priceUOM)
+  }
+
+  override def dP(vc: ValuationContext) = {
+    val priceUOM = vc.refData.markets.spotMarketOrThrow(market).priceUOM
+    Qty(".25", priceUOM)
+  }
+
+  override def forwardStateValue(
+    refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay
+    ) = {
+    if (forwardMarketDay >= day.endOfDay) {
+      sys.error(s"$this has expired on $forwardMarketDay")
+    }
+    original(this)
   }
 }
 

@@ -1,24 +1,18 @@
 package evcel.instrument.valuation
 
-import evcel.curve.curves.{SpotPriceIdentifier, FuturesPriceIdentifier}
-import evcel.daterange.DateRangeSugar.Oct
-import evcel.instrument.CommoditySwap
+import evcel.curve.curves.{FuturesPriceIdentifier, SpotPriceIdentifier}
+import evcel.instrument.{CommoditySwapLookalike, CommoditySwap}
 import evcel.quantity.Qty
+import evcel.instrument.valuation.Valuer._
 import evcel.quantity.UOM._
 import evcel.quantity.utils.QuantityTestUtils._
 
 class SwapLikeValuerTest extends ValuationTest {
   val K = Qty("100", USD / BBL)
   val V = Qty("1000", BBL)
-  val oct = Oct / 14
-  val nov = oct.next
-  val dec = nov.next
-  val jan = dec.next
-  val wti = "Nymex WTI"
-  val sing = "Singapore Gasoil 0.05"
 
   test("swap on futures contract index") {
-    val swap = new CommoditySwap(wti, oct, K, V)
+    val swap = new CommoditySwapLookalike(wti, oct, K, V)
     val vc = createVC()
     val mtm = valuer.value(vc, swap)
     mtm shouldEqual (vc.futuresPrice("Nymex WTI", oct) - K) * V
@@ -54,5 +48,19 @@ class SwapLikeValuerTest extends ValuationTest {
     val weightings = futuresMonthWeightings(vc, index, oct)
 
     mtm should matchQty (((Fdec * weightings(dec) + Fjan * weightings(jan)) - K) * V)
+  }
+
+
+  test("swap on spread index") {
+    val vc = createVC()
+    val observationDays = SwapLikeValuer(vc, createSingSpreadSwap()).observationDays
+    val K = Qty("10", USD/MT)
+    val singSwap = createSingSwap(volume = Qty((observationDays.size * 13).toString, MT), strike = K)
+    val bblVol = singSwap.volume.in(BBL, vc.marketConversions(wti)).get
+    val wtiSwap = createSwap(volume = -bblVol, strike = Qty("0", USD/BBL))
+    val spread = createSingSpreadSwap(volume = Qty((observationDays.size * 13).toString, MT), strike= K)
+
+    spread.keys(vc) shouldEqual (singSwap.keys(vc) ++ wtiSwap.keys(vc))
+    spread.mtm(vc) should matchQty (singSwap.mtm(vc) + wtiSwap.mtm(vc))
   }
 }

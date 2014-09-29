@@ -10,6 +10,12 @@ abstract class DerivedAtomicEnvironment(original: AtomicEnvironment)
   override def marketDay = original.marketDay
 }
 
+case class ForwardStateEnvironment(refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay)
+  extends DerivedAtomicEnvironment(original) {
+  override def marketDay = forwardMarketDay
+  def apply(k: AtomicDatumIdentifier) = k.forwardStateValue(refData, original, forwardMarketDay)
+}
+
 case class PerturbedAtomicEnvironment(
   original: AtomicEnvironment,
   perturbation: PartialFunction[AtomicDatumIdentifier, Any])
