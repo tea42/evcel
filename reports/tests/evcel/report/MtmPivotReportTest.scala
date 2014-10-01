@@ -1,6 +1,6 @@
 package evcel.report
 
-import evcel.curve.curves.{DiscountRateIdentifier, FuturesPriceIdentifier, FuturesVolIdentifier, TestFuturesExpiryRules}
+import evcel.curve.curves.{DiscountRateIdentifier, FuturesPriceIdentifier, FuturesVolIdentifier}
 import evcel.curve.environment.{MarketDay, TimeOfDay}
 import evcel.curve.marketdata.Act365
 import evcel.curve.{UnitTestingEnvironment, ValuationContext}
@@ -14,6 +14,7 @@ import evcel.quantity.UOM._
 import evcel.quantity.utils.QuantityTestUtils
 import evcel.quantity.{Percent, Qty}
 import org.scalatest.{FunSuite, ShouldMatchers}
+import evcel.referencedata.TestFuturesExpiryRules
 
 class MtmPivotReportTest extends FunSuite with ShouldMatchers {
   val ivc = TestInstrumentValuationContext.Test

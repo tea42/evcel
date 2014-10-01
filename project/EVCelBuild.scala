@@ -62,7 +62,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(calendar, curve % "compile->compile;test->test", quantity % "test->test")
+  ).dependsOn(referencedata, curve % "compile->compile;test->test", quantity % "test->test")
 
   lazy val reports = module("reports").settings(
     libraryDependencies ++= Seq(
@@ -80,13 +80,21 @@ object EVCelBuild extends Build {
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(reports)
 
+  lazy val referencedata = module("referencedata").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(daterange, quantity)
+
   lazy val curve = module("curve").settings(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.0" % "test"
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(utils, quantity, daterange, calendar % "compile->compile;test->test")
+  ).dependsOn(calendar, utils, quantity, daterange, referencedata % "compile->compile;test->test")
 
   lazy val eventstore = module("eventstore").settings(
     libraryDependencies ++= Seq(
@@ -103,7 +111,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(curve, quantity, utils)
+  ).dependsOn(instrument, referencedata, curve, quantity, utils)
 
   lazy val calendar = module("calendar").settings(
     libraryDependencies ++= Seq(
@@ -113,13 +121,6 @@ object EVCelBuild extends Build {
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(daterange)
 
-  lazy val calendarstore = module("calendarstore").settings(
-    libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
-    ),
-    scalaSource in Compile := baseDirectory.value / "src",
-    scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(calendar, eventstore % "compile->compile;test->test")
 
   lazy val marketdatastore = module("marketdatastore").settings(
     libraryDependencies ++= Seq(
@@ -129,9 +130,25 @@ object EVCelBuild extends Build {
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(eventstore % "compile->compile;test->test")
 
+  lazy val referencedatastore = module("referencedatastore").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(referencedata, eventstore % "compile->compile;test->test")
+
+  lazy val tradestore = module("tradestore").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(instrument, eventstore % "compile->compile;test->test")
+
   lazy val server = module("server").settings(
     libraryDependencies ++= Seq()
-  ).dependsOn(maths, daterange, quantity, eventstore, calendar, calendarstore, xl, instrument, marketdatastore)
+  ).dependsOn(maths, daterange, quantity, eventstore, calendar, tradestore, referencedatastore, xl, instrument, marketdatastore)
 
   def module(name: String) = {
     Project(

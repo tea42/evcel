@@ -10,6 +10,7 @@ import evcel.quantity.UOM._
 import org.scalatest.{FunSpec, Matchers}
 
 import scala.language.reflectiveCalls
+import evcel.referencedata.FuturesExpiryRule
 
 class FuturesVolsTests extends FunSpec with Matchers {
   private def makeFuturesVols(smiles: (Month, BDQty, List[(Double, BDQty)])*) = {

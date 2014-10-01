@@ -1,7 +1,7 @@
 package evcel.curve.environment
 
 import com.google.common.collect.Sets
-import evcel.curve.ReferenceData
+import evcel.referencedata.ReferenceData
 import scala.collection.JavaConverters._
 import evcel.utils.EitherUtils._
 

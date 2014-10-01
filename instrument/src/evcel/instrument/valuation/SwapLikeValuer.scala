@@ -1,9 +1,9 @@
 package evcel.instrument.valuation
 
-import evcel.calendar.Calendar
+import evcel.referencedata.calendar.Calendar
 import evcel.curve.ValuationContext
 import evcel.curve.environment.PriceIdentifier
-import evcel.curve.markets.{SpotMarket, FuturesMarket}
+import evcel.referencedata.market.{SpotMarket, FuturesMarket}
 import evcel.daterange.{Month, DateRange, Day}
 import evcel.instrument.{CommoditySwapLookalike, CommoditySwap, Future}
 import evcel.quantity.{Qty, BDQty}

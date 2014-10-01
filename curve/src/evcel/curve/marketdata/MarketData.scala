@@ -1,6 +1,6 @@
 package evcel.curve.marketdata
 
-import evcel.curve.ReferenceData
+import evcel.referencedata.ReferenceData
 import evcel.curve.environment.{MarketDataIdentifier, MarketDay, Curve}
 import evcel.daterange.Day
 import evcel.quantity.UOM

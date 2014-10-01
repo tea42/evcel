@@ -9,6 +9,7 @@ import org.apache.zookeeper.server.ZooKeeperServer
 import org.apache.zookeeper.server.NIOServerCnxn
 import java.net.InetSocketAddress
 import evcel.utils.FileUtils
+import kafka.admin.AdminUtils
 
 /**
   * Mostly copied from Kafka's own unit tests
@@ -31,6 +32,12 @@ object KafkaTestUtils{
       zookeeper.shutdown()
       FileUtils.recursiveDelete(kafkaLogDir)
     }
+  }
+
+  def createTopic(server : KafkaServer, topic : String){
+    AdminUtils.createTopic(server.zkClient, topic, partitions = 1, replicationFactor = 1)
+    Thread.sleep(200) // Prevents 'Failed to collate messages by topic' error message from Kafka,
+                      // which is just noise, as Kafka invariably retries successfully
   }
 
   private def choosePort : Int = {

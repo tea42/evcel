@@ -9,19 +9,61 @@ import scala.collection.JavaConversions._
 import scala.concurrent.{Future, Promise}
 import spray.json._
 import spray.json.DefaultJsonProtocol._
+import scala.collection.immutable.SortedMap
+import scala.collection.immutable.TreeMap
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 
 
 abstract class EventStore[K, V](topic : String, kafkaPort : Int){
   import EventStore._
 
+  /**
+    * History is updated only after writes have successfully been written to the kafka store
+    */
+  private val history = new ConcurrentHashMap[K, JavaTreeMap[Offset, V]]()
+  /**
+    * Whereas latestVersions is updated immediately upon a write. It's purpose
+    * is only to prevent storing of duplicates
+    */
+  private val latestVersions = new ConcurrentHashMap[K, V]()
+
+  /**
+    * Defines the latest surface stored in memory. May be less than the
+    * last offset in kafka if we are in the middle of a write
+    */
+  private val latestOffsetReference = new AtomicReference(Offset(-1))
+
+  private val SYNC_POINT = "SYNC_POINT"
+  private val log = LoggerFactory.getLogger(this.getClass)
+  private val writer = EventStoreProducer(topic, kafkaPort)
+
+  private val promisesToWrite = new ConcurrentHashMap[UUID_String, Promise[Offset]]()
+
+  private val monitor = new Object
+  private var isLive = new AtomicBoolean(true)
+
+  private val consumer = new EventStoreConsumer(topic, kafkaPort)
+  syncWithKafka()
+
+
   def write(map : Map[K, V]): Future[Offset] = {
-    val uuid = UUID.randomUUID.toString
-    val message = createMessage(uuid, map)
     val promise = Promise[Offset]()
-    promisesToWrite.put(uuid, promise)
-    writer.send(message)
-    notifyReaderThread()
+    val updates = map.filterNot{
+      case (key, value) => 
+        latestVersions.get(key) == value
+    }
+    if (updates.isEmpty){
+      promise.success(latestOffset())
+    } else {
+      latestVersions ++= updates
+      val uuid = UUID.randomUUID.toString
+      val message = createMessage(uuid, updates)
+      promisesToWrite.put(uuid, promise)
+      writer.send(message)
+      notifyReaderThread()
+    }
     promise.future
   }
 
@@ -35,18 +77,17 @@ abstract class EventStore[K, V](topic : String, kafkaPort : Int){
   }
 
 
-  def latestVersion(): Offset = {
-    var latest = -1
-    if (history.size() == 0) Offset(-1)
-    else history.map{
-      case (_, treeMap) => treeMap.lastKey
-    }.max
+  def latestOffset(): Offset = latestOffsetReference.get()
+
+  def allVersions(key : K) : SortedMap[Offset, V] = {
+    TreeMap[Offset, V]() ++ Option(history.get(key)).getOrElse(new JavaTreeMap[Offset, V])
   }
 
+
   def read(offset: Offset, key : K) : Either[EventStore.NotFound[K], V] = {
-    if (offset > latestVersion())
+    if (offset > latestOffset())
       throw new RuntimeException(
-        s"$topic event store asked for offset/key $offset/$key when latest is $latestVersion()")
+        s"$topic event store asked for offset/key $offset/$key when latest is $latestOffset()")
     require(offset.value >= 0, s"$topic offset must be non-negative")
 
 
@@ -60,28 +101,61 @@ abstract class EventStore[K, V](topic : String, kafkaPort : Int){
   protected def parseMessage(message : String) : (UUID_String, Map[K, V])
   protected def createMessage(uuid : UUID_String, map : Map[K, V]) : String
 
-  private val log = LoggerFactory.getLogger(this.getClass)
-  private val writer = EventStoreProducer(topic, kafkaPort)
-  private val history = new ConcurrentHashMap[K, JavaTreeMap[Offset, V]]()
-
-  private val promisesToWrite = new ConcurrentHashMap[UUID_String, Promise[Offset]]()
-
-  private val monitor = new Object
-  private var isLive = new AtomicBoolean(true)
 
 
-  private val reader : Thread = new Thread() {
-
+  private def processMessage(offset : Offset, message : String){
     /** 
       * Completes (sucessfully) any waiting write Futures
       */
-    def fulfillPromise(uuid : UUID_String, offset : Offset){
+    def fulfillPromise(uuid : UUID_String){
       if (promisesToWrite.containsKey(uuid)) {
         promisesToWrite.get(uuid).success(offset)
         promisesToWrite.remove(uuid)
       }
     }
-    private val consumer = new EventStoreConsumer(topic, kafkaPort)
+    def updateHistory(updates : Map[K, V]){
+      updates.foreach{
+        case (key, value) => 
+          history.putIfAbsent(key, new JavaTreeMap[Offset, V]())
+          history.get(key).put(offset, value)
+      }
+    }
+    def incrementOffset(){
+      require(
+        offset.value == latestOffset().value + 1, 
+        s"Received a message out of order. Got $offset when latest is ${latestOffset()}"
+      )
+      latestOffsetReference.set(offset)
+    }
+
+    incrementOffset()
+
+    if (message.startsWith(SYNC_POINT + ":"))
+      return
+
+    val (uuid, updates) = parseMessage(message)
+    updateHistory(updates)
+    fulfillPromise(uuid)
+  }
+
+  def syncWithKafka() : Unit = {
+    val syncMessage = SYNC_POINT + ":" + UUID.randomUUID
+
+    writer.send(syncMessage)
+    var haveSynced = false
+    while (! haveSynced){
+      val messages = consumer.readMessages()
+      messages.foreach{
+        case (offset, message) => 
+          if (message == syncMessage)
+            haveSynced = true
+          processMessage(Offset(offset), message)
+      }
+    }
+  }
+
+  private val reader : Thread = new Thread() {
+
 
     override def run() {
       var lastReadEmpty = false
@@ -97,13 +171,7 @@ abstract class EventStore[K, V](topic : String, kafkaPort : Int){
             lastReadEmpty = messages.isEmpty
             messages.foreach {
               case (offset, message) =>
-                val (uuid, map) = parseMessage(message)
-                map.foreach{
-                  case (key, value) => 
-                    history.putIfAbsent(key, new JavaTreeMap[Offset, V]())
-                    history.get(key).put(Offset(offset), value)
-                }
-                fulfillPromise(uuid, Offset(offset))
+                processMessage(Offset(offset), message)
             }
           } catch {
 
