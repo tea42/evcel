@@ -28,16 +28,19 @@ def module(name : String, upstream : Module*) : Module = {
 val utils = module("utils")
 val maths = module("maths")
 val daterange = module("daterange", maths)
-val quantity = module("quantity", maths)
-val calendar = module("calendar", daterange)
-val curve = module_("curve", List(quantity, daterange, calendar, utils), List(calendar))
-val eventstore = module("eventstore", curve, utils)
-val marketdatastore = module_("marketdatastore", List(eventstore), List(eventstore))
-val calendarstore = module_("calendarstore", List(calendar, eventstore), List(eventstore))
+val quantity = module("quantity", maths, utils)
+val referencedata = module("referencedata", daterange, quantity)
+val calendar = module("calendar", daterange, referencedata)
+val curve = module_("curve", List(quantity, daterange, calendar, utils), List(calendar, referencedata))
 val instrument = module_("instrument", List(curve), List(curve, quantity))
+
+val eventstore = module("eventstore", instrument, curve, utils)
+val marketdatastore = module_("marketdatastore", List(eventstore), List(eventstore))
+val referencedatastore = module_("referencedatastore", List(referencedata, eventstore), List(eventstore))
+val tradestore = module_("tradestore", List(instrument, eventstore), List(eventstore))
 val reports = module_("reports", List(instrument), List(curve, instrument))
 val xl = module("xl", reports)
-val server = module("server", calendarstore, marketdatastore, xl)
+val server = module("server", referencedatastore, marketdatastore, tradestore, xl)
 
 val evcel = new Project(
   name = "evcel",

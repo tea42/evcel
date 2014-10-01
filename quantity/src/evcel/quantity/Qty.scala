@@ -188,5 +188,6 @@ object Qty {
 
     def toQty = Qty(value, UOM.SCALAR)
   }
+
 }
 

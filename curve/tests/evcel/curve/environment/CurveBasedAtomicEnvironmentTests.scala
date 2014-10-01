@@ -1,14 +1,16 @@
 package evcel.curve.environment
 
-import evcel.calendar.TestCalendars
-import evcel.curve.markets.TestMarkets
+import evcel.referencedata.calendar.TestCalendars
+import evcel.referencedata.market.TestMarkets
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import evcel.daterange.DateRangeSugar._
-import evcel.curve.curves.{TestFuturesExpiryRules, FuturesPrices}
+import evcel.curve.curves.FuturesPrices
+import evcel.referencedata.TestFuturesExpiryRules
 import evcel.quantity.UOM._
 import evcel.quantity.Qty._
-import evcel.curve.{EnvironmentParams, ReferenceData, ValuationContext}
+import evcel.curve.{EnvironmentParams, ValuationContext}
+import evcel.referencedata.ReferenceData
 import scala.language.reflectiveCalls
 
 class CurveBasedAtomicEnvironmentTests extends FunSpec with Matchers {

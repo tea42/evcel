@@ -1,6 +1,7 @@
 package evcel.curve.curves
 
-import evcel.curve.{ValuationContext, ReferenceData}
+import evcel.curve.ValuationContext
+import evcel.referencedata.ReferenceData
 import evcel.curve.environment._
 import evcel.curve.environment.MarketDay._
 import evcel.daterange._

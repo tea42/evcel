@@ -1,13 +1,14 @@
 package evcel.curve
 
-import evcel.calendar.TestCalendars
-import evcel.curve.curves.TestFuturesExpiryRules
+import evcel.referencedata.calendar.TestCalendars
+import evcel.referencedata.TestFuturesExpiryRules
 import evcel.curve.environment._
 import evcel.curve.marketdata._
-import evcel.curve.markets.TestMarkets
+import evcel.referencedata.market.TestMarkets
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.breakOut
 import evcel.quantity.UOM
+import evcel.referencedata.ReferenceData
 
 object UnitTestingEnvironment {
   def testRefData = ReferenceData(

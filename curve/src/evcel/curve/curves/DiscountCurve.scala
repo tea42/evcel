@@ -1,5 +1,6 @@
 package evcel.curve.curves
 
+import evcel.referencedata.ReferenceData
 import evcel.quantity.Percent
 import evcel.daterange.Day
 import evcel.quantity.UOM
@@ -9,7 +10,6 @@ import evcel.curve.environment._
 import scala.math._
 import evcel.quantity.Qty
 import evcel.utils.EitherUtils._
-import evcel.curve.ReferenceData
 
 abstract class DiscountCurve extends Curve {
   private[curves] def discountRate(day: Day): Double

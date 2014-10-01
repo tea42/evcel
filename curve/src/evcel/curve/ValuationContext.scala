@@ -1,11 +1,12 @@
 package evcel.curve
 
-import evcel.calendar.Calendar
+import evcel.referencedata.calendar.Calendar
 import evcel.curve.curves._
 import evcel.curve.environment._
 import evcel.daterange.{DateRange, Day, Month}
 import evcel.quantity.{Qty, UOM}
 import evcel.utils.EitherUtils._
+import evcel.referencedata.ReferenceData
 
 case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, params: EnvironmentParams) {
   def futuresPrice(market: String, month: Month) =

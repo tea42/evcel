@@ -1,6 +1,6 @@
 package evcel.curve.marketdata
 
-import evcel.curve.ReferenceData
+import evcel.referencedata.ReferenceData
 import evcel.curve.curves.DiscountCurve
 import evcel.curve.environment.{Curve, MarketDay}
 import evcel.curve.marketdata.MarketData.CantBuildCurve

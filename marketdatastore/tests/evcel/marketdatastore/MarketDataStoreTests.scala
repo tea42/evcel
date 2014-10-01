@@ -22,11 +22,9 @@ class MarketDataStoreTests extends FunSpec with Matchers with TableDrivenPropert
   def withMarketDataStore(fn : MarketDataStore => Unit){
     KafkaTestUtils.withTestKafka{
       server => 
-        AdminUtils.createTopic(server.zkClient, MarketDataStore.TOPIC, partitions = 1, replicationFactor = 1)
+        KafkaTestUtils.createTopic(server, "EVENTS")
         val store = MarketDataStore(kafkaPort = server.config.port)
         try{
-          Thread.sleep(100) // Prevents 'Failed to collate messages by topic' error message from Kafka,
-                            // which is just noise, as Kafka invariably retries successfully
           fn(store)
         } finally {
           store.shutdown()
@@ -52,8 +50,8 @@ class MarketDataStoreTests extends FunSpec with Matchers with TableDrivenPropert
             )))
           ).zipWithIndex.foreach{
             case ((key, data), i) => 
-              Await.result(store.write(marketDay, key, data), 2 seconds) should equal(Offset(i))
-              store.read(Offset(i), marketDay, key) should equal (Right(data))
+              Await.result(store.write(marketDay, key, data), 2 seconds) should equal(Offset(i + 1))
+              store.read(Offset(i + 1), marketDay, key) should equal (Right(data))
           }
       }
     }

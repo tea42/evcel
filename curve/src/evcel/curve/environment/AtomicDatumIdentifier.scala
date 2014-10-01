@@ -1,6 +1,7 @@
 package evcel.curve.environment
 
-import evcel.curve.{ValuationContext, ReferenceData}
+import evcel.curve.ValuationContext
+import evcel.referencedata.ReferenceData
 import evcel.daterange.DateRange
 import evcel.quantity.Qty
 

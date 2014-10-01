@@ -1,7 +1,7 @@
 package evcel.curve.marketdata
 
 import com.opengamma.analytics.math.interpolation.ConstrainedCubicSplineInterpolator
-import evcel.curve.ReferenceData
+import evcel.referencedata.ReferenceData
 import evcel.curve.curves.FuturesVols
 import evcel.curve.environment._
 import evcel.quantity.{Qty, BDQty}

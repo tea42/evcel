@@ -1,6 +1,6 @@
 package evcel.instrument
 
-import evcel.curve.ReferenceData
+import evcel.referencedata.ReferenceData
 import evcel.daterange.Month
 import evcel.instrument.valuation.FuturesFrontPeriodIndex
 import evcel.quantity.BDQty

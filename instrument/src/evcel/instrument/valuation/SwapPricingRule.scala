@@ -1,6 +1,6 @@
 package evcel.instrument.valuation
 
-import evcel.calendar.Calendar
+import evcel.referencedata.calendar.Calendar
 import evcel.daterange.Day
 
 sealed trait SwapPricingRule {

@@ -1,6 +1,6 @@
 package evcel.curve.marketdata
 
-import evcel.curve.ReferenceData
+import evcel.referencedata.ReferenceData
 import evcel.curve.curves.FuturesPrices
 import evcel.curve.environment.{FuturesPricesIdentifier, MarketDataIdentifier, MarketDay, Curve}
 import evcel.quantity.BDQty
