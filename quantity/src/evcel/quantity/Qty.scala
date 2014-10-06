@@ -1,5 +1,7 @@
 package evcel.quantity
 
+import java.text.DecimalFormat
+
 import scala.language.implicitConversions
 import UOM._
 
@@ -34,12 +36,22 @@ trait Qty extends Ordered[Qty] {
   def in(other: UOM, conv: Option[QtyConversions] = None): Option[Qty]
   override def toString = doubleValue + " " + uom
 
+  def toFormattedString(dp: Int) = if (dp < 16) { // DecimalFormat doesn't work after 16 decimal places
+    val format = new DecimalFormat("#,###" + (if (dp > 0) "." + "0" * dp else ""))
+    format.setRoundingMode(java.math.RoundingMode.HALF_UP)
+    format.format(bdValue) + " " + uom
+  } else {
+    bdValue + " " + uom
+  }
+
   def isFixedPoint: Boolean
   def ensuringFixedPoint: Qty
   def isScalar = uom == UOM.SCALAR
   def isNull = uom == UOM.NULL
 
   def round(nDP: Int): Qty
+
+  def one: Qty
 }
 
 class DblQty private[quantity] (private val value: Double, val uom: UOM) extends Qty {
@@ -89,6 +101,8 @@ class DblQty private[quantity] (private val value: Double, val uom: UOM) extends
   }
 
   override def round(nDP: Int) = Qty(value.toString, uom).round(nDP)
+
+  def one: DblQty = new DblQty(1, uom)
 }
 
 class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) extends Qty {
@@ -151,6 +165,8 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
   }
 
   def round(nDP: Int) = new BDQty(value.setScale(nDP, RoundingMode.HALF_UP), uom)
+
+  def one: BDQty = new BDQty(Qty.bdOne, uom)
 }
 
 object Qty {

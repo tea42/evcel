@@ -13,12 +13,9 @@ import evcel.referencedata.FuturesExpiryRule
 import evcel.referencedata.market.FuturesMarket
 import evcel.referencedata.calendar.CalendarData
 import evcel.referencedata.ReferenceDataTrait
-import evcel.instrument.Future
+import evcel.instrument._
 import evcel.quantity.Qty._
-import evcel.instrument.CommoditySwap
-import evcel.instrument.valuation.CommonSwapPricingRule
-import evcel.instrument.CommoditySwapLookalike
-import evcel.instrument.Instrument
+import evcel.instrument.valuation.{NonCommonSwapPricingRule, CommonSwapPricingRule}
 
 class EventStoreJsonProtocolTests extends FunSpec with Matchers {
   describe("EventStoreProtocol must be able to round trip") {
@@ -134,8 +131,17 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
       swap1.toJson.prettyPrint.parseJson.convertTo[CommoditySwap] should equal (swap1)
 
       val swap2 = CommoditySwap("WTI", Jun / 2014, Qty("100.0", USD/MT), Qty("10", MT), 
-        pricingRule = CommonSwapPricingRule)
+        bizDaysToSettlement = Some(5))
       swap2.toJson.prettyPrint.parseJson.convertTo[CommoditySwap] should equal (swap2)
+
+      info("Commodity Swap Spread")
+      val swaps1 = CommoditySwapSpread("WTI vs Brent", Jun / 2014, Qty("100.0", USD/MT), Qty("10", MT),
+        pricingRule = NonCommonSwapPricingRule)
+      swaps1.toJson.prettyPrint.parseJson.convertTo[CommoditySwapSpread] should equal (swaps1)
+
+      val swaps2 = CommoditySwapSpread("WTI vs Brent", Jun / 2014, Qty("100.0", USD/MT), Qty("10", MT),
+        bizDaysToSettlement = Some(5), pricingRule = CommonSwapPricingRule)
+      swaps2.toJson.prettyPrint.parseJson.convertTo[CommoditySwapSpread] should equal (swaps2)
 
       info("Commodity Swap Lookalike")
       val swapLookalike = CommoditySwapLookalike("WTI", Jun / 2014, Qty("100.0", USD/MT), Qty("10", MT))

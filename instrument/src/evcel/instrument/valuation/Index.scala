@@ -22,11 +22,8 @@ trait Index {
 }
 
 object Index {
-  def unapply(o: AnyRef): Option[Index] = o match {
-    case FuturesContractIndex(i) => Some(i)
-    case FuturesFrontPeriodIndex(i) => Some(i)
-    case SpotMarketIndex(i) => Some(i)
-    case _ => None
+  def parse(name: String)(implicit refData: ReferenceData): Option[Index] = refData.indexCache.memoize(name) {
+    FuturesContractIndex.parse(name).orElse(FuturesFrontPeriodIndex.parse(name)).orElse(SpotMarketIndex.parse(name))
   }
 }
 
@@ -64,14 +61,13 @@ case class FuturesContractIndex(marketName: String, month: Month) extends Future
 object FuturesContractIndex {
   val Parse = ("""(.*) \(""" + Month.Format + """+\)""").r
 
-  def unapply(o: AnyRef): Option[FuturesContractIndex] = o match {
-    case (refData: ReferenceData, name: String) => name match {
+  def parse(name: String)(implicit refData: ReferenceData): Option[FuturesContractIndex] = {
+    name match {
       case Parse(market, yy, mm) => refData.markets.futuresMarket(market).map(
         fm => FuturesContractIndex(fm.name, Month(yy.toInt, mm.toInt))
       )
       case _ => None
     }
-    case _ => None
   }
 
   def fromMarketAndPeriod(refData: ReferenceData, marketName: String, period: DateRange) = {
@@ -90,8 +86,10 @@ case class SpotMarketIndex(marketName: String) extends Index {
   }
 
   override def observationDays(vc: ValuationContext, period: DateRange) = {
-    val calendar = vc.spotCalendarOrThrow(marketName)
-    period.days.filter(calendar.isBusinessDay).toSeq
+    vc.refData.indexCache.memoize((this, "observationDays", period)) {
+      val calendar = vc.spotCalendarOrThrow(marketName)
+      period.days.filter(calendar.isBusinessDay).toSeq
+    }
   }
 
   override def calendar(refData: ReferenceData) = {
@@ -107,9 +105,8 @@ case class SpotMarketIndex(marketName: String) extends Index {
 }
 
 object SpotMarketIndex {
-  def unapply(o: AnyRef): Option[SpotMarketIndex] = o match {
-    case (refData: ReferenceData, name: String) => refData.markets.spotMarket(name).map(s => SpotMarketIndex(s.name))
-    case _ => None
+  def parse(name: String)(implicit refData: ReferenceData): Option[SpotMarketIndex] = {
+    refData.markets.spotMarket(name).map(s => SpotMarketIndex(s.name))
   }
 }
 
@@ -124,8 +121,10 @@ case class FuturesFrontPeriodIndex(marketName: String, nearby: Int, rollEarlyDay
   }
 
   def observationDays(vc: ValuationContext, period: DateRange) = {
-    val cal = calendar(vc.refData)
-    period.days.filter(cal.isBusinessDay).toSeq
+    vc.refData.indexCache.memoize((this, "observationDays", period)) {
+      val cal = calendar(vc.refData)
+      period.days.filter(cal.isBusinessDay).toSeq
+    }
   }
 
   override def price(vc: ValuationContext, observationDay: Day) = {
@@ -160,18 +159,15 @@ case class FuturesFrontPeriodIndex(marketName: String, nearby: Int, rollEarlyDay
 object FuturesFrontPeriodIndex {
   val Parse = """(.+) nearby ([0-9]+)[ ]?(roll )?([0-9]?)""".r
 
-  def unapply(o: AnyRef) = o match {
-    case (refData: ReferenceData, name: String) => name match {
-      case Parse(market, nearby, _, roll) =>
-        val nearbyNum = if (nearby.isEmpty) 1 else nearby.toInt
-        val rollNum = if (roll.isEmpty) 0 else roll.toInt
-        refData.markets.futuresMarket(market).map(_ =>
-          new FuturesFrontPeriodIndex(
-            market, nearbyNum, rollNum
-          )
+  def parse(name: String)(implicit refData: ReferenceData) = name match {
+    case Parse(market, nearby, _, roll) =>
+      val nearbyNum = if (nearby.isEmpty) 1 else nearby.toInt
+      val rollNum = if (roll.isEmpty) 0 else roll.toInt
+      refData.markets.futuresMarket(market).map(_ =>
+        new FuturesFrontPeriodIndex(
+          market, nearbyNum, rollNum
         )
-      case _ => None
-    }
+      )
     case _ => None
   }
 }
@@ -187,13 +183,14 @@ case class IndexSpread(index1: Index, index2: Index) {
 object IndexSpread {
   val Parse = """(.+?) vs (.+)""".r
 
-  def unapply(o: AnyRef): Option[IndexSpread] = o match {
-    case (refData: ReferenceData, name: String) => name match {
-      case Parse(i1, i2) =>
-        for(index1 <- Index.unapply((refData, i1)); index2 <- Index.unapply((refData, i2)))
+  def parse(name: String)(implicit refData: ReferenceData): Option[IndexSpread] = {
+    refData.indexSpreadCache.memoize(name) {
+      name match {
+        case Parse(i1, i2) =>
+          for (index1 <- Index.parse(i1); index2 <- Index.parse(i2))
           yield IndexSpread(index1, index2)
-      case _ => None
+        case _ => None
+      }
     }
-    case _ => None
   }
 }

@@ -11,13 +11,14 @@ import evcel.quantity.BDQty
  * CommoditySwapLookalike("nymex wti", Feb) is the same as
  *  CommoditySwap("nymex wti 1st month", averagingPeriod = lastTradingDay(Feb))
  */
-case class CommoditySwapLookalike(futuresMarket: String, month: Month, strike: BDQty, volume: BDQty)
+case class CommoditySwapLookalike(futuresMarket: String, month: Month, strike: BDQty, volume: BDQty,
+                                  bizDaysToSettlement: Option[Int] = None)
   extends Instrument {
 
   def asCommoditySwap(refData: ReferenceData) = {
     val ltd = refData.markets.futuresMarketOrThrow(futuresMarket).lastTradingDay(refData, month)
     val ndx = new FuturesFrontPeriodIndex(futuresMarket, 1, 0)
-    new CommoditySwap(ndx.indexName, ltd, strike, volume)
+    new CommoditySwap(ndx.indexName, ltd, strike, volume, bizDaysToSettlement = bizDaysToSettlement)
   }
 }
 
