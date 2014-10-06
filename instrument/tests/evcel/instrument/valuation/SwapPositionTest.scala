@@ -1,23 +1,33 @@
 package evcel.instrument.valuation
 
 import evcel.daterange.{Day, Month, PeriodLabel}
-import evcel.instrument.{CommoditySwapLookalike, CommoditySwap}
-import evcel.quantity.Qty
 import evcel.instrument.valuation.Position._
+import evcel.quantity.Qty
+import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 
 class SwapPositionTest extends ValuationTest {
-  val K = Qty("100", USD / BBL)
-  val V = Qty("1000", BBL)
+  implicit val tol: BigDecimal = BigDecimal("1e-7")
+  import scalaz.syntax.equal._
+  import scalaz.std.iterable._
+  import evcel.quantity.utils.QuantityTestUtils._
 
   test("swap on futures contract index") {
-    val swap = new CommoditySwapLookalike(wti, oct, K, V)
+    val swap = createLookalike(bizDaysSett = Some(5))
     val vc = createVC()
+    val undiscVC = vc.undiscounted
     val ltd = vc.futureExpiryDayOrThrow(wti, oct)
-    val positions = swap.positions(vc)
-    positions shouldEqual List(SwapHedgeInstrument("Nymex WTI nearby 1", PeriodLabel(ltd), V))
-    val positionsEqF = swap.positions(vc.copy(params = vc.params.withShowEqFutures(b = true)))
-    positionsEqF.toList shouldEqual List(FutureHedgeInstrument(wti, PeriodLabel(oct), V))
+    val settDay = vc.futuresCalendarOrThrow(wti).addBusinessDays(ltd, 5)
+    val positions = swap.positions(undiscVC)
+    positions shouldEqual List(SwapHedgeInfo("Nymex WTI nearby 1", PeriodLabel(ltd), swap.volume))
+    val positionsEqF = swap.positions(undiscVC.copy(params = vc.params.withShowEqFutures(b = true)))
+    positionsEqF.toList shouldEqual List(FutureHedgeInfo(wti, PeriodLabel(oct), swap.volume))
+
+    val discountRate = vc.discountRate(USD, settDay).toQty
+    val positionsDisc = swap.positions(vc)
+    positionsDisc assert_=== List(SwapHedgeInfo("Nymex WTI nearby 1", PeriodLabel(ltd), swap.volume * discountRate))
+    val positionsEqFDisc = swap.positions(vc.copy(params = vc.params.withShowEqFutures(b = true)))
+    positionsEqFDisc assert_=== List(FutureHedgeInfo(wti, PeriodLabel(oct), swap.volume * discountRate))
 
     // expired is broken at the moment as we don't have fixings
 //    val fs = vc.forwardState(ltd.endOfDay)
@@ -29,13 +39,13 @@ class SwapPositionTest extends ValuationTest {
     val observationDays = SwapLikeValuer(vc, createSingSwap()).observationDays
     val swap = createSingSwap(volume = Qty((observationDays.size * 13).toString, MT))
     val positions = swap.positions(vc)
-    positions shouldEqual List(SwapHedgeInstrument(sing, PeriodLabel(oct), swap.volume))
+    positions shouldEqual List(SwapHedgeInfo(sing, PeriodLabel(oct), swap.volume))
     val positionsEqF = swap.positions(vc.copy(params = vc.params.withShowEqFutures(b = true)))
     positionsEqF shouldEqual positions
     swap.positions(vc.copy(params = vc.params.withTenor(Some(Month)))) shouldEqual positions
 
     swap.positions(vc.copy(params = vc.params.withTenor(Some(Day)))).toSet shouldEqual observationDays.map{
-      d => SwapHedgeInstrument(sing, PeriodLabel(d), swap.volume / observationDays.size)
+      d => SwapHedgeInfo(sing, PeriodLabel(d), swap.volume / observationDays.size)
     }.toSet
   }
 
@@ -45,7 +55,7 @@ class SwapPositionTest extends ValuationTest {
     val V = Qty((observationDays.size * 13).toString, BBL)
     val swap = createSwap(volume = V)
     val positions = swap.positions(vc)
-    positions shouldEqual SwapHedgeInstrument(wti1st, PeriodLabel(oct), V) :: Nil
+    positions shouldEqual SwapHedgeInfo(wti1st, PeriodLabel(oct), V) :: Nil
 
     val positionsEqF = swap.positions(vc.copy(params = vc.params.withShowEqFutures(b = true)))
     val market = vc.futuresMarketOrThrow(wti)
@@ -54,12 +64,12 @@ class SwapPositionTest extends ValuationTest {
     ).groupBy(identity).map{case (m, instances) => m -> instances.size / BigDecimal(observationDays.size)}
 
     val expectedPositionsEqF = weights.map { case (m, w) =>
-      FutureHedgeInstrument(s"Nymex WTI", PeriodLabel(m), (V * w).round(9))
+      FutureHedgeInfo(s"Nymex WTI", PeriodLabel(m), (V * w).round(9))
     }
     positionsEqF shouldEqual expectedPositionsEqF
 
     val expectedDaily = observationDays.map { d =>
-      SwapHedgeInstrument(wti1st, PeriodLabel(d), V / observationDays.size)
+      SwapHedgeInfo(wti1st, PeriodLabel(d), V / observationDays.size)
     }.toSet
     swap.positions(vc.copy(params = vc.params.withTenor(Some(Day)))).toSet shouldEqual expectedDaily
   }

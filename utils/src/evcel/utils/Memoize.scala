@@ -1,31 +1,29 @@
 package evcel.utils
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{Callable, ConcurrentHashMap}
 
-trait Memoize[K, V] extends (K => V){
-  protected def singleParameterFunction(k : K) : V
+trait Cache {
+  def name: String
+  def memoize[K, V](key: K)(f: => V): V
+}
 
-  private val cache = new ConcurrentHashMap[K, V]()
-  def update(key : K) : V = {
-    val v = singleParameterFunction(key)
-    cache.put(key, v)
-    v
+case class CHMCache(name: String) extends Cache {
+  private class CachedCallable(f: => AnyRef) extends Callable[AnyRef] {
+    lazy val result = f
+    override def call() = result
   }
-  def apply(key : K): V = {
-    Option(cache.get(key)).getOrElse(update(key))
+
+  private val cache = new ConcurrentHashMap[AnyRef, CachedCallable]()
+
+  override def memoize[K, V](key: K)(f:  => V): V = {
+    def call = f.asInstanceOf[AnyRef]
+    val callable = new CachedCallable(call)
+    Option(cache.putIfAbsent(key.asInstanceOf[AnyRef], callable)).map(_.call().asInstanceOf[V]).getOrElse(f)
   }
 }
 
-object Memoize{
-  def apply[T, R](f: T => R) = new Memoize[T, R]{
-    def singleParameterFunction(t : T) = f(t)
-  }
-
-  def apply[T1, T2, R](f: (T1, T2) => R) = new Memoize[(T1, T2), R]{
-    def singleParameterFunction(t : (T1, T2)) = f(t._1, t._2)
-  }
-
-  def apply[T1, T2, T3, R](f: (T1, T2, T3) => R) = new Memoize[(T1, T2, T3), R]{
-    def singleParameterFunction(t : (T1, T2, T3)) = f(t._1, t._2, t._3)
+object Cache{
+  def createStaticCache(name: String) = {
+    new CHMCache(name)
   }
 }

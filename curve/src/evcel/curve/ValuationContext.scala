@@ -68,4 +68,6 @@ case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, p
   }
 
   def forwardState(forwardDay: MarketDay) = copy(atomic = ForwardStateEnvironment(refData, atomic, forwardDay))
+
+  def undiscounted = copy(atomic = PerturbedAtomicEnvironment(atomic, { case DiscountRateIdentifier(_, _) => 1.0 }))
 }

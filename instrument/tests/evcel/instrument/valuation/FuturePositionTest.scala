@@ -10,6 +10,6 @@ class FuturePositionTest extends ValuationTest {
     val future = createFuture()
 
     future.positions(vc) shouldEqual
-      FutureHedgeInstrument(future.market, PeriodLabel(future.delivery), future.volume) :: Nil
+      FutureHedgeInfo(future.market, PeriodLabel(future.delivery), future.volume) :: Nil
   }
 }

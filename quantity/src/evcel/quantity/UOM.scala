@@ -1,6 +1,6 @@
 package evcel.quantity
 
-import evcel.utils.Memoize
+import evcel.utils.Cache
 import org.apache.commons.math3.util.ArithmeticUtils
 import scala.annotation.tailrec
 import scalaz.Scalaz._
@@ -23,9 +23,7 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
 
   def /(other: UOM): UOM = mult(other.invert)._1
 
-  def mult(other: UOM): (UOM, BigDecimal) = mmult(other)
-
-  private val mmult: Memoize[UOM, (UOM, BigDecimal)] = Memoize { (other: UOM) =>
+  def mult(other: UOM): (UOM, BigDecimal) = UOM.multCache.memoize((this, other)) {
     val newUOM = UOM(dimension * other.dimension, secondary * other.secondary)
     val dimGCD = newUOM.dimension.gcd
     // if the dimension has a gcd > 1 then we have some redundancy in the UOM, something like
@@ -151,6 +149,7 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
 }
 
 object UOM {
+  private val multCache = Cache.createStaticCache("UOMCache.mult")
   private var symbols = Map[Int, List[String]]()
   private var byDimension = Map[Int, List[UOM]]()
   private var primeToUOM = Map[Int, UOM]()

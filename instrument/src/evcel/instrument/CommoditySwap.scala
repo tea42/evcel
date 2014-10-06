@@ -1,12 +1,17 @@
 package evcel.instrument
 
-import evcel.daterange.{Day, DateRange}
-import evcel.instrument.valuation.{SingleUnderlyingSwapPricingRule, SwapPricingRule}
+import evcel.daterange.DateRange
 import evcel.quantity.BDQty
 
 case class CommoditySwap(market: String, averagingPeriod: DateRange, strike: BDQty, volume: BDQty,
-  pricingRule: SwapPricingRule = SingleUnderlyingSwapPricingRule)
+  bizDaysToSettlement: Option[Int] = None)
   extends Instrument {
+
+  def isCleared = bizDaysToSettlement.isEmpty
+}
+
+object CommoditySwap {
+  val defaultDaysToSettlement = 5
 }
 
 

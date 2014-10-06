@@ -26,6 +26,27 @@ class QtyTest extends FunSuite with Matchers {
     }
   }
 
+  test("test equality") {
+    import scalaz.syntax.equal._
+
+    (Qty("1", USD): Qty) assert_=== (Qty("1", USD) - Qty("1e-21", USD))
+    (Qty("1", USD): Qty) assert_=/= (Qty("1", USD) - Qty("1e-19", USD))
+  }
+
+  test("test equality with new tolerance") {
+    import scalaz.syntax.equal._
+
+    intercept[RuntimeException] {
+      implicit val tol: BigDecimal = BigDecimal("1e-25")
+      (Qty("1", USD): Qty) assert_=== (Qty("1", USD) - Qty("1e-19", USD))
+    }.getMessage shouldEqual "1 USD ≠ 0.9999999999999999999 USD"
+
+    intercept[RuntimeException] {
+      implicit val tol: BigDecimal = BigDecimal("1e-5")
+      (Qty("1", USD): Qty) assert_=/= (Qty("1", USD) - Qty("1e-19", USD))
+    }.getMessage shouldEqual "1.00000 USD == 1.00000 USD"
+  }
+
   test("checked values") {
     Qty(7, USD).checkedDouble(USD) shouldEqual 7
     Qty(7, USD).checkedBDValue(USD) shouldEqual BigDecimal(7)
@@ -106,6 +127,21 @@ class QtyTest extends FunSuite with Matchers {
     (Qty(100, PERCENT) * Qty(100, PERCENT)).toString shouldEqual "100.0 %"
     (Qty(100, PERCENT) * Qty(1, PERCENT)).toString shouldEqual "1.0 %"
     (Qty(100, PERCENT) / Qty(1, PERCENT)).toString shouldEqual "10000.0 %"
+  }
+
+  test("format") {
+    Qty(2, USD).toFormattedString(2) shouldEqual "2.00 USD"
+    Qty(2, USD).toFormattedString(0) shouldEqual "2 USD"
+    Qty(1.99, USD).toFormattedString(2) shouldEqual "1.99 USD"
+
+    // this test fails in Java 8. it gives 1.9 USD
+    // https://github.com/PROSPricing/jdk8patch-halfupround/
+//    Qty("1.99", USD).toFormattedString(1) shouldEqual "2.0 USD"
+
+    Qty(1.99, USD).toFormattedString(0) shouldEqual "2 USD"
+//    decimal format gives up after 16 decimal places.
+//    so after 16 decimal places we just print out the string for the bigdecimal and the uom.
+    (Qty("1", USD) - Qty("1e-20", USD)).toFormattedString(300) shouldEqual "0.99999999999999999999 USD"
   }
 
   test("implicits") {

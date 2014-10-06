@@ -2,32 +2,16 @@ package evcel.eventstore.json
 
 import evcel.curve.environment._
 import evcel.curve.marketdata._
-import evcel.daterange.{SimpleDateRange, DateRange, Day, Month}
-import evcel.quantity.{BDQty, Qty, UOM, UOMRatio}
-import spray.json._
+import evcel.daterange.{DateRange, Day, Month, SimpleDateRange}
+import evcel.instrument._
 import evcel.instrument.trade.Trade
-import evcel.instrument.Future
-import evcel.instrument.FuturesOption
+import evcel.instrument.valuation.{CommonSwapPricingRule, NonCommonSwapPricingRule, SwapPricingRule}
 import evcel.maths.OptionRight
-import evcel.instrument.OptionType
-import evcel.instrument.CommoditySwap
-import evcel.instrument.Instrument
-import evcel.referencedata.ReferenceDataTrait._
-import evcel.referencedata.CalendarIdentifier
-import evcel.referencedata.ReferenceDataIdentifier
-import evcel.referencedata.ReferenceDataTrait
+import evcel.quantity.{BDQty, Qty, QtyConversions, UOM, UOMRatio}
+import evcel.referencedata.{CalendarIdentifier, FuturesExpiryRule, FuturesExpiryRuleIdentifier, ReferenceDataIdentifier, ReferenceDataTrait}
 import evcel.referencedata.calendar.CalendarData
-import evcel.referencedata.FuturesExpiryRule
-import evcel.referencedata.FuturesExpiryRuleIdentifier
-import evcel.referencedata.ReferenceData
-import evcel.referencedata.market.FuturesMarket
-import evcel.referencedata.market.FuturesMarketIdentifier
-import evcel.instrument.valuation.SwapPricingRule
-import evcel.instrument.valuation.SingleUnderlyingSwapPricingRule
-import evcel.instrument.valuation.CommonSwapPricingRule
-import evcel.instrument.valuation.NonCommonSwapPricingRule
-import evcel.quantity.QtyConversions
-import evcel.instrument.CommoditySwapLookalike
+import evcel.referencedata.market.{FuturesMarket, FuturesMarketIdentifier}
+import spray.json._
 
 object EventStoreJsonProtocol extends DefaultJsonProtocol {
   abstract class NamedFormat[T] extends RootJsonFormat[T] {
@@ -178,12 +162,10 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
 
   implicit val swapPricingRuleFormat = new RootJsonFormat[SwapPricingRule]{
     def write(pr : SwapPricingRule) = pr match {
-      case SingleUnderlyingSwapPricingRule  => JsString("SingleUnderlyingSwapPricingRule")
       case CommonSwapPricingRule            => JsString("CommonSwapPricingRule")
       case NonCommonSwapPricingRule         => JsString("NonCommonSwapPricingRule")
     }
     def read(json : JsValue) = json match {
-      case JsString("SingleUnderlyingSwapPricingRule")  => SingleUnderlyingSwapPricingRule
       case JsString("CommonSwapPricingRule")            => CommonSwapPricingRule
       case JsString("NonCommonSwapPricingRule")         => NonCommonSwapPricingRule
       case _ => 
@@ -192,8 +174,13 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
   }
   implicit val futureFormat = named(Instrument.FUTURE, jsonFormat4(Future.apply))
   implicit val futuresOptionFormat = named(Instrument.FUTURES_OPTION, jsonFormat9(FuturesOption.apply))
-  implicit val commoditySwapFormat = named(Instrument.COMMODITY_SWAP, jsonFormat5(CommoditySwap))
-  implicit val commoditySwapLookalikeFormat = named(Instrument.COMMODITY_SWAP_LOOKALIKE, jsonFormat4(CommoditySwapLookalike))
+  implicit val commoditySwapFormat = named(Instrument.COMMODITY_SWAP, jsonFormat5(CommoditySwap.apply))
+  implicit val commoditySwapLookalikeFormat = named(
+    Instrument.COMMODITY_SWAP_LOOKALIKE, jsonFormat5(CommoditySwapLookalike.apply)
+  )
+  implicit val commoditySwapSpreadLookalikeFormat = named(
+    Instrument.COMMODITY_SWAP_SPREAD, jsonFormat6(CommoditySwapSpread.apply)
+  )
 
   implicit val instrumentFormat = new TraitFormat[Instrument](
     classOf[Future] -> futureFormat, 
