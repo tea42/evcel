@@ -1,4 +1,4 @@
-import maker.project.{Module, Project}
+import maker.project.{Module, Project, ClassicLayout}
 import java.io.File
 import scala.util.Properties
 import maker.task.BuildResult
@@ -19,7 +19,7 @@ def module_(name : String, upstream : List[Module], testUpstream : List[Module])
     immediateUpstreamModules = upstream,
     immediateUpstreamTestModules = testUpstream,
     props = makerProps
-    )
+    ) with ClassicLayout
 }
 def module(name : String, upstream : Module*) : Module = {
   module_(name, upstream.toList, testUpstream = Nil)
