@@ -11,6 +11,9 @@ case class EventStoreProducer(topic: String, kafkaPort: Int) {
     val data = new KeyedMessage[String, String](topic, msg);
     producer.send(data)
   }
+  def close(){
+    producer.close()
+  }
 }
 
 object EventStoreProducer {
