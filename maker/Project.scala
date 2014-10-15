@@ -19,7 +19,9 @@ def module_(name : String, upstream : List[Module], testUpstream : List[Module])
     immediateUpstreamModules = upstream,
     immediateUpstreamTestModules = testUpstream,
     props = makerProps
-    ) with ClassicLayout
+    ) with ClassicLayout{
+      override def scalacOptions = List("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
+    }
 }
 def module(name : String, upstream : Module*) : Module = {
   module_(name, upstream.toList, testUpstream = Nil)
