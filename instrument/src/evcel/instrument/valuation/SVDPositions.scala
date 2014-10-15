@@ -4,7 +4,7 @@ import evcel.curve.ValuationContext
 import evcel.curve.environment.{MarketDay, PriceIdentifier}
 import evcel.instrument.valuation.Valuer._
 import evcel.instrument._
-import evcel.quantity.{BDQty, Qty}
+import evcel.quantity.{DblQty, Qty}
 import org.apache.commons.math3.linear.{Array2DRowRealMatrix, SingularValueDecomposition}
 
 object SVDPositions{
@@ -12,7 +12,7 @@ object SVDPositions{
     vc: ValuationContext,
     portfolio: Seq[Instrument],
     hedges: Seq[Instrument])
-    (implicit valuer: Valuer): Seq[(Instrument, BDQty)] = {
+    (implicit valuer: Valuer): Seq[(Instrument, DblQty)] = {
 
     val portfolioKeys = portfolio.map(i => i -> i.priceKeys(vc)).toMap
     val hedgeKeys = hedges.map(i => i -> i.priceKeys(vc)).toMap
@@ -54,7 +54,7 @@ object SVDPositions{
     val solution = svd.getSolver.solve(hedgePos)
     hedges.zipWithIndex.map {
       case (hedge, i) =>
-        (hedge, Qty(solution.getEntry(i, 0).toString, hedge.volume.uom))
+        (hedge, Qty(solution.getEntry(i, 0), hedge.volume.uom))
     }
   }
   def positions(vc: ValuationContext, instr: Instrument)(implicit valuer : Valuer): Iterable[HedgeInfo] = {
@@ -70,7 +70,7 @@ object SVDPositions{
     }
     val scaled = scaleHedges(vc, instr :: Nil, hedgePortfolio.unscaledHedges)(valuer)
     val hedgeInfos = scaled.map{
-      case (unscaled: Instrument, volume: BDQty) => hedgePortfolio.instrumentToHedgeInfo(vc, unscaled, volume)
+      case (unscaled: Instrument, volume: DblQty) => hedgePortfolio.instrumentToHedgeInfo(vc, unscaled, volume)
     }
     HedgeInfo.combineSameMarketAndPeriod(hedgeInfos)
   }

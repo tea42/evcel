@@ -11,13 +11,13 @@ import org.apache.commons.math3.linear.{Array2DRowRealMatrix, SingularValueDecom
 trait HedgePortfolio {
   def unscaledHedges: Seq[Instrument]
 
-  def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: BDQty): HedgeInfo
+  def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: Qty): HedgeInfo
 }
 
 class FutureHedgePortfolio(f: Future) extends HedgePortfolio {
   override def unscaledHedges = f.copy(volume = f.volume.one) :: Nil
 
-  override def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: BDQty) = {
+  override def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: Qty) = {
     unscaledHedge match {
       case f: Future => FutureHedgeInfo(f.market, PeriodLabel(f.delivery), volume)
       case o => sys.error("Not valid: " + o)

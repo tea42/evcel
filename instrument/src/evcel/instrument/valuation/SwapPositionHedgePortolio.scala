@@ -46,7 +46,7 @@ class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDa
     indexes.flatMap(i => hedgesForFuturesIndexes(i) ++ hedgesForSwapIndexes(i))
   }
 
-  override def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: BDQty) = {
+  override def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: Qty) = {
     unscaledHedge match {
       case swapHedge: CommoditySwap =>
         require(swapHedge.averagingPeriod.days.size == 1, "This should be one day: " + swapHedge.averagingPeriod)
