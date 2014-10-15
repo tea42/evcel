@@ -61,7 +61,7 @@ class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDa
             PeriodLabel(month)
           case o => sys.error("Invalid: " + o)
         }
-        SwapHedgeInfo(swapHedge.market, periodLabel, volume)
+        SwapHedgeInfo(swapHedge.index, periodLabel, volume)
       case f: Future => FutureHedgeInfo(f.market, PeriodLabel(f.delivery), volume)
       case o => sys.error("Not valid: " + o)
     }
