@@ -168,12 +168,13 @@ class QtyTest extends FunSuite with Matchers {
   }
 
   test("compare") {
-    1(USD) shouldBe < (2(USD))
-    2(USD) shouldBe > (1(USD))
-    2(USD) shouldBe > (1(SCALAR))
-    2(USD) shouldBe > (Qty.NULL: Qty)
+    import Qty._
+    (1(USD) < 2.0(USD)) shouldBe (true)
+    (2(USD) > 1(USD)) shouldBe (true)
+    (2(USD) > 1(SCALAR)) shouldBe (true)
+    (2(USD) > Qty.NULL) shouldBe (true)
     intercept[RuntimeException] {
-      2(USD) shouldBe > (0(BBL))
+      2(USD) > (0(BBL))
     }
   }
 }
