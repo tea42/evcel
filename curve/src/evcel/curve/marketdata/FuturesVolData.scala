@@ -52,3 +52,23 @@ case class FuturesVolData(data: List[(Month, BDQty, List[(Double, BDQty)])])
   }
 }
 
+object FuturesVolData{
+  // Convenience method for tests
+  def apply(
+    first : (Month, BDQty, List[(Double, BDQty)]),
+    others :(Month, BDQty, List[(Double, BDQty)])* 
+  ) : FuturesVolData = {
+    FuturesVolData(first::others.toList)
+  }
+
+  // Convenience method for tests - no skews
+  def apply(
+    firstAtmVol  : (Month, BDQty),
+    others : (Month, BDQty)* 
+  ) : FuturesVolData = {
+    val data = (firstAtmVol :: others.toList).map{
+      case (m, v) => (m, v, Nil)
+    }
+    FuturesVolData(data)
+  }
+}

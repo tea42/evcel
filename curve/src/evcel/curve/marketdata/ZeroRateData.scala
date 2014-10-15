@@ -15,3 +15,10 @@ case class ZeroRateData(dayCount: DayCount, rates: List[(Day, BDQty)])
     Right(DiscountCurve(currency, marketDay.day, dayCount, rates))
   }
 }
+
+object ZeroRateData{
+  // Convenience method for tests
+  def apply(dayCount : DayCount, firstRate : (Day, BDQty), otherRates : (Day, BDQty)*) : ZeroRateData = {
+    ZeroRateData(dayCount, firstRate :: otherRates.toList)
+  }
+}

@@ -15,6 +15,9 @@ import evcel.quantity.utils.QuantityTestUtils
 import evcel.quantity.{Percent, Qty}
 import org.scalatest.{FunSuite, ShouldMatchers}
 import evcel.referencedata.TestFuturesExpiryRules
+import evcel.curve.marketdata.FuturesPriceData
+import evcel.curve.marketdata.ZeroRateData
+import evcel.curve.marketdata.FuturesVolData
 
 class MtmPivotReportTest extends FunSuite with ShouldMatchers {
   val ivc = TestInstrumentValuationContext.Test
@@ -24,20 +27,26 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
     val market = "Nymex WTI"
     val F = Qty("100", USD / BBL)
     val K = Qty("101", USD / BBL)
-    val r = 0.05
+    val r = Percent("5")
+    val vol = Percent("20")
     val option = new FuturesOption(
       market, month, K, Qty("1", BBL), Call, EuropeanOption
     )
     val expiryDay = TestFuturesExpiryRules.Test.expiryRule(market).map(_.optionExpiryDayOrThrow(month)).get
     val marketDay = MarketDay(Day(2014, 6, 1), TimeOfDay.end)
     val T = Act365.timeBetween(marketDay.day, expiryDay)
-    val pr = new MtmPivotReport(UnitTestingEnvironment(marketDay, {
-      case FuturesPriceIdentifier(`market`, `month`) => F
-      case DiscountRateIdentifier(USD, day) => math.exp(-r * T)
-      case FuturesVolIdentifier(`market`, `month`, K, _) => Percent("20")
-    }), ivc)
+    val pr = new MtmPivotReport(
+      UnitTestingEnvironment.fromMarketData(
+        marketDay, 
+        market -> FuturesPriceData(month -> F),
+        USD -> ZeroRateData(Act365, (marketDay.day + 100) -> r),
+        market -> FuturesVolData((month, vol))
+      ),
+      ivc
+    )
 
-    val bsValue = new BlackScholes(Call, F.doubleValue, K.doubleValue, .2, T).undiscountedValue * math.exp(-r * T)
+    val bsValue = new BlackScholes(Call, F.doubleValue, K.doubleValue, vol.checkedPercent, T).undiscountedValue * 
+      math.exp(-r.checkedPercent * T) 
     val rows = pr.rows(option)
     rows.size shouldBe 1
     rows.head.value(MtmPivotReportType.MtmField) shouldEqual Qty(bsValue, USD)
@@ -72,11 +81,10 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
       index, oct, K, Qty("1", BBL)
     )
     val marketDay = MarketDay(Day(2014, 6, 1), TimeOfDay.end)
-    val vc = UnitTestingEnvironment(marketDay, {
-      case FuturesPriceIdentifier(`market`, `nov`) => Fnov
-      case FuturesPriceIdentifier(`market`, `dec`) => Fdec
-      case other => sys.error("invalid req: " + other)
-    })
+    val vc = UnitTestingEnvironment.fromMarketData(
+      marketDay, 
+      market -> FuturesPriceData(nov -> Fnov, dec -> Fdec)
+    )
     val pr = new MtmPivotReport(vc, ivc)
     val rows = pr.rows(swap)
     rows.size shouldBe 1

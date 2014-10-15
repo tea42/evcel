@@ -117,8 +117,8 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     )
 
   implicit val futuresPricesFormat = named(MarketData.FUTURES_PRICES, jsonFormat1(FuturesPriceData.apply))
-  implicit val discountRateFormat = named(MarketData.ZERO_RATES, jsonFormat2(ZeroRateData))
-  implicit val futuresVolFormat = named(MarketData.FUTURES_VOLS, jsonFormat1(FuturesVolData))
+  implicit val discountRateFormat = named(MarketData.ZERO_RATES, jsonFormat2(ZeroRateData.apply))
+  implicit val futuresVolFormat = named(MarketData.FUTURES_VOLS, jsonFormat1(FuturesVolData.apply))
   implicit val spotPriceDataFormat = named(MarketData.SPOT_PRICES, jsonFormat1(SpotPriceData))
 
   implicit val marketDataFormat = new TraitFormat[MarketData](
