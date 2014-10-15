@@ -5,7 +5,6 @@ import evcel.curve.environment.{MarketDay, TimeOfDay}
 import evcel.curve.marketdata.Act365
 import evcel.curve.{UnitTestingEnvironment, ValuationContext}
 import evcel.daterange.{DateRange, Day, Month}
-import evcel.instrument.valuation.TestInstrumentValuationContext
 import evcel.instrument.{CommoditySwap, EuropeanOption, Future, FuturesOption}
 import evcel.maths.Call
 import evcel.maths.models.BlackScholes
@@ -18,9 +17,10 @@ import evcel.referencedata.TestFuturesExpiryRules
 import evcel.curve.marketdata.FuturesPriceData
 import evcel.curve.marketdata.ZeroRateData
 import evcel.curve.marketdata.FuturesVolData
+import evcel.instrument.valuation.DefaultValuer
 
 class MtmPivotReportTest extends FunSuite with ShouldMatchers {
-  val ivc = TestInstrumentValuationContext.Test
+  val valuer = new DefaultValuer()
 
   test("mtm report on european option matches black scholes") {
     val month = Month(2014, 12)
@@ -42,7 +42,7 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
         USD -> ZeroRateData(Act365, (marketDay.day + 100) -> r),
         market -> FuturesVolData((month, vol))
       ),
-      ivc
+      valuer
     )
 
     val bsValue = new BlackScholes(Call, F.doubleValue, K.doubleValue, vol.checkedPercent, T).undiscountedValue * 
@@ -62,7 +62,7 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
     val marketDay = MarketDay(Day(2014, 6, 1), TimeOfDay.end)
     val vc = UnitTestingEnvironment.Null(marketDay)
     val F = vc.futuresPrice(market, month)
-    val pr = new MtmPivotReport(vc, ivc)
+    val pr = new MtmPivotReport(vc, valuer)
     val rows = pr.rows(future)
     rows.size shouldBe 1
     rows.head.value(MtmPivotReportType.MtmField) shouldEqual (F - K) * Qty("1", BBL)
@@ -85,7 +85,7 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
       marketDay, 
       market -> FuturesPriceData(nov -> Fnov, dec -> Fdec)
     )
-    val pr = new MtmPivotReport(vc, ivc)
+    val pr = new MtmPivotReport(vc, valuer)
     val rows = pr.rows(swap)
     rows.size shouldBe 1
 

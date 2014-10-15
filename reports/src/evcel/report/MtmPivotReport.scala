@@ -2,28 +2,28 @@ package evcel.report
 
 import evcel.curve.ValuationContext
 import evcel.instrument.Instrument
-import evcel.instrument.valuation.InstrumentValuationContext
 import evcel.quantity.Qty
+import evcel.instrument.valuation.Valuer
 
-class MtmPivotReport(vc: ValuationContext, ivc: InstrumentValuationContext) extends PivotReport {
+class MtmPivotReport(vc: ValuationContext, valuer : Valuer) extends PivotReport {
   override def rows(instr: Instrument) = {
-    new MtmRow(instr, vc, ivc) :: Nil
+    new MtmRow(instr, vc, valuer) :: Nil
   }
 }
 
-class MtmRow(instr: Instrument, vc: ValuationContext, ivc: InstrumentValuationContext) extends PivotRow {
+class MtmRow(instr: Instrument, vc: ValuationContext, valuer : Valuer) extends PivotRow {
   override def market = "?"
 
   override def period = None
 
   override def value(field: PivotField): Qty = field match {
-    case MtmPivotReportType.MtmField => ivc.valuer.value(vc, instr)
+    case MtmPivotReportType.MtmField => valuer.value(vc, instr)
     case _ => throw new RuntimeException("Invalid field : " + field)
   }
 }
 
 object MtmPivotReportType extends PivotReportType {
-  override def create(vc: ValuationContext, ivc: InstrumentValuationContext) = new MtmPivotReport(vc, ivc)
+  override def create(vc: ValuationContext, valuer : Valuer) = new MtmPivotReport(vc, valuer)
 
   override def fields = List(MtmField)
 
