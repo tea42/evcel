@@ -17,7 +17,6 @@ import scalaz.{Show, Equal}
 trait ValuationTest extends FunSuite with ShouldMatchers {
   implicit val valuer = new DefaultValuer
   implicit val refData = UnitTestingEnvironment.testRefData
-  implicit val position = new Position
 
   val oct = Oct / 14
   val nov = oct.next

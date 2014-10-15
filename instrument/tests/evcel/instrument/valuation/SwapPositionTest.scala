@@ -1,7 +1,7 @@
 package evcel.instrument.valuation
 
 import evcel.daterange.{Day, Month, PeriodLabel}
-import evcel.instrument.valuation.Position._
+import evcel.instrument.valuation.Valuer._
 import evcel.quantity.Qty
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._

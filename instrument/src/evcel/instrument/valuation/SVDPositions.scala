@@ -2,32 +2,13 @@ package evcel.instrument.valuation
 
 import evcel.curve.ValuationContext
 import evcel.curve.environment.{MarketDay, PriceIdentifier}
-import evcel.daterange._
 import evcel.instrument.valuation.Valuer._
 import evcel.instrument._
 import evcel.quantity.{BDQty, Qty}
 import org.apache.commons.math3.linear.{Array2DRowRealMatrix, SingularValueDecomposition}
 
-trait HedgePortfolio {
-  def unscaledHedges: Seq[Instrument]
-
-  def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: BDQty): HedgeInfo
-}
-
-class FutureHedgePortfolio(f: Future) extends HedgePortfolio {
-  override def unscaledHedges = f.copy(volume = f.volume.one) :: Nil
-
-  override def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: BDQty) = {
-    unscaledHedge match {
-      case f: Future => FutureHedgeInfo(f.market, PeriodLabel(f.delivery), volume)
-      case o => sys.error("Not valid: " + o)
-    }
-  }
-}
-
-object Position {
-
-  def scaleHedges(
+object SVDPositions{
+  private def scaleHedges(
     vc: ValuationContext,
     portfolio: Seq[Instrument],
     hedges: Seq[Instrument])
@@ -75,5 +56,22 @@ object Position {
       case (hedge, i) =>
         (hedge, Qty(solution.getEntry(i, 0).toString, hedge.volume.uom))
     }
+  }
+  def positions(vc: ValuationContext, instr: Instrument)(implicit valuer : Valuer): Iterable[HedgeInfo] = {
+    val hedgePortfolio = instr match {
+      case s: CommoditySwapLookalike =>
+        SwapPositionHedgePortolio(vc, s.asCommoditySwap(vc.refData))(valuer)
+      case s: CommoditySwapSpread =>
+        SwapPositionHedgePortolio(vc, s)(valuer)
+      case s: CommoditySwap =>
+        SwapPositionHedgePortolio(vc, s)(valuer)
+      case f: Future =>
+        new FutureHedgePortfolio(f)
+    }
+    val scaled = scaleHedges(vc, instr :: Nil, hedgePortfolio.unscaledHedges)(valuer)
+    val hedgeInfos = scaled.map{
+      case (unscaled: Instrument, volume: BDQty) => hedgePortfolio.instrumentToHedgeInfo(vc, unscaled, volume)
+    }
+    HedgeInfo.combineSameMarketAndPeriod(hedgeInfos)
   }
 }
