@@ -128,7 +128,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(eventstore % "compile->compile;test->test")
+  ).dependsOn(eventstore % "compile->compile;test->test", curve % "compile->compile;test->test")
 
   lazy val referencedatastore = module("referencedatastore").settings(
     libraryDependencies ++= Seq(

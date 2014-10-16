@@ -18,8 +18,9 @@ import evcel.curve.marketdata.FuturesPriceData
 import evcel.curve.marketdata.ZeroRateData
 import evcel.curve.marketdata.FuturesVolData
 import evcel.instrument.valuation.DefaultValuer
+import evcel.curve.marketdata.MarketDataTest
 
-class MtmPivotReportTest extends FunSuite with ShouldMatchers {
+class MtmPivotReportTest extends FunSuite with MarketDataTest with ShouldMatchers {
   val valuer = new DefaultValuer()
 
   test("mtm report on european option matches black scholes") {
@@ -38,9 +39,9 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
     val pr = new MtmPivotReport(
       UnitTestingEnvironment.fromMarketData(
         marketDay, 
-        market -> FuturesPriceData(month -> F),
-        USD -> ZeroRateData(Act365, (marketDay.day + 100) -> r),
-        market -> FuturesVolData((month, vol))
+        market -> futuresPrices(month -> F),
+        USD -> zeroRates(Act365, (marketDay.day + 100) -> r),
+        market -> futuresVols(month -> vol)
       ),
       valuer
     )
@@ -83,7 +84,7 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
     val marketDay = MarketDay(Day(2014, 6, 1), TimeOfDay.end)
     val vc = UnitTestingEnvironment.fromMarketData(
       marketDay, 
-      market -> FuturesPriceData(nov -> Fnov, dec -> Fdec)
+      market -> futuresPrices(nov -> Fnov, dec -> Fdec)
     )
     val pr = new MtmPivotReport(vc, valuer)
     val rows = pr.rows(swap)

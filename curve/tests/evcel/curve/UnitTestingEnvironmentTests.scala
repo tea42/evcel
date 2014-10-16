@@ -13,15 +13,17 @@ import evcel.curve.marketdata.Act365
 import evcel.quantity.Percent
 import scala.math._
 import evcel.curve.marketdata.FuturesVolData
+import evcel.curve.marketdata.MarketDataTest
+import org.scalatest.FunSpecLike
 
-class UnitTestingEnvironmentTests extends FunSpec with Matchers{
+class UnitTestingEnvironmentTests extends MarketDataTest with FunSpecLike with Matchers{
   describe("UnitTestingEnvironment"){
     it("Should work"){
       val env = UnitTestingEnvironment.fromMarketData(
         (10 / Sep/ 2014).endOfDay,
 
-        "Nymex WTI"          -> FuturesPriceData(Sep / 2014 -> Qty("100", USD/MT)),
-        "PORK BELLIES" -> FuturesPriceData(Sep / 2014 -> Qty("123", USD/MT)),
+        "Nymex WTI"          -> futuresPrices(Sep / 2014 -> Qty("100", USD/MT)),
+        "PORK BELLIES" -> futuresPrices(Sep / 2014 -> Qty("123", USD/MT)),
 
         USD -> ZeroRateData(Act365, List((31 / Dec / 2014) -> Percent("5"))),
 

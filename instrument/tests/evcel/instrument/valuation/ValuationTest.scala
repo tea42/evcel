@@ -15,6 +15,7 @@ import scala.language.reflectiveCalls
 import scalaz.{Show, Equal}
 
 trait ValuationTest extends FunSuite with ShouldMatchers {
+import evcel.curve.marketdata.FuturesPriceData
   implicit val valuer = new DefaultValuer
   implicit val refData = UnitTestingEnvironment.testRefData
 

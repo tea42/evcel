@@ -15,8 +15,9 @@ import scala.language.reflectiveCalls
 import evcel.quantity.utils.QuantityTestUtils._
 import evcel.daterange.Day
 import evcel.instrument.valuation.Index
+import evcel.curve.marketdata.MarketDataTest
 
-class PositionPivotReportTests extends FunSpec with Matchers{
+class PositionPivotReportTests extends FunSpec with MarketDataTest with Matchers{
   val valuer = new DefaultValuer()
   val market = "Nymex WTI"
   val index = "Nymex WTI nearby 1"
@@ -28,7 +29,7 @@ class PositionPivotReportTests extends FunSpec with Matchers{
   )
   val valuationContext = UnitTestingEnvironment.fromMarketData(
     marketDay,
-    market -> FuturesPriceData(Nov / 2014 -> F, Dec / 2014 -> F)
+    market -> futuresPrices(Nov / 2014 -> F, Dec / 2014 -> F)
   )
   describe("PositionPivotReport"){
     it("Should by default return a swap as its own position"){

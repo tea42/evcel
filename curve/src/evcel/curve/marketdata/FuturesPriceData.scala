@@ -14,8 +14,3 @@ case class FuturesPriceData(prices: List[(Month, BDQty)])
   def buildCurve(market : String, marketDay: MarketDay): Either[MarketData.CantBuildCurve, FuturesPrices] =
     Right(FuturesPrices(market, marketDay, prices.toMap))
 }
-
-object FuturesPriceData{
-  def apply(firstPrice : (Month, BDQty) , otherPrices : (Month, BDQty) *) : FuturesPriceData = 
-    FuturesPriceData(firstPrice :: otherPrices.toList)
-}
