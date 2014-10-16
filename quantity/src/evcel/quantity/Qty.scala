@@ -54,9 +54,22 @@ trait Qty extends Ordered[Qty] {
   def one: Qty
 
   def compare(that : Qty) = {
-    require(that.isScalar || that.isNull || that.uom == uom, s"UOMs don't match: $this, $that")
+    require(that.uom == uom, s"UOMs don't match: $this, $that")
     doubleValue.compare(that.doubleValue)
   }
+
+  /*
+   * Convenience methods that allow us to test for positivity etc, with natural
+   * looking code, but without implicit conversions
+   */
+  private def compareWithZero(zero : Int, comparison : (Double, Int) => Boolean) = {
+    require(zero == 0, s"Convenience method for comparing $this with 0, no other number allowed")
+    comparison(doubleValue, zero)
+  }
+  def > (zero : Int) = compareWithZero(zero, _ > _)
+  def >= (zero : Int) = compareWithZero(zero, _ >= _)
+  def < (zero : Int) = compareWithZero(zero, _ < _)
+  def <= (zero : Int) = compareWithZero(zero, _ <= _)
 }
 
 class DblQty private[quantity] (private val value: Double, val uom: UOM) extends Qty {

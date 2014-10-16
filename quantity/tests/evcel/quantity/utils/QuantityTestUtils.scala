@@ -11,7 +11,9 @@ object QuantityTestUtils {
   class EssentiallyEqual(tol: BigDecimal = BigDecimal("1e-20")) extends Equality[Qty] {
     def areEqual(a: Qty, b: Any): Boolean =
       (a, b) match {
-        case (c: Qty, d: Qty) => (c - d).abs < tol
+        case (c: Qty, d: Qty) => 
+          require(c.uom == d.uom, s"Mismatching uoms, $c, $d")
+          (c - d).abs.doubleValue < tol
         case _ => false
       }
 
