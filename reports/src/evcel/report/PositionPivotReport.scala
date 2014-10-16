@@ -18,10 +18,13 @@ class PositionPivotReport(vc: ValuationContext, valuer : Valuer) extends PivotRe
   }
 }
 
-object PositionPivotReport{
+object PositionPivotReport extends PivotReportType{
   val PositionField = new PivotField{
     override def name = "Position"
   }
+  def create(vc: ValuationContext, valuer : Valuer) = new PositionPivotReport(vc, valuer)
+
+  def fields: List[PivotField] = List(PositionField)
 }
 case class PositionRow(market : String, period : Option[String], position : Qty ) extends PivotRow {
 

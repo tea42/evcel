@@ -49,7 +49,7 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
       math.exp(-r.checkedPercent * T) 
     val rows = pr.rows(option)
     rows.size shouldBe 1
-    rows.head.value(MtmPivotReportType.MtmField) shouldEqual Qty(bsValue, USD)
+    rows.head.value(MtmPivotReport.MtmField) shouldEqual Qty(bsValue, USD)
   }
 
   test("mtm report on future") {
@@ -65,7 +65,7 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
     val pr = new MtmPivotReport(vc, valuer)
     val rows = pr.rows(future)
     rows.size shouldBe 1
-    rows.head.value(MtmPivotReportType.MtmField) shouldEqual (F - K) * Qty("1", BBL)
+    rows.head.value(MtmPivotReport.MtmField) shouldEqual (F - K) * Qty("1", BBL)
   }
 
   test("mtm report on swap") {
@@ -102,7 +102,7 @@ class MtmPivotReportTest extends FunSuite with ShouldMatchers {
     }
 
     val expected: Qty = ((Fnov * weights(nov) + Fdec * weights(dec)) - K) * Qty("1", BBL)
-    val actual: Qty = rows.head.value(MtmPivotReportType.MtmField)
+    val actual: Qty = rows.head.value(MtmPivotReport.MtmField)
 
     implicit val equality = new QuantityTestUtils.EssentiallyEqual()
     actual shouldEqual expected
