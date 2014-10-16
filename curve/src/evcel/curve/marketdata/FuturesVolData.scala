@@ -48,7 +48,5 @@ case class FuturesVolData(data: List[(Month, BDQty, List[(Double, BDQty)])])
       case None =>
         Left(MarketData.CantBuildCurve(FuturesVolsIdentifier(market), marketDay, "No expiry rule found"))
     }
-
   }
 }
-

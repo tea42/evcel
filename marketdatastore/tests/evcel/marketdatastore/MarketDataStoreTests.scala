@@ -16,8 +16,9 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 import evcel.quantity.Percent
 import scala.language.reflectiveCalls
 import scala.language.postfixOps
+import evcel.curve.marketdata.MarketDataTest
 
-class MarketDataStoreTests extends FunSpec with Matchers with TableDrivenPropertyChecks{
+class MarketDataStoreTests extends FunSpec with MarketDataTest with Matchers with TableDrivenPropertyChecks{
 
   def withMarketDataStore(fn : MarketDataStore => Unit){
     KafkaTestUtils.withTestKafka{
@@ -40,14 +41,13 @@ class MarketDataStoreTests extends FunSpec with Matchers with TableDrivenPropert
           Table(
             ("Key", "Data"),
             (FuturesPricesIdentifier("WTI"),
-              FuturesPriceData(Jun / 2014 -> Qty("100", USD/MT))),
+              futuresPrices(Jun / 2014 -> Qty("100", USD/MT))),
             (ZeroRatesIdentifier(USD),
               ZeroRateData(Act365, List((10/Jun/2014, Qty("5", PERCENT))))),
             (FuturesVolsIdentifier("WTI"),
-              FuturesVolData(
-                List(
+              futuresVols(
                   (Jun/2014, Percent("20"), List((0.1, Qty("5", PERCENT)), (0.6, Qty("3", PERCENT))))
-            )))
+            ))
           ).zipWithIndex.foreach{
             case ((key, data), i) => 
               Await.result(store.write(marketDay, key, data), 2 seconds) should equal(Offset(i + 1))

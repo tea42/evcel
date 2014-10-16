@@ -88,17 +88,11 @@ object SwapLikeValuer {
   }
 
   def apply(vc: ValuationContext, swap: CommoditySwap): SingleUnderlyingSwapLikeValuer = {
-    Index.parse(swap.market)(vc.refData) match {
-      case Some(ndx: FuturesFrontPeriodIndex) =>
+    Index.parse(swap.index)(vc.refData) match {
+      case Some(ndx: Index) =>
         new SingleUnderlyingSwapLikeValuer(vc, ndx, swap.averagingPeriod, swap.strike, swap.volume,
           swap.bizDaysToSettlement)
-      case Some(ndx: FuturesContractIndex) =>
-        new SingleUnderlyingSwapLikeValuer(vc, ndx, swap.averagingPeriod, swap.strike, swap.volume,
-          swap.bizDaysToSettlement)
-      case Some(ndx: SpotMarketIndex) =>
-        new SingleUnderlyingSwapLikeValuer(vc, ndx, swap.averagingPeriod, swap.strike, swap.volume,
-          swap.bizDaysToSettlement)
-      case _ => sys.error(s"Not a matching index ${swap.market}")
+      case _ => sys.error(s"Not a matching index ${swap.index}")
     }
   }
 

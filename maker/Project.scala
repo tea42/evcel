@@ -19,7 +19,9 @@ def module_(name : String, upstream : List[Module], testUpstream : List[Module])
     immediateUpstreamModules = upstream,
     immediateUpstreamTestModules = testUpstream,
     props = makerProps
-    ) with ClassicLayout
+    ) with ClassicLayout{
+      override def scalacOptions = List("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
+    }
 }
 def module(name : String, upstream : Module*) : Module = {
   module_(name, upstream.toList, testUpstream = Nil)
@@ -35,7 +37,7 @@ val curve = module_("curve", List(quantity, daterange, calendar, utils), List(ca
 val instrument = module_("instrument", List(curve), List(curve, quantity))
 
 val eventstore = module("eventstore", instrument, curve, utils)
-val marketdatastore = module_("marketdatastore", List(eventstore), List(eventstore))
+val marketdatastore = module_("marketdatastore", List(eventstore), List(eventstore, curve))
 val referencedatastore = module_("referencedatastore", List(referencedata, eventstore), List(eventstore))
 val tradestore = module_("tradestore", List(instrument, eventstore), List(eventstore))
 val reports = module_("reports", List(instrument), List(curve, instrument))

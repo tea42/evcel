@@ -2,7 +2,7 @@ package evcel.report
 
 import evcel.curve.ValuationContext
 import evcel.instrument.Instrument
-import evcel.instrument.valuation.InstrumentValuationContext
+import evcel.instrument.valuation.Valuer
 
 trait PivotRow {
   def market: String
@@ -17,7 +17,7 @@ trait PivotReport {
 }
 
 trait PivotReportType {
-  def create(vc: ValuationContext, ivc: InstrumentValuationContext): PivotReport
+  def create(vc: ValuationContext, valuer : Valuer): PivotReport
 
   def fields: List[PivotField]
 }

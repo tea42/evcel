@@ -11,7 +11,7 @@ import evcel.quantity.{BDQty, Qty}
 import scalaz.Scalaz._
 
 class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDays: Map[Index, Iterable[Day]],
-  period: DateRange, keys: List[PriceIdentifier])(implicit valuer: Valuer) extends HedgePortfolio {
+  period: DateRange, keys: List[PriceIdentifier]) extends HedgePortfolio {
 
   override def unscaledHedges = {
 
@@ -46,7 +46,7 @@ class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDa
     indexes.flatMap(i => hedgesForFuturesIndexes(i) ++ hedgesForSwapIndexes(i))
   }
 
-  override def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: BDQty) = {
+  override def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: Qty) = {
     unscaledHedge match {
       case swapHedge: CommoditySwap =>
         require(swapHedge.averagingPeriod.days.size == 1, "This should be one day: " + swapHedge.averagingPeriod)
@@ -61,7 +61,7 @@ class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDa
             PeriodLabel(month)
           case o => sys.error("Invalid: " + o)
         }
-        SwapHedgeInfo(swapHedge.market, periodLabel, volume)
+        SwapHedgeInfo(swapHedge.index, periodLabel, volume)
       case f: Future => FutureHedgeInfo(f.market, PeriodLabel(f.delivery), volume)
       case o => sys.error("Not valid: " + o)
     }
@@ -70,7 +70,7 @@ class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDa
 
 object SwapPositionHedgePortolio {
   def apply(vc: ValuationContext, swap: CommoditySwap)(implicit valuer: Valuer): SwapPositionHedgePortolio = {
-    val keys = swap.priceKeys(vc).toList.sortWith(_.point < _.point)
+    val keys = valuer.priceKeys(vc, swap).toList.sortWith(_.point < _.point)
     val swapValuer = SwapLikeValuer(vc, swap)
     new SwapPositionHedgePortolio(
       vc, swapValuer.index :: Nil, Map(swapValuer.index -> swapValuer.observationDays), swapValuer.averagingPeriod, keys
@@ -78,7 +78,7 @@ object SwapPositionHedgePortolio {
   }
 
   def apply(vc: ValuationContext, swap: CommoditySwapSpread)(implicit valuer: Valuer): SwapPositionHedgePortolio = {
-    val keys = swap.priceKeys(vc).toList.sortWith(_.point < _.point)
+    val keys = valuer.priceKeys(vc, swap).toList.sortWith(_.point < _.point)
     val swapValuer = SwapLikeValuer(vc, swap)
     val obDays = swapValuer.indexes.map(i => i -> swapValuer.observationDays(i)).toMap
     new SwapPositionHedgePortolio(vc, swapValuer.indexes, obDays, swapValuer.period, keys)

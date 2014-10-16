@@ -4,6 +4,7 @@ import evcel.curve.ValuationContext
 import evcel.curve.environment.{PriceIdentifier, AtomicDatumIdentifier}
 import evcel.instrument._
 import evcel.quantity.Qty
+import evcel.quantity.BDQty
 
 trait Valuer {
   def value(vc: ValuationContext, instr: Instrument): Qty
@@ -19,6 +20,7 @@ trait Valuer {
     val mtmDown = value(vc.shiftPrice(pi, -dP), instr)
     (mtmUp - mtmDown) / (2 * dP)
   }
+  def positions(vc: ValuationContext, instr: Instrument): Iterable[HedgeInfo] 
 }
 
 object Valuer {
@@ -30,6 +32,7 @@ object Valuer {
     def firstOrderPriceDiff(vc: ValuationContext, pi: PriceIdentifier)(implicit valuer: Valuer) = {
       valuer.firstOrderPriceDiff(vc, instr, pi)
     }
+    def positions(vc: ValuationContext)(implicit valuer : Valuer) = valuer.positions(vc, instr)
   }
 }
 
@@ -48,4 +51,7 @@ class DefaultValuer extends Valuer {
     value(recordingVC, instr)
     record.keys
   }
+
+  def positions(vc: ValuationContext, instr: Instrument): Iterable[HedgeInfo] =  
+    SVDPositions.positions(vc, instr)(this)
 }

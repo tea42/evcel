@@ -2,36 +2,17 @@ package evcel.instrument.valuation
 
 import evcel.curve.ValuationContext
 import evcel.curve.environment.{MarketDay, PriceIdentifier}
-import evcel.daterange._
 import evcel.instrument.valuation.Valuer._
 import evcel.instrument._
-import evcel.quantity.{BDQty, Qty}
+import evcel.quantity.{DblQty, Qty}
 import org.apache.commons.math3.linear.{Array2DRowRealMatrix, SingularValueDecomposition}
 
-trait HedgePortfolio {
-  def unscaledHedges: Seq[Instrument]
-
-  def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: Qty): HedgeInfo
-}
-
-class FutureHedgePortfolio(f: Future) extends HedgePortfolio {
-  override def unscaledHedges = f.copy(volume = f.volume.one) :: Nil
-
-  override def instrumentToHedgeInfo(vc: ValuationContext, unscaledHedge: Instrument, volume: Qty) = {
-    unscaledHedge match {
-      case f: Future => FutureHedgeInfo(f.market, PeriodLabel(f.delivery), volume)
-      case o => sys.error("Not valid: " + o)
-    }
-  }
-}
-
-object Position {
-
-  def scaleHedges(
+object SVDPositions{
+  private def scaleHedges(
     vc: ValuationContext,
     portfolio: Seq[Instrument],
     hedges: Seq[Instrument])
-    (implicit valuer: Valuer): Seq[(Instrument, BDQty)] = {
+    (implicit valuer: Valuer): Seq[(Instrument, DblQty)] = {
 
     val portfolioKeys = portfolio.map(i => i -> i.priceKeys(vc)).toMap
     val hedgeKeys = hedges.map(i => i -> i.priceKeys(vc)).toMap
@@ -73,7 +54,24 @@ object Position {
     val solution = svd.getSolver.solve(hedgePos)
     hedges.zipWithIndex.map {
       case (hedge, i) =>
-        (hedge, Qty(solution.getEntry(i, 0).toString, hedge.volume.uom))
+        (hedge, Qty(solution.getEntry(i, 0), hedge.volume.uom))
     }
+  }
+  def positions(vc: ValuationContext, instr: Instrument)(implicit valuer : Valuer): Iterable[HedgeInfo] = {
+    val hedgePortfolio = instr match {
+      case s: CommoditySwapLookalike =>
+        SwapPositionHedgePortolio(vc, s.asCommoditySwap(vc.refData))(valuer)
+      case s: CommoditySwapSpread =>
+        SwapPositionHedgePortolio(vc, s)(valuer)
+      case s: CommoditySwap =>
+        SwapPositionHedgePortolio(vc, s)(valuer)
+      case f: Future =>
+        new FutureHedgePortfolio(f)
+    }
+    val scaled = scaleHedges(vc, instr :: Nil, hedgePortfolio.unscaledHedges)(valuer)
+    val hedgeInfos = scaled.map{
+      case (unscaled: Instrument, volume: DblQty) => hedgePortfolio.instrumentToHedgeInfo(vc, unscaled, volume)
+    }
+    HedgeInfo.combineSameMarketAndPeriod(hedgeInfos)
   }
 }

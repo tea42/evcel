@@ -52,6 +52,24 @@ trait Qty extends Ordered[Qty] {
   def round(nDP: Int): Qty
 
   def one: Qty
+
+  def compare(that : Qty) = {
+    require(that.uom == uom, s"UOMs don't match: $this, $that")
+    doubleValue.compare(that.doubleValue)
+  }
+
+  /*
+   * Convenience methods that allow us to test for positivity etc, with natural
+   * looking code, but without implicit conversions
+   */
+  private def compareWithZero(zero : Int, comparison : (Double, Int) => Boolean) = {
+    require(zero == 0, s"Convenience method for comparing $this with 0, no other number allowed")
+    comparison(doubleValue, zero)
+  }
+  def > (zero : Int) = compareWithZero(zero, _ > _)
+  def >= (zero : Int) = compareWithZero(zero, _ >= _)
+  def < (zero : Int) = compareWithZero(zero, _ < _)
+  def <= (zero : Int) = compareWithZero(zero, _ <= _)
 }
 
 class DblQty private[quantity] (private val value: Double, val uom: UOM) extends Qty {
@@ -94,11 +112,6 @@ class DblQty private[quantity] (private val value: Double, val uom: UOM) extends
 
   override def isFixedPoint = false
   def ensuringFixedPoint: Qty = throw new RuntimeException("Not fixed point Qty: " + this)
-
-  override def compare(that: Qty) = {
-    require(that.isScalar || that.isNull || that.uom == this.uom, s"UOMs don't match: $this, $that")
-    this.value.compare(that.doubleValue)
-  }
 
   override def round(nDP: Int) = Qty(value.toString, uom).round(nDP)
 
@@ -159,11 +172,6 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
   override def isFixedPoint = true
   def ensuringFixedPoint: Qty = this
 
-  override def compare(that: Qty) = {
-    require(that.isScalar || that.isNull || that.uom == this.uom, s"UOMs don't match: $this, $that")
-    this.value.compare(that.bdValue)
-  }
-
   def round(nDP: Int) = new BDQty(value.setScale(nDP, RoundingMode.HALF_UP), uom)
 
   def one: BDQty = new BDQty(Qty.bdOne, uom)
@@ -174,9 +182,9 @@ object Qty {
 
   val NULL = Qty(BigDecimal(0), UOM.NULL)
 
-  def apply(value: Int, uom: UOM): Qty = new BDQty(value, uom)
+  def apply(value: Int, uom: UOM): BDQty = new BDQty(value, uom)
 
-  def apply(value: Double, uom: UOM): Qty = new DblQty(value, uom)
+  def apply(value: Double, uom: UOM): DblQty = new DblQty(value, uom)
 
   def apply(value: String, uom: UOM): BDQty = apply(BigDecimal(value), uom)
 
@@ -195,15 +203,19 @@ object Qty {
   // we don't have a double to scalar to avoid people accidentally using a double like .1
   // and losing precision.
   // if you want to divide by a scalar double then write it out long form.
-  implicit def intToScalarQty(value: Int) = Qty(BigDecimal(value), SCALAR)
+  implicit def intToScalarQty(value: Int) : BDQty = Qty(BigDecimal(value), SCALAR)
 
-  implicit def bigDecimalToScalarQty(value: BigDecimal) = Qty(value, SCALAR)
+  implicit def bigDecimalToScalarQty(value: BigDecimal) : BDQty = Qty(value, SCALAR)
 
-  implicit class RichDblQty(value: Double) {
-    def apply(uom: UOM) = Qty(value, uom)
+  implicit class RichIntQty(value: Int) {
+    def apply(uom: UOM) : BDQty = Qty(value, uom)
 
-    def toQty = Qty(value, UOM.SCALAR)
+    def toQty : BDQty = Qty(value, UOM.SCALAR)
   }
+  implicit class RichDblQty(value: Double) {
+    def apply(uom: UOM) : DblQty = Qty(value, uom)
 
+    def toQty : DblQty = Qty(value, UOM.SCALAR)
+  }
 }
 

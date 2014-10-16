@@ -15,3 +15,4 @@ case class ZeroRateData(dayCount: DayCount, rates: List[(Day, BDQty)])
     Right(DiscountCurve(currency, marketDay.day, dayCount, rates))
   }
 }
+
