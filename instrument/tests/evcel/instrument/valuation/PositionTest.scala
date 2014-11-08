@@ -13,7 +13,7 @@ class PositionTest extends ValuationTest {
     val hedges = observationDays.map(
       d => createSwap(period = d, volume = Qty("1", BBL))
     )
-    val scaled = Position.scaleHedges(vc, List(swap), hedges)
+    val scaled = SVDPositions.scaleHedges(vc, List(swap), hedges)
     val expected = hedges.map(h => h -> Qty("13", BBL))
     scaled.toList.map{case (h, v) => h -> v.round(9)} shouldEqual expected.toList
   }

@@ -7,7 +7,8 @@ import evcel.referencedata.ReferenceDataIdentifier
 import evcel.quantity.{QtyConversions, UOM}
 
 case class FuturesMarket(
-  name: String, calendarName: String, priceUOM: UOM, conversions: Option[QtyConversions] = None
+  name: String, calendarName: String, priceUOM: UOM, conversions: Option[QtyConversions] = None,
+  perTimeUnit: Option[UOM] = None
 ) 
   extends ReferenceDataTrait
 {

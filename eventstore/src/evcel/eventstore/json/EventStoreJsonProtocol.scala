@@ -226,7 +226,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     def read(json : JsValue) = QtyConversions(json.convertTo[List[((UOM, UOM), BigDecimal)]].toMap)
   }
   implicit val futuresExpiryRuleFormat = named(ReferenceDataTrait.FUTURES_EXPIRY_RULE, jsonFormat3(FuturesExpiryRule.apply))
-  implicit val futuresMarketRuleFormat = named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat4(FuturesMarket.apply))
+  implicit val futuresMarketRuleFormat = named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat5(FuturesMarket.apply))
   implicit val calendarDataFormat = named(ReferenceDataTrait.CALENDAR, jsonFormat1(CalendarData))
   implicit val referenceDataTraitFormat = new TraitFormat[ReferenceDataTrait](
     classOf[FuturesExpiryRule] -> futuresExpiryRuleFormat,

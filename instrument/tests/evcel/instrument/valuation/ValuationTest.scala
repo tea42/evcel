@@ -15,7 +15,6 @@ import scala.language.reflectiveCalls
 import scalaz.{Show, Equal}
 
 trait ValuationTest extends FunSuite with ShouldMatchers {
-import evcel.curve.marketdata.FuturesPriceData
   implicit val valuer = new DefaultValuer
   implicit val refData = UnitTestingEnvironment.testRefData
 
@@ -24,6 +23,8 @@ import evcel.curve.marketdata.FuturesPriceData
   val dec = nov.next
   val jan = dec.next
   val wti = "Nymex WTI"
+  val nbp = "ICE NBP"
+  val nbp1st = "ICE NBP nearby 1"
   val wti1st = "Nymex WTI nearby 1"
   val sing = "Singapore Gasoil 0.05"
 
@@ -55,6 +56,10 @@ import evcel.curve.marketdata.FuturesPriceData
     strike: BDQty = Qty("100", USD / BBL), volume: BDQty = Qty(123, BBL), bizDaysSett: Option[Int] = None) =
     new CommoditySwap(market, period, strike, volume, bizDaysToSettlement = bizDaysSett)
 
+  def createSwapNBP(market: String = nbp1st, period: DateRange = oct,
+    strike: BDQty = Qty("1", GBP / THM), volume: BDQty = Qty(123, THM/DAY), bizDaysSett: Option[Int] = None) =
+    new CommoditySwap(market, period, strike, volume, bizDaysToSettlement = bizDaysSett)
+
   def createSingSwap(market: String = sing, period: DateRange = oct,
     strike: BDQty = Qty("100", USD / MT), volume: BDQty = Qty(123, MT), bizDaysSett: Option[Int] = None) =
     new CommoditySwap(market, period, strike, volume, bizDaysToSettlement = bizDaysSett)
@@ -66,6 +71,10 @@ import evcel.curve.marketdata.FuturesPriceData
 
   def createFuture(market: String = wti, period: Month = oct,
     strike: BDQty = Qty("100", USD / BBL), volume: BDQty = Qty(123, BBL)) = {
+    new Future(market, period, strike, volume)
+  }
+  def createFutureNBP(market: String = nbp, period: Month = oct,
+    strike: BDQty = Qty("100", PENCE / THM), volume: BDQty = Qty(123, THM/DAY)) = {
     new Future(market, period, strike, volume)
   }
 

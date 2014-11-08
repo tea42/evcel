@@ -1,9 +1,12 @@
 package evcel.quantity
 
+import evcel.utils.Enumerate
+
 case class UnitDimension(prime: Int, names: List[String])
 
-object UnitDimension {
+object UnitDimension extends Enumerate[UnitDimension](classOf[UnitDimension], _.names){
   private val primes = Primes.primes()
+  lazy val primesUsed: Seq[Int] = values.map(_.prime)
 
   def apply(names: String*) = {
     new UnitDimension(primes.next(), names.toList)
@@ -18,6 +21,11 @@ object UnitDimension {
   // An oil barrel (abbreviated as bbl) is a unit of volume whose definition has not been universally standardized.
   // from http://en.wikipedia.org/wiki/Oil_barrel#Oil_barrel
   val OilVolume = UnitDimension("OilVolume")
+
+  // One British therm (symbol thm) is a non-SI unit of heat energy equal to 100,000 British thermal units (BTU).
+  // It is approximately the energy equivalent of burning 100 cubic feet (often referred to as 1 CCF) of natural gas.
+  // from http://en.wikipedia.org/wiki/Therm
+  val GasVolume = UnitDimension("GasVolume")
 
   // currencies
   val AED = UnitDimension("AED") // United Arab Emirates Dirham
@@ -183,4 +191,14 @@ object UnitDimension {
   val ZAR = UnitDimension("ZAR") // South Africa Rand
   val ZMW = UnitDimension("ZMW") // Zambia Kwacha
   val ZWD = UnitDimension("ZWD") // Zimbabwe Dollar
+
+  val currencyPrimes =
+    Set(AED,AFN,ALL,AMD,ANG,AOA,ARS,AUD,AWG,AZN,BAM,BBD,BDT,BGN,BHD,BIF,BMD,BND,BOB,BRL,BSD,BTN,BWP,BYR,
+    BZD,CAD,CDF,CHF,CLP,CNY,COP,CRC,CUC,CUP,CVE,CZK,DJF,DKK,DOP,DZD,EGP,ERN,ETB,EUR,FJD,FKP,GBP,GEL,GGP,GHS,GIP,GMD,
+    GNF,GTQ,GYD,HKD,HNL,HRK,HTG,HUF,IDR,ILS,IMP,INR,IQD,IRR,ISK,JEP,JMD,JOD,JPY,KES,KGS,KHR,KMF,KPW,KRW,KWD,KYD,KZT,
+    LAK,LBP,LKR,LRD,LSL,LTL,LYD,MAD,MDL,MGA,MKD,MMK,MNT,MOP,MRO,MUR,MVR,MWK,MXN,MYR,MZN,NAD,NGN,NIO,NOK,NPR,NZD,OMR,
+    PAB,PEN,PGK,PHP,PKR,PLN,PYG,QAR,RON,RSD,RUB,RWF,SAR,SBD,SCR,SDG,SEK,SGD,SHP,SLL,SOS,SPL,SRD,STD,SVC,SYP,SZL,THB,
+    TJS,TMT,TND,TOP,TRY,TTD,TVD,TWD,TZS,UAH,UGX,USD,UYU,UZS,VEF,VND,VUV,WST,XAF,XCD,XDR,XOF,XPF,YER,ZAR,ZMW,ZWD).map{
+      _.prime
+    }
 }
