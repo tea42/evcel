@@ -14,6 +14,8 @@ trait DateRange extends Ordered[DateRange] {
 
   def days: Seq[Day] = firstDay to lastDay
 
+  def size = (lastDay - firstDay) + 1
+
   def contains(day: Day) = day >= firstDay && day <= lastDay
 
   def remainder(inclusive: Day): Option[DateRange] = if(inclusive <= firstDay) {

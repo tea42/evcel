@@ -1,9 +1,12 @@
 package evcel.quantity
 
-import evcel.utils.Cache
+import evcel.utils.{Enumerate, Cache}
 import org.apache.commons.math3.util.ArithmeticUtils
+import pimpathon.GenTraversableLikeCapturer
 import scala.annotation.tailrec
 import scalaz.Scalaz._
+import pimpathon.genTraversableLike._
+import pimpathon.multiMap._
 
 case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   /**
@@ -121,9 +124,13 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
       numString
   }
 
-  private def intern = UOM.uoms.getOrElse(this, this)
+  private def intern = {
+    UOM.instances.getOrElse(this, this)
+  }
 
   override def toString = string
+
+  def isCcy = UOM.baseCurrenciesMap.contains(this)
 
   lazy val isScalar = this == UOM.SCALAR
   lazy val isPercent = asPrimeMap.keySet == UOM.PERCENT.asPrimeMap.keySet
@@ -132,6 +139,11 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
     case (prime, instances) => UOM.primeToUOM(prime).pow(instances.size)
   }.foldLeft(UOM.SCALAR)(_*_)
   lazy val denominator = invert.numerator
+
+  def inBaseCcy = {
+    require(isCcy, "Not a currency: " + this)
+    UOM.baseCurrenciesMap(this)
+  }
 
   def pow(n: Int) = {
     @tailrec
@@ -146,16 +158,28 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
     else
       rec(this, n)
   }
+
+  def isPerTimeUnit = dimension.den == UnitDimension.Time.prime
+
+  def allNames = {
+    if(this == UOM.NULL) {
+      UOM.NULL.toString :: Nil
+    } else if(this == UOM.SCALAR) {
+      UOM.SCALAR.toString :: Nil
+    } else {
+      val primes = asPrimeMap
+      require(primes.size == 1 && primes.values.head == 1, "Not valid on compound UOMs: " + this)
+      UOM.symbols(primes.keys.head)
+    }
+  }
 }
 
-object UOM {
-  private val multCache = Cache.createStaticCache("UOMCache.mult")
-  private var symbols = Map[Int, List[String]]()
-  private var byDimension = Map[Int, List[UOM]]()
-  private var primeToUOM = Map[Int, UOM]()
-  private var uoms = Map[UOM, UOM]()
+object UOM extends Enumerate[UOM](classOf[UOM], _.allNames){
   private val primesIterator = Primes.primes()
-  private var conversionToDimensionBase = Map[Int, BigDecimal]()
+  private val multCache = Cache.createStaticCache("UOMCache.mult")
+
+  case class UOMData(dimension: Int, secondary: Int, magnitude: BigDecimal, strs: List[String], uom: UOM)
+  private var uomData: List[UOMData] = Nil
 
   val NULL = UOM(0, 0, "NULL")
 
@@ -164,40 +188,68 @@ object UOM {
 
   // ccys
   val USD = UOM(UnitDimension.USD, 1.0, "USD")
-  val US_CENT = UOM(UnitDimension.USD, 0.01, "¢", "USC")
+  val US_CENT = UOM(UnitDimension.USD, 0.01, "¢", "USC", "US_CENT")
   val GBP = UOM(UnitDimension.GBP, 1.0, "GBP")
+  val PENCE = UOM(UnitDimension.GBP, 0.01, "p", "PENCE")
   val EUR = UOM(UnitDimension.EUR, 1.0, "EUR")
 
   // oil
   val BBL = UOM(UnitDimension.OilVolume, 1.0, "BBL")
   val GAL = UOM(UnitDimension.OilVolume, 1 / BigDecimal(42.0), "GAL")
 
+  // gas
+  val THM = UOM(UnitDimension.GasVolume, 1.0, "THM")
+  val MMBTU = UOM(UnitDimension.GasVolume, 10.0, "MMBTU")
+
   // mass
   val G = UOM(UnitDimension.Mass, 1.0, "G")
   val MT = UOM(UnitDimension.Mass, 1e6, "MT")
 
-  private def symbolFor(prime: Int) = symbols(prime).head
+  // time
+  val DAY = UOM(UnitDimension.Time, 24 * 60 * 60, "Day")
+  val SECOND = UOM(UnitDimension.Time, 1.0, "sec")
 
-  lazy val primesUsed = (symbols ++ byDimension).keys.toList.filter(_ >= 2).sortWith(_ > _)
+  private def symbolFor(prime: Int) = symbols(prime).head
 
   private def apply(dimension: UnitDimension, magnitude: BigDecimal, strs: String*) = UOM.synchronized {
     val prime = primesIterator.next()
     val uom = new UOM(UOMRatio(dimension.prime, 1), UOMRatio(prime, 1))
-    symbols += prime -> strs.toList
-    byDimension += dimension.prime -> (uom :: byDimension.getOrElse(dimension.prime, Nil))
-    conversionToDimensionBase += prime -> magnitude
-    primeToUOM += prime -> uom
-    uoms += (uom -> uom)
+    val data = UOMData(dimension.prime, prime, magnitude, strs.toList, uom)
+    uomData ::= data
     uom
   }
 
   private def apply(dimension: Int, secondary: Int, str: String) = UOM.synchronized {
     val uom = new UOM(UOMRatio(dimension, 1), UOMRatio(secondary, 1))
-    symbols += secondary -> (str :: Nil)
-    byDimension += dimension -> (uom :: byDimension.getOrElse(dimension, Nil))
-    primeToUOM += secondary -> uom
+    val data = UOMData(dimension, secondary, 1.0, str :: Nil, uom)
+    uomData ::= data
     uom
   }
+
+  private lazy val instances: Map[UOM, UOM] = uomData.map(d => d.uom -> d.uom).toMap // used for interning.
+  private lazy val byDimension: Map[Int, List[UOM]] = uomData.map(_.uom).asMultiMap.withKeys(_.dimension.num.toInt)
+  private lazy val symbols = uomData.map(d => d.secondary -> d.strs).toMap
+  private lazy val primeToUOM = uomData.map(d => d.secondary -> d.uom).toMap
+  private lazy val conversionToDimensionBase = uomData.map(d => d.secondary -> d.magnitude).toMap
+
+  private lazy val baseCurrenciesMap: Map[UOM, UOM] = { // USD -> US_CENT, USD -> USD, etc.
+    val (ccyBase, ccyDenominations) = instances.keys.flatMap{
+      uom =>
+        if(UnitDimension.currencyPrimes.contains(uom.dimension.num.toInt))
+           Some(uom)
+        else
+          None
+    }.partition(_.magnitude == 1)
+
+    ccyDenominations.map{
+      uom => uom -> ccyBase.find(_.dimension == uom.dimension).getOrElse(sys.error("No base unit for " + uom))
+    } ++ ccyBase.map(ccy => ccy -> ccy)
+  }.toMap
+
+  lazy val primesUsed: List[Int] =
+    (instances.keys.toList.flatMap(
+      uom => List(uom.dimension.num.toInt, uom.secondary.num.toInt)) ++ UnitDimension.primesUsed)
+      .filter(_ > 1).distinct.sortWith(_ > _)
 }
 
 /*

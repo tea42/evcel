@@ -20,7 +20,7 @@ trait Valuer {
     val mtmDown = value(vc.shiftPrice(pi, -dP), instr)
     (mtmUp - mtmDown) / (2 * dP)
   }
-  def positions(vc: ValuationContext, instr: Instrument): Iterable[HedgeInfo] 
+  def positions(vc: ValuationContext, instr: Instrument): Iterable[HedgeInfo]
 }
 
 object Valuer {
@@ -36,13 +36,20 @@ object Valuer {
   }
 }
 
+trait Valuation {
+  def value: Qty
+
+}
+
 class DefaultValuer extends Valuer {
-  def value(vc: ValuationContext, instr: Instrument): Qty = instr match {
-    case fo: FuturesOption => new OptionOnFutureValuer(fo).value(vc)
-    case f: Future => SwapLikeValuer(vc, f).value
-    case s: CommoditySwap => SwapLikeValuer(vc, s).value
-    case s: CommoditySwapSpread => SwapLikeValuer(vc, s).value
-    case s: CommoditySwapLookalike => SwapLikeValuer(vc, s).value
+  def value(vc: ValuationContext, instr: Instrument): Qty = valuer(vc, instr).value.inBaseCcy
+
+  def valuer(vc: ValuationContext, instr: Instrument): Valuation = instr match {
+    case fo: FuturesOption => new OptionOnFutureValuer(vc, fo)
+    case f: Future => SwapLikeValuer(vc, f)
+    case s: CommoditySwap => SwapLikeValuer(vc, s)
+    case s: CommoditySwapSpread => SwapLikeValuer(vc, s)
+    case s: CommoditySwapLookalike => SwapLikeValuer(vc, s)
     case o => sys.error("No valuation code for " + o)
   }
 

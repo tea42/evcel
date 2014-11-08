@@ -25,6 +25,11 @@ class DateRangeTests extends FunSuite with ShouldMatchers {
     }
   }
 
+  test("range size") {
+    (Day(2012, 1, 1) to Day(2012, 1, 1)).size shouldEqual 1
+    (Day(2012, 1, 1) to Day(2012, 1, 3)).size shouldEqual 3
+  }
+
   test("parse month") {
     Month.unapply("2010-1") shouldEqual Some(Month(2010, 1))
     Month.unapply("2010-01") shouldEqual Some(Month(2010, 1))

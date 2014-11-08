@@ -5,10 +5,12 @@ import evcel.instrument.{CommoditySwapLookalike, CommoditySwap}
 import evcel.quantity.Qty
 import evcel.instrument.valuation.Valuer._
 import evcel.quantity.UOM._
-import evcel.quantity.utils.QuantityTestUtils._
 import evcel.quantity.Qty._
 
 class SwapLikeValuerTest extends ValuationTest {
+  implicit val tol: BigDecimal = BigDecimal("1e-7")
+  import scalaz.syntax.equal._
+  import evcel.quantity.utils.QuantityTestUtils._
 
   test("lookalike swap on futures contract index") {
     val swap = createLookalike(bizDaysSett = Some(5))
@@ -35,7 +37,7 @@ class SwapLikeValuerTest extends ValuationTest {
     val F = Qty.average(obDays.map(d => vc.spotPrice(sing, d)))
     val mtmUndisc = valuer.value(vc.undiscounted, swap)
     val mtm = valuer.value(vc, swap)
-    mtmUndisc shouldEqual (F - K) * V
+    mtmUndisc assert_=== (F - K) * V
     mtm shouldEqual mtmUndisc * vc.discountRate(USD, settDay).toQty
     mtmUndisc should not be mtm
     valuer.keys(vc, swap) shouldEqual

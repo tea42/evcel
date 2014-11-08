@@ -1,6 +1,6 @@
 package evcel.instrument.valuation
 
-import evcel.daterange.{Day, Month, PeriodLabel}
+import evcel.daterange._
 import evcel.instrument.valuation.Valuer._
 import evcel.quantity.Qty
 import evcel.quantity.Qty._
@@ -64,7 +64,7 @@ class SwapPositionTest extends ValuationTest {
     ).groupBy(identity).map{case (m, instances) => m -> instances.size / BigDecimal(observationDays.size)}
 
     val expectedPositionsEqF = weights.map { case (m, w) =>
-      FutureHedgeInfo(s"Nymex WTI", PeriodLabel(m), (V * w).round(9))
+      FutureHedgeInfo("Nymex WTI", PeriodLabel(m), (V * w).round(9))
     }
     positionsEqF shouldEqual expectedPositionsEqF
 
@@ -72,6 +72,71 @@ class SwapPositionTest extends ValuationTest {
       SwapHedgeInfo(wti1st, PeriodLabel(d), V / observationDays.size)
     }.toSet
     swap.positions(vc.copy(params = vc.params.withTenor(Some(Day)))).toSet shouldEqual expectedDaily
+  }
+
+  test("nbp swap - thm/day") {
+    val vc = createVC()
+    val vcWithFuturesEq = vc.copy(params = vc.params.withShowEqFutures())
+
+    val vcEnergy = vc.copy(params = vc.params.withPositionAsEnergy)
+    val vcEnergyWithFuturesEq = vc.copy(params = vc.params.withPositionAsEnergy.withShowEqFutures())
+
+    val periods = List(oct.firstDay, SimpleDateRange(oct.firstDay, oct.firstDay + 1),
+      SimpleDateRange(Day(2014, 10, 3), Day(2014, 10, 6)), oct)
+
+    for(period <- periods) {
+      val swap = createSwapNBP(period = period, volume = Qty(123, THM/DAY))
+
+      val totalEnergy = Qty(period.size, DAY) * swap.volume
+      val positions = swap.positions(vc)
+      val positionsEnergy = swap.positions(vcEnergy)
+      positions shouldEqual SwapHedgeInfo(nbp1st, PeriodLabel(period), swap.volume) :: Nil
+      positionsEnergy shouldEqual SwapHedgeInfo(nbp1st, PeriodLabel(period), totalEnergy) :: Nil
+
+      val market = vc.futuresMarketOrThrow(nbp)
+      val observationDays = period.days
+      val weights = observationDays.map(
+        d => market.frontMonth(vc.refData, d)
+      ).groupBy(identity).map{case (m, instances) => m -> instances.size / BigDecimal(observationDays.size)}
+
+      val energyNov = weights.get(nov).map(_ * totalEnergy)
+      val energyDec = weights.get(dec).map(_ * totalEnergy)
+      val powerNov = energyNov.map(_ / Qty(nov.size, DAY))
+      val powerDec = energyDec.map(_ / Qty(dec.size, DAY))
+
+      val positionsEqF = swap.positions(vcWithFuturesEq)
+      positionsEqF shouldEqual List(
+        powerNov.map(q => FutureHedgeInfo(nbp, PeriodLabel(nov), q.round(9))),
+        powerDec.map(q => FutureHedgeInfo(nbp, PeriodLabel(dec), q.round(9)))
+      ).flatten
+
+      val positionsEqFe = swap.positions(vcEnergyWithFuturesEq)
+      positionsEqFe shouldEqual List(
+        energyNov.map(e => FutureHedgeInfo(nbp, PeriodLabel(nov), e.round(9))),
+        energyDec.map(e => FutureHedgeInfo(nbp, PeriodLabel(dec), e.round(9)))
+      ).flatten
+
+    }
+  }
+
+  test("nbp swap - thm/day - daily tenor") {
+    val vc = createVC().withParam(_.withTenor(Some(Day)))
+    val vcWithFuturesEq = vc.withParam(_.withShowEqFutures())
+
+    val vcEnergy = vc.withParam(_.withPositionAsEnergy)
+    val vcEnergyWithFuturesEq = vc.withParam(_.withPositionAsEnergy.withShowEqFutures())
+
+    val period = SimpleDateRange(Day(2014, 10, 3), Day(2014, 10, 6)) // Friday -> Monday
+    val observationDays = period.days
+
+    val swap = createSwapNBP(period = period, volume = Qty(123, THM / DAY))
+
+    val totalEnergy = Qty(period.size, DAY) * swap.volume
+    val dailyEnergy = totalEnergy / period.size
+    val positions = swap.positions(vc)
+    val positionsEnergy = swap.positions(vcEnergy)
+    positions.toSet shouldEqual observationDays.map(d => SwapHedgeInfo(nbp1st, PeriodLabel(d), swap.volume)).toSet
+    positionsEnergy.toSet shouldEqual observationDays.map(d => SwapHedgeInfo(nbp1st, PeriodLabel(d), dailyEnergy)).toSet
   }
 
   test("swap on spread index") {

@@ -52,6 +52,7 @@ trait Qty extends Ordered[Qty] {
   def round(nDP: Int): Qty
 
   def one: Qty
+  def inBaseCcy: Qty = in(uom.inBaseCcy).getOrElse(sys.error("Can't convert to base ccy"))
 
   def compare(that : Qty) = {
     require(that.uom == uom, s"UOMs don't match: $this, $that")

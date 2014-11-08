@@ -5,10 +5,10 @@ import evcel.curve.environment.MarketDay._
 import evcel.daterange.{DateRange, Day}
 import evcel.instrument.{CommoditySwap, CommoditySwapLookalike, CommoditySwapSpread, Future}
 import evcel.quantity.Qty._
-import evcel.quantity.{BDQty, Qty}
+import evcel.quantity.{UOM, BDQty, Qty}
 import evcel.referencedata.calendar.Calendar
 
-trait SwapLikeValuer {
+trait SwapLikeValuer extends Valuation {
   def calendar: Calendar
 
   def value: Qty
@@ -34,8 +34,24 @@ case class SingleUnderlyingSwapLikeValuer(
 
   def value = {
     val price = Qty.average(observationDays.map(d => index.price(vc, d)))
-    val undiscounted = (price - initialPrice) * volume
+    val undiscounted = (price - initialPrice) * amount
     settlementDay.map(d => undiscounted * vc.discountRate(vc.valuationCcy, d).toQty).getOrElse(undiscounted)
+  }
+
+  def amount: BDQty = {
+    def calcAmount(period: DateRange, perTimeUnit: Option[UOM]): BDQty = {
+      perTimeUnit.map {
+        case UOM.DAY => Qty(period.size, UOM.DAY) * volume
+        case o => sys.error("No handler for " + o)
+      }.getOrElse(volume).asInstanceOf[BDQty]
+    }
+
+    index match {
+      case smi: SpotMarketIndex => calcAmount(averagingPeriod, smi.perTimeUnit(vc.refData))
+      case fci@FuturesContractIndex(_, month) => calcAmount(month, fci.perTimeUnit(vc.refData))
+      case fdi: FuturesDerivedIndex => calcAmount(averagingPeriod, fdi.perTimeUnit(vc.refData))
+      case _ => volume
+    }
   }
 }
 

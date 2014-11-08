@@ -3,7 +3,8 @@ package evcel.referencedata.market
 import evcel.quantity.{QtyConversions, UOM}
 import evcel.referencedata.ReferenceData
 
-case class SpotMarket(name: String, calendarName: String, priceUOM: UOM, conversions: Option[QtyConversions] = None)
+case class SpotMarket(name: String, calendarName: String, priceUOM: UOM, conversions: Option[QtyConversions] = None,
+  perTimeUnit: Option[UOM] = None)
 
 object SpotMarket {
   def unapply(o: AnyRef) = o match {

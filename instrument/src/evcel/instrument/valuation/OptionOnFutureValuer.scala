@@ -2,12 +2,13 @@ package evcel.instrument.valuation
 
 import evcel.curve.ValuationContext
 import evcel.curve.marketdata.Act365
+import evcel.daterange.Month
 import evcel.instrument.{EuropeanOption, FuturesOption}
 import evcel.maths.models.BlackScholes
-import evcel.quantity.Qty
+import evcel.quantity.{Qty, UOM, BDQty}
 
-case class OptionOnFutureValuer(o: FuturesOption) {
-  def value(vc: ValuationContext) = {
+case class OptionOnFutureValuer(vc: ValuationContext, o: FuturesOption) extends Valuation {
+  def value = {
     val ccy = vc.valuationCcy
     require(o.optionType == EuropeanOption, "Only EuropeanOption supported")
     require(ccy == o.strike.uom.numerator, "No fx yet: " + (ccy, o.strike))

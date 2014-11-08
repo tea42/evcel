@@ -27,6 +27,9 @@ class UOMTest extends FunSuite with Matchers {
     USD.mult(USD).toString shouldEqual "(USD^2,1.0)"
     USD.div(US_CENT).toString shouldEqual "(,1.0E+2)"
     USD.mult(USD)._1.div(US_CENT).toString shouldEqual "(USD,1.0E+2)"
+  }
+
+  test("reduce and intern") {
     (USD / MT).mult(MT) match {
       case (USD, bd) => bd shouldEqual BigDecimal(1.0)
     }
@@ -48,6 +51,13 @@ class UOMTest extends FunSuite with Matchers {
     (SCALAR / USD).toString shouldEqual "USD^-1"
     (SCALAR / (USD * USD)).toString shouldEqual "USD^-2"
     (USD / SCALAR).toString shouldEqual "USD"
+  }
+
+  test("fromName") {
+    UOM.fromName("USD") shouldEqual Some(USD)
+    UOM.fromName("USC") shouldEqual Some(US_CENT)
+    UOM.fromName("US_CENT") shouldEqual Some(US_CENT)
+    UOM.fromName("USD1") shouldEqual None
   }
 
   test("test simple conversion") {
@@ -100,5 +110,12 @@ class UOMTest extends FunSuite with Matchers {
     USD.pow(2) shouldEqual USD*USD
     USD.pow(-1) shouldEqual SCALAR/USD
     USD.pow(-2) shouldEqual SCALAR/(USD*USD)
+  }
+
+  test("isPerTimeUnit") {
+    (USD/DAY).isPerTimeUnit shouldEqual true
+    (MT/DAY).isPerTimeUnit shouldEqual true
+    (GAL/SECOND).isPerTimeUnit shouldEqual true
+    (DAY/MT).isPerTimeUnit shouldEqual false
   }
 }

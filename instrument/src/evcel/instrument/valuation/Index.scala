@@ -4,7 +4,7 @@ import evcel.referencedata.calendar.Calendar
 import evcel.referencedata.ReferenceData
 import evcel.curve.ValuationContext
 import evcel.daterange.{DateRange, Day, Month}
-import evcel.quantity.{QtyConversions, Qty}
+import evcel.quantity.{UOM, QtyConversions, Qty}
 import evcel.curve.environment.MarketDay._
 
 trait Index {
@@ -29,6 +29,10 @@ object Index {
 
 trait FuturesDerivedIndex extends Index {
   def underlyingMarketName: String
+
+  def perTimeUnit(refData: ReferenceData): Option[UOM] = {
+    refData.markets.futuresMarket(underlyingMarketName).flatMap(_.perTimeUnit)
+  }
 }
 
 case class FuturesContractIndex(marketName: String, month: Month) extends FuturesDerivedIndex {
@@ -101,6 +105,11 @@ case class SpotMarketIndex(marketName: String) extends Index {
   override def marketConversions(refData: ReferenceData) = {
     refData.markets.spotMarket(marketName).flatMap(_.conversions)
   }
+
+  def perTimeUnit(refData: ReferenceData): Option[UOM] = {
+    refData.markets.spotMarket(marketName).flatMap(_.perTimeUnit)
+  }
+
   override def toString = marketName
 }
 

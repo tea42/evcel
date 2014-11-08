@@ -28,6 +28,10 @@ case class CalendarData(days : Set[Day]) extends ReferenceDataTrait
 case class SimpleCalendar(holidays: Calendar.Holidays) extends Calendar {
   def isHoliday(day: Day) = holidays.days.contains(day)
 }
+case object SimpleGasCalendar extends Calendar {
+  override def weekendsAreHolidays: Boolean = false
+  def isHoliday(day: Day) = false
+}
 
 class Calendars(map: Map[String, Calendar]) {
   def calendar(name: String) = map.get(name)

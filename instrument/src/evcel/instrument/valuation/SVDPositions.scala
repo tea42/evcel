@@ -8,10 +8,10 @@ import evcel.quantity.{DblQty, Qty}
 import org.apache.commons.math3.linear.{Array2DRowRealMatrix, SingularValueDecomposition}
 
 object SVDPositions{
-  private def scaleHedges(
+  private[valuation] def scaleHedges(
     vc: ValuationContext,
     portfolio: Seq[Instrument],
-    hedges: Seq[Instrument])
+    hedges: Seq[HedgeInstrument])
     (implicit valuer: Valuer): Seq[(Instrument, DblQty)] = {
 
     val portfolioKeys = portfolio.map(i => i -> i.priceKeys(vc)).toMap
@@ -24,29 +24,13 @@ object SVDPositions{
     val jacobian = new Array2DRowRealMatrix(allKeys.size, hedges.size)
     val hedgePos = new Array2DRowRealMatrix(allKeys.size, 1)
 
-    def fastDeriv(i: Instrument, key: PriceIdentifier) = {
-      val keys = instrumentKeys(i)
-      if(keys.contains(key)) {
-        val linearAndNotDiscounted = i match {
-          case s: CommoditySwap => s.isCleared
-          case f: Future => true
-          case _ => false
-        }
-        if(linearAndNotDiscounted && keys == Set(key))
-          i.volume.doubleValue
-        else
-          i.firstOrderPriceDiff(vc, key).doubleValue
-      } else {
-        0.0
-      }
-    }
-
     allKeys.zipWithIndex.foreach{
       case (key, i) =>
-        hedgePos.setEntry(i, 0, portfolio.map(i => fastDeriv(i, key)).sum)
+        val portfolioDelta = portfolio.map(i => fastDeriv(vc, i, instrumentKeys(i), key)).sum
+        hedgePos.setEntry(i, 0, portfolioDelta)
         hedges.zipWithIndex.foreach{
           case (hedge, j) =>
-            val position = fastDeriv(hedge, key)
+            val position = fastDeriv(vc, hedge, instrumentKeys(hedge), key)
             jacobian.setEntry(i, j, position)
         }
     }
@@ -57,6 +41,7 @@ object SVDPositions{
         (hedge, Qty(solution.getEntry(i, 0), hedge.volume.uom))
     }
   }
+
   def positions(vc: ValuationContext, instr: Instrument)(implicit valuer : Valuer): Iterable[HedgeInfo] = {
     val hedgePortfolio = instr match {
       case s: CommoditySwapLookalike =>
@@ -68,10 +53,24 @@ object SVDPositions{
       case f: Future =>
         new FutureHedgePortfolio(f)
     }
-    val scaled = scaleHedges(vc, instr :: Nil, hedgePortfolio.unscaledHedges)(valuer)
-    val hedgeInfos = scaled.map{
-      case (unscaled: Instrument, volume: DblQty) => hedgePortfolio.instrumentToHedgeInfo(vc, unscaled, volume)
+    val hedgesWithScale = scaleHedges(vc, instr :: Nil, hedgePortfolio.unscaledHedges)(valuer)
+    val hedgeInfos = hedgePortfolio.combineToHedgeInfo(vc, hedgesWithScale)
+    hedgeInfos
+  }
+
+  private def fastDeriv(vc: ValuationContext, i: Instrument,
+                        instrumentKeys: Set[PriceIdentifier], key: PriceIdentifier)(implicit valuer: Valuer) = {
+    if (instrumentKeys.contains(key)) {
+      val delta = if (instrumentKeys == Set(key)) {
+        i match {
+          case s: CommoditySwap if s.isCleared && !s.volume.uom.isPerTimeUnit => Some(s.volume.doubleValue)
+          case f: Future if !f.volume.uom.isPerTimeUnit => Some(f.volume.doubleValue)
+          case _ => None
+        }
+      } else None
+      delta.getOrElse(i.firstOrderPriceDiff(vc, key).doubleValue)
+    } else {
+      0.0
     }
-    HedgeInfo.combineSameMarketAndPeriod(hedgeInfos)
   }
 }
