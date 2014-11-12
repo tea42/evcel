@@ -1,8 +1,7 @@
 package evcel.curve.marketdata
 
-import evcel.referencedata.ReferenceData
 import evcel.curve.curves.SpotPrices
-import evcel.curve.environment.{Curve, MarketDay}
+import evcel.curve.environment.MarketDay
 import evcel.curve.marketdata.MarketData.CantBuildCurve
 import evcel.daterange.DateRange
 import evcel.quantity.BDQty

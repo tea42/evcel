@@ -10,7 +10,7 @@ import org.scalatest.{FunSpec, Matchers}
 import spray.json._
 import scala.language.reflectiveCalls
 import evcel.referencedata.FuturesExpiryRule
-import evcel.referencedata.market.FuturesMarket
+import evcel.referencedata.market.{Currency, FuturesMarket}
 import evcel.referencedata.calendar.CalendarData
 import evcel.referencedata.ReferenceDataTrait
 import evcel.instrument._
@@ -80,6 +80,12 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
       )
       zeros.toJson.prettyPrint.parseJson.convertTo[ZeroRateData] should equal(zeros)
 
+      info("spotfx")
+      val spotfx = SpotFXData(
+        Qty("1.6", USD/GBP)
+      )
+      spotfx.toJson.prettyPrint.parseJson.convertTo[SpotFXData] should equal(spotfx)
+
       info("Futures Vols")
       val vols = FuturesVolData(
         List(
@@ -108,6 +114,10 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
       info("Futures Markets")
       val market = FuturesMarket("WTI", "CALENDAR", USD/MT)
       market.toJson.prettyPrint.parseJson.convertTo[FuturesMarket] should equal (market)
+
+      info("Currency")
+      val ccy = Currency(USD, "US Dollar", 2, "USDCAL", spotDayUsesBothCalendars = false)
+      ccy.toJson.prettyPrint.parseJson.convertTo[Currency] should equal (ccy)
 
       info("Calendar Data")
       val calendarData = CalendarData(Set(10 / Jun / 2014, 15 / Oct / 2015))

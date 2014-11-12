@@ -5,6 +5,8 @@ import evcel.curve.curves._
 import evcel.curve.environment._
 import evcel.daterange.{DateRange, Day, Month}
 import evcel.quantity.{Qty, UOM}
+import evcel.quantity.Qty._
+import evcel.referencedata.market.FXPair
 import evcel.utils.EitherUtils._
 import evcel.referencedata.ReferenceData
 
@@ -15,9 +17,37 @@ case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, p
     atomic.qty(SpotPriceIdentifier(market, day)).getOrErrorLeft(_.s)
   def discountRate(currency: UOM, day: Day) =
     atomic.double(DiscountRateIdentifier(currency, day)).getOrErrorLeft(_.s)
+
+  /**
+   * spot fx discounted back to today
+   */
+  def todayFX(pair: FXPair): Qty = {
+    val fxMarket = refData.fxMarket(pair)
+    val spotDay = fxMarket.spotDate(refData, marketDay.day)
+    val spotRate = spotFX(pair)
+    val foreignDiscount = discountRate(pair.foreignCurrency, spotDay)
+    val domesticDiscount = discountRate(pair.domesticCurrency, spotDay)
+    spotRate * (foreignDiscount / domesticDiscount).toQty
+  }
+
+  def spotFX(pair: FXPair): Qty = {
+    if(pair.domesticCurrency == baseCCY)
+      atomic.qty(new BaseFXRateKey(baseCCY, pair.foreignCurrency)).getOrErrorLeft(_.s)
+    else if(pair.foreignCurrency == baseCCY)
+      atomic.qty(new BaseFXRateKey(baseCCY, pair.domesticCurrency)).getOrErrorLeft(_.s).invert
+    else
+      spotFX(FXPair(baseCCY, pair.domesticCurrency)) * spotFX(FXPair(pair.foreignCurrency, baseCCY))
+  }
+  def forwardFX(pair: FXPair, day: Day) = {
+    val rd = discountRate(pair.domesticCurrency, day)
+    val rf = discountRate(pair.foreignCurrency, day)
+    todayFX(pair) * Qty(rf / rd, UOM.SCALAR)
+  }
+
   def futuresVol(market: String, month: Month, strike: Qty) =
     atomic.qty(FuturesVolIdentifier(market, month, strike, futuresPrice(market, month))).getOrErrorLeft(_.s)
 
+  def baseCCY = params.baseCCY
   def valuationCcy = params.valuationCcy
 
   def marketDay = atomic.marketDay
@@ -72,4 +102,5 @@ case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, p
   def undiscounted = copy(atomic = PerturbedAtomicEnvironment(atomic, { case DiscountRateIdentifier(_, _) => 1.0 }))
 
   def withParam(f: EnvironmentParams => EnvironmentParams) = copy(params = f(params))
+  def withValuationCCY(ccy: UOM) = withParam(_.withValuationCcy(ccy))
 }

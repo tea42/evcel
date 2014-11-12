@@ -53,7 +53,7 @@ case class DiscountRateIdentifier(currency: UOM, day: Day) extends AtomicDatumId
   override def nullValue(refData: ReferenceData) = 1.0
 
   override def forwardStateValue(refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay) = {
-    for(d1 <- original.qty(this); d2 <- original.qty(copy(day = forwardMarketDay.day))) yield d1 / d2
+    for(d1 <- original.double(this); d2 <- original.double(copy(day = forwardMarketDay.day))) yield d1 / d2
   }
 }
 

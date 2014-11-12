@@ -10,7 +10,7 @@ import evcel.maths.OptionRight
 import evcel.quantity.{BDQty, Qty, QtyConversions, UOM, UOMRatio}
 import evcel.referencedata.{CalendarIdentifier, FuturesExpiryRule, FuturesExpiryRuleIdentifier, ReferenceDataIdentifier, ReferenceDataTrait}
 import evcel.referencedata.calendar.CalendarData
-import evcel.referencedata.market.{FuturesMarket, FuturesMarketIdentifier}
+import evcel.referencedata.market.{Currency, CurrencyIdentifier, FuturesMarket, FuturesMarketIdentifier}
 import spray.json._
 
 object EventStoreJsonProtocol extends DefaultJsonProtocol {
@@ -106,6 +106,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
   implicit val futuresPricesIdentifierFormat  = named(MarketData.FUTURES_PRICES, jsonFormat1(FuturesPricesIdentifier))
   implicit val futuresVolsIdentifierFormat    = named(MarketData.FUTURES_VOLS, jsonFormat1(FuturesVolsIdentifier))
   implicit val zeroRateIdentifierFormat       = named(MarketData.ZERO_RATES, jsonFormat1(ZeroRatesIdentifier))
+  implicit val spotFXIdentifierFormat       = named(MarketData.SPOT_FX, jsonFormat2(SpotFXIdentifier))
   implicit val spotPricesIdentifierFormat     = named(MarketData.SPOT_PRICES, jsonFormat1(SpotPricesIdentifier))
 
   implicit val marketDataIdentifierFormat : TraitFormat[MarketDataIdentifier] = 
@@ -113,11 +114,13 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
       classOf[FuturesPricesIdentifier] -> futuresPricesIdentifierFormat,
       classOf[FuturesVolsIdentifier] -> futuresVolsIdentifierFormat,
       classOf[ZeroRatesIdentifier] -> zeroRateIdentifierFormat,
+      classOf[SpotFXIdentifier] -> spotFXIdentifierFormat,
       classOf[SpotPricesIdentifier] -> spotPricesIdentifierFormat
     )
 
   implicit val futuresPricesFormat = named(MarketData.FUTURES_PRICES, jsonFormat1(FuturesPriceData.apply))
   implicit val discountRateFormat = named(MarketData.ZERO_RATES, jsonFormat2(ZeroRateData.apply))
+  implicit val spotFXFormat = named(MarketData.SPOT_FX, jsonFormat1(SpotFXData.apply))
   implicit val futuresVolFormat = named(MarketData.FUTURES_VOLS, jsonFormat1(FuturesVolData.apply))
   implicit val spotPriceDataFormat = named(MarketData.SPOT_PRICES, jsonFormat1(SpotPriceData))
 
@@ -125,6 +128,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     classOf[FuturesPriceData] -> futuresPricesFormat,
     classOf[FuturesVolData] -> futuresVolFormat,
     classOf[ZeroRateData] -> discountRateFormat,
+    classOf[SpotFXData] -> spotFXFormat,
     classOf[SpotPriceData] -> spotPriceDataFormat
   )
 
@@ -215,9 +219,11 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
   implicit val futuresExpiryRuleIdentifierFormat = named(
     ReferenceDataTrait.FUTURES_EXPIRY_RULE, jsonFormat1(FuturesExpiryRuleIdentifier))
   implicit val futuresMarketIdentifierFormat = named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat1(FuturesMarketIdentifier))
+  implicit val currencyIdentifierFormat = named(ReferenceDataTrait.CURRENCY, jsonFormat1(CurrencyIdentifier))
   implicit val referenceDataIdentifierFormat = new TraitFormat[ReferenceDataIdentifier](
     classOf[CalendarIdentifier] -> calendarIdentifierFormat,
     classOf[FuturesExpiryRuleIdentifier] -> futuresExpiryRuleIdentifierFormat,
+    classOf[CurrencyIdentifier] -> currencyIdentifierFormat,
     classOf[FuturesMarketIdentifier] -> futuresMarketIdentifierFormat
   )
 
@@ -228,9 +234,11 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
   implicit val futuresExpiryRuleFormat = named(ReferenceDataTrait.FUTURES_EXPIRY_RULE, jsonFormat3(FuturesExpiryRule.apply))
   implicit val futuresMarketRuleFormat = named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat5(FuturesMarket.apply))
   implicit val calendarDataFormat = named(ReferenceDataTrait.CALENDAR, jsonFormat1(CalendarData))
+  implicit val currencyFormat = named(ReferenceDataTrait.CURRENCY, jsonFormat5(Currency.apply))
   implicit val referenceDataTraitFormat = new TraitFormat[ReferenceDataTrait](
     classOf[FuturesExpiryRule] -> futuresExpiryRuleFormat,
     classOf[CalendarData] -> calendarDataFormat,
+    classOf[Currency] -> currencyFormat,
     classOf[FuturesMarket] -> futuresMarketRuleFormat
   )
 }

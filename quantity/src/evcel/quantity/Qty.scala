@@ -74,6 +74,8 @@ trait Qty extends Ordered[Qty] {
 }
 
 class DblQty private[quantity] (private val value: Double, val uom: UOM) extends Qty {
+  require(!value.isNaN && !value.isInfinity, "Invalid value: " + value)
+
   def +(other: Qty) = (this, other) match {
     case (_, Qty.NULL) => this
     case _ => uom.add(other.uom) match {
@@ -140,6 +142,8 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
       case (newUOM, mult) => new BDQty(value * other.bdValue * mult, newUOM)
     }
   }
+
+  def mult(other: BDQty) = this.*(other).asInstanceOf[BDQty]
 
   def /(other: Qty) = other match {
     case _: DblQty => dblQty./(other)

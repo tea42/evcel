@@ -60,6 +60,9 @@ class Day private (val year: Int, val month: Int, val dayNumber: Int) extends Da
     require(day >= this, s"Invalid: $this, $day")
     (0 to (day - this)).map(this + _)
   }
+
+  def min(other: Day) = if(this < other) this else other
+  def max(other: Day) = if(this > other) this else other
 }
 
 object Day extends TenorType {

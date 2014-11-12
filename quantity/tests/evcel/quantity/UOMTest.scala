@@ -118,4 +118,11 @@ class UOMTest extends FunSuite with Matchers {
     (GAL/SECOND).isPerTimeUnit shouldEqual true
     (DAY/MT).isPerTimeUnit shouldEqual false
   }
+
+  test("ccy pair toString") {
+    (USD/GBP).toString shouldEqual "GBPUSD"
+    (GBP/USD).toString shouldEqual "USDGBP"
+    (GBP/US_CENT).toString shouldEqual "¢GBP" // bit weird this one. but we should never see it unless we have a bug.
+    (USD/GBP/DAY).toString shouldEqual "USD/DayGBP"
+  }
 }

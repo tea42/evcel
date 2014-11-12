@@ -51,6 +51,9 @@ object UnitTestingEnvironment {
         case (ccy : UOM, zr : ZeroRateData) =>
           map += (ZeroRatesIdentifier(ccy) -> zr.buildCurve(ccy, marketDay_))
 
+        case ((from: UOM, to: UOM), spot: SpotFXData) =>
+          map += (SpotFXIdentifier(from, to) -> spot.buildCurve(from, to))
+
         case (market : String, sp : SpotPriceData) =>
           map += (SpotPricesIdentifier(market) -> sp.buildCurve(market, marketDay_))
 

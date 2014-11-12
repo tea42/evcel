@@ -116,12 +116,17 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
     val num = reduced.factorNum
     val den = reduced.factorDen
     val numString = formatPower(reduced, num, negate = false).mkString("")
-    if (den.nonEmpty && numString.isEmpty)
+    if (den.nonEmpty && numString.isEmpty) {
       formatPower(reduced, den, negate = true).mkString("")
-    else if (den.nonEmpty)
-      numString + "/" + formatPower(reduced, den, negate = false).mkString("")
-    else
+    }else if (den.nonEmpty) {
+      val denString = formatPower(reduced, den, negate = false).mkString("")
+      if (isCcyPair)
+        denString + numString
+      else
+        numString + "/" + denString
+    } else {
       numString
+    }
   }
 
   private def intern = {
@@ -131,6 +136,7 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   override def toString = string
 
   def isCcy = UOM.baseCurrenciesMap.contains(this)
+  def isCcyPair = numerator.isCcy && denominator.isCcy
 
   lazy val isScalar = this == UOM.SCALAR
   lazy val isPercent = asPrimeMap.keySet == UOM.PERCENT.asPrimeMap.keySet
@@ -192,6 +198,14 @@ object UOM extends Enumerate[UOM](classOf[UOM], _.allNames){
   val GBP = UOM(UnitDimension.GBP, 1.0, "GBP")
   val PENCE = UOM(UnitDimension.GBP, 0.01, "p", "PENCE")
   val EUR = UOM(UnitDimension.EUR, 1.0, "EUR")
+  val CAD = UOM(UnitDimension.CAD, 1.0, "CAD")
+  val NZD = UOM(UnitDimension.NZD, 1.0, "NZD")
+  val AUD = UOM(UnitDimension.AUD, 1.0, "AUD")
+  val CHF = UOM(UnitDimension.CHF, 1.0, "CHF")
+  val JPY = UOM(UnitDimension.JPY, 1.0, "JPY")
+
+  val TRY = UOM(UnitDimension.TRY, 1.0, "TRY")
+  val MXN = UOM(UnitDimension.MXN, 1.0, "MXN")
 
   // oil
   val BBL = UOM(UnitDimension.OilVolume, 1.0, "BBL")

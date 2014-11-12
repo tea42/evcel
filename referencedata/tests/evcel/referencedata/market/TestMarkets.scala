@@ -15,5 +15,14 @@ object TestMarkets {
   ),
     Map(
       "Singapore Gasoil 0.05" -> new SpotMarket("Singapore Gasoil 0.05", "Platts Asia", USD/MT, Some(conv))
-  ))
+  ),
+  Map(
+    USD -> Currency(USD, "USD", 2, "USD", spotDayUsesBothCalendars = false),
+    GBP -> Currency(GBP, "GBP", 2, "GBP", spotDayUsesBothCalendars = false),
+    EUR -> Currency(EUR, "EUR", 2, "EUR", spotDayUsesBothCalendars = false),
+    TRY -> Currency(TRY, "TRY", 1, "TRY", spotDayUsesBothCalendars = false),
+    MXN -> Currency(MXN, "MXN", 2, "MXN", spotDayUsesBothCalendars = true)
+  )
+
+  )
 }
