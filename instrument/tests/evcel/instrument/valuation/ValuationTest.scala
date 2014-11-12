@@ -1,13 +1,13 @@
 package evcel.instrument.valuation
 
-import evcel.curve.curves.{SpotPriceIdentifier, DiscountRateIdentifier, FuturesPriceIdentifier, FuturesVolIdentifier}
-import evcel.curve.environment.MarketDay
+import evcel.curve.curves._
+import evcel.curve.environment.{SpotFXIdentifier, MarketDay}
 import evcel.curve.environment.MarketDay._
 import evcel.curve.marketdata.Act365
 import evcel.curve.{UnitTestingEnvironment, ValuationContext}
 import evcel.daterange.DateRangeSugar.{Oct, Jan}
-import evcel.daterange.{DateRange, Month}
-import evcel.instrument.{CommoditySwapSpread, CommoditySwapLookalike, Future, CommoditySwap}
+import evcel.daterange.{Day, DateRange, Month}
+import evcel.instrument._
 import evcel.quantity.UOM._
 import evcel.quantity.{BDQty, Percent, Qty}
 import org.scalatest.{FunSuite, ShouldMatchers}
@@ -36,7 +36,11 @@ trait ValuationTest extends FunSuite with ShouldMatchers {
       case SpotPriceIdentifier(market, d) =>
         val priceUOM = refData.markets.spotMarketOrThrow(market).priceUOM
         Qty("100.0", priceUOM) + Qty(d.dayNumber, priceUOM)
+      case BaseFXRateKey(USD, GBP) => Qty("1.6", USD/GBP)
+      case BaseFXRateKey(USD, EUR) => Qty("1.25", USD/EUR)
       case DiscountRateIdentifier(USD, day) => math.exp(-0.05 * Act365.timeBetween(marketDay.day, day))
+      case DiscountRateIdentifier(GBP, day) => math.exp(-0.025 * Act365.timeBetween(marketDay.day, day))
+      case DiscountRateIdentifier(EUR, day) => math.exp(-0.015 * Act365.timeBetween(marketDay.day, day))
       case FuturesVolIdentifier(market, month, strike, _) => Percent("20") + Percent((strike.doubleValue % 5).toString)
     })
   }
@@ -76,6 +80,10 @@ trait ValuationTest extends FunSuite with ShouldMatchers {
   def createFutureNBP(market: String = nbp, period: Month = oct,
     strike: BDQty = Qty("100", PENCE / THM), volume: BDQty = Qty(123, THM/DAY)) = {
     new Future(market, period, strike, volume)
+  }
+
+  def fxForward(volume: BDQty = Qty(1013, GBP), strike: BDQty = Qty("1.6", USD / GBP), delivery: Day = oct.lastDay) = {
+    new FXForward(volume, strike, delivery)
   }
 
   implicit def hedgeInfoEqual(implicit q: Equal[Qty]): Equal[HedgeInfo] = Equal.equal[HedgeInfo]{

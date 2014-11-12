@@ -7,7 +7,7 @@ import evcel.quantity.utils.QuantityTestUtils._
 class FutureValuationTest extends ValuationTest {
 
   test("future - per day valuation") {
-    val vc = createVC()
+    val vc = createVC().withValuationCCY(GBP)
     val future = createFutureNBP(nbp, oct)
 
     val F = vc.futuresPrice(nbp, oct)

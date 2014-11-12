@@ -5,6 +5,7 @@ import evcel.curve.environment.{PriceIdentifier, AtomicDatumIdentifier}
 import evcel.instrument._
 import evcel.quantity.Qty
 import evcel.quantity.BDQty
+import evcel.referencedata.market.FXPair
 
 trait Valuer {
   def value(vc: ValuationContext, instr: Instrument): Qty
@@ -42,7 +43,17 @@ trait Valuation {
 }
 
 class DefaultValuer extends Valuer {
-  def value(vc: ValuationContext, instr: Instrument): Qty = valuer(vc, instr).value.inBaseCcy
+  implicit val valuer: Valuer = this
+
+  def value(vc: ValuationContext, instr: Instrument): Qty = {
+    val mtm = valuer(vc, instr).value.inBaseCcy
+    if(mtm.uom != vc.valuationCcy) {
+      val rate = vc.todayFX(FXPair(mtm.uom, vc.valuationCcy))
+      mtm * rate
+    } else {
+      mtm
+    }
+  }
 
   def valuer(vc: ValuationContext, instr: Instrument): Valuation = instr match {
     case fo: FuturesOption => new OptionOnFutureValuer(vc, fo)
@@ -50,6 +61,8 @@ class DefaultValuer extends Valuer {
     case s: CommoditySwap => SwapLikeValuer(vc, s)
     case s: CommoditySwapSpread => SwapLikeValuer(vc, s)
     case s: CommoditySwapLookalike => SwapLikeValuer(vc, s)
+    case f: FXForward => FXForwardValuer(vc, f)
+    case c: Cash => CashValuer(vc, c)
     case o => sys.error("No valuation code for " + o)
   }
 

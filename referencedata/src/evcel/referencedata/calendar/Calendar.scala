@@ -18,6 +18,10 @@ trait Calendar {
     }
     d
   }
+
+  def &&(other: Calendar) = new Calendar {
+    override def isHoliday(day: Day): Boolean = Calendar.this.isHoliday(day) || other.isHoliday(day)
+  }
 }
 object Calendar{
   case class CalendarName(name : String) extends AnyVal

@@ -1,7 +1,7 @@
 package evcel.referencedata
 
 import evcel.referencedata.calendar.Calendars
-import evcel.referencedata.market.Markets
+import evcel.referencedata.market.{FXMarket, FXPair, Markets}
 import evcel.utils.Cache
 
 trait ReferenceDataTrait
@@ -13,6 +13,7 @@ object ReferenceDataTrait{
   val CALENDAR = "Calendar"
   val FUTURES_EXPIRY_RULE = "FuturesExpiryRule"
   val FUTURES_MARKET = "FuturesMarket"
+  val CURRENCY = "Currency"
 }
 
 case class ReferenceData(
@@ -23,4 +24,8 @@ case class ReferenceData(
 
   val indexCache = Cache.createStaticCache("ReferenceData.indexCache")
   val indexSpreadCache = Cache.createStaticCache("ReferenceData.indexSpreadCache")
+
+  def fxMarket(pair: FXPair) = {
+    FXMarket(this, pair)
+  }
 }
