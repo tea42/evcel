@@ -1,4 +1,4 @@
-package evcel.instrument
+package evcel.maths
 
 sealed trait OptionType{
   def name : String

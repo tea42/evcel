@@ -1,22 +1,23 @@
 package evcel.maths.models
 
-import evcel.maths.{Straddle, Put, Call, OptionRight}
+import evcel.maths.{Call, OptionRight, Put, Straddle}
 import org.apache.commons.math3.distribution.NormalDistribution
 
 /**
  * Code mostly from Option Pricing Formulas (Second edition) - Haug
  */
-class BlackScholes(right: OptionRight, S: Double, K: Double, vol: Double, T: Double) {
-  val d1 = (math.log(S / K) + (vol * vol / 2) * T) / (vol * Math.sqrt(T))
-  val d2 = d1 - vol * math.sqrt(T)
+case class BlackScholes(right: OptionRight, S: Double, K: Double, vol: Double, T: Double, b: Double = 0.0) {
+  lazy val d1 = (math.log(S / K) + (b + vol * vol / 2) * T) / (vol * Math.sqrt(T))
+  lazy val d2 = d1 - vol * math.sqrt(T)
   lazy val N1 = BlackScholes.NormalDist.cumulativeProbability(d1)
   lazy val Nm1 = BlackScholes.NormalDist.cumulativeProbability(-d1)
   lazy val N2 = BlackScholes.NormalDist.cumulativeProbability(d2)
   lazy val Nm2 = BlackScholes.NormalDist.cumulativeProbability(-d2)
+  lazy val Fb = math.exp(b * T)
 
   def undiscountedValue = right match {
-    case Call => S * N1 - K * N2
-    case Put => K * Nm2 - S * Nm1
+    case Call => S * Fb * N1 - K * N2
+    case Put => K * Nm2 - S * Fb * Nm1
     case Straddle => S * (N1 - Nm1) - K * (N2 - Nm2)
   }
 

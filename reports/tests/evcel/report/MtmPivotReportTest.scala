@@ -5,8 +5,8 @@ import evcel.curve.environment.{MarketDay, TimeOfDay}
 import evcel.curve.marketdata.Act365
 import evcel.curve.{UnitTestingEnvironment, ValuationContext}
 import evcel.daterange.{DateRange, Day, Month}
-import evcel.instrument.{CommoditySwap, EuropeanOption, Future, FuturesOption}
-import evcel.maths.Call
+import evcel.instrument.{CommoditySwap, Future, FuturesOption}
+import evcel.maths.{EuropeanOption, Call}
 import evcel.maths.models.BlackScholes
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._

@@ -5,8 +5,8 @@ import evcel.curve.curves.{FuturesVolIdentifier, DiscountRateIdentifier, Futures
 import evcel.daterange.DateRangeSugar.{Oct, Nov}
 import evcel.curve.environment.MarketDay._
 import evcel.daterange.Month
-import evcel.instrument.{CommoditySwap, EuropeanOption, FuturesOption}
-import evcel.maths.Call
+import evcel.instrument.{CommoditySwap, FuturesOption}
+import evcel.maths.{EuropeanOption, Call}
 import evcel.quantity.Qty
 import org.scalatest.{ShouldMatchers, FunSuite}
 import evcel.quantity.UOM._
