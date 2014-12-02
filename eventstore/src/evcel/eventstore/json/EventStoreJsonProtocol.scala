@@ -6,7 +6,7 @@ import evcel.daterange.{DateRange, Day, Month, SimpleDateRange}
 import evcel.instrument._
 import evcel.instrument.trade.Trade
 import evcel.instrument.valuation.{CommonSwapPricingRule, NonCommonSwapPricingRule, SwapPricingRule}
-import evcel.maths.OptionRight
+import evcel.maths.{OptionType, OptionRight}
 import evcel.quantity.{BDQty, Qty, QtyConversions, UOM, UOMRatio}
 import evcel.referencedata.{CalendarIdentifier, FuturesExpiryRule, FuturesExpiryRuleIdentifier, ReferenceDataIdentifier, ReferenceDataTrait}
 import evcel.referencedata.calendar.CalendarData

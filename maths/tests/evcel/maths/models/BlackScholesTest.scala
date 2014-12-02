@@ -2,7 +2,8 @@ package evcel.maths.models
 
 import evcel.maths._
 import evcel.maths.utils.DoubleTestUtils
-import org.scalatest.{ ShouldMatchers, FunSuite }
+import org.apache.commons.math3.random.MersenneTwister
+import org.scalatest.{ShouldMatchers, FunSuite}
 
 class BlackScholesTest extends FunSuite with ShouldMatchers {
   // this is java code for BS converted to scala to test against. taken from
@@ -47,9 +48,9 @@ class BlackScholesTest extends FunSuite with ShouldMatchers {
     for (
       cp <- List(Call, Put, Straddle);
       k <- 80.until(120);
-      vol <- .01.until(.5, .05);
-      t <- .01.until(2.0, .05);
-      r <- .0.until(.2, .05)
+      vol <-.01.until(.5, .05);
+      t <-.01.until(2.0, .05);
+      r <-.0.until(.2, .05)
     ) {
       new BlackScholes(cp, 100, k, vol, t).undiscountedValue * math.exp(-r * t) shouldEqual
         discFuturesOptionPrice(cp, 100, k, vol, t, r)
@@ -103,4 +104,22 @@ class BlackScholesTest extends FunSuite with ShouldMatchers {
     }
   }
 
+  test("against MC") {
+    for (t <- List(0.35, 0.6); b <- List(0.0, 0.05, 0.1); vol <- List(0.1, 0.3, 0.6)) {
+      val S = 100
+      val params = new MCParams(b = b, S = S, T = t, vol = vol)
+      val mc = new MonteCarlo(100 * 1000, 1, new MersenneTwister(1234), params)
+
+      for (cp <- List(Call, Put); r <- List(0.05, 0.25, 0.0); k <- List(95, 100, 105, 110, 120)) {
+        val valuation = EuropeanOptionMC.valuation(cp, k)
+
+        val bs = new BlackScholes(cp, 100, k, vol, t, b)
+        val bsValue = bs.undiscountedValue * math.exp(-r * t)
+        val (mcValue, se) = mc.value(valuation, math.exp(-r * t))
+
+        bsValue shouldEqual (mcValue +- (se * 2).max(0.1))
+        se should be < (bsValue * 0.015).max(0.005)
+      }
+    }
+  }
 }

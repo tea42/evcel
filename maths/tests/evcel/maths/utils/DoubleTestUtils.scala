@@ -10,7 +10,7 @@ object DoubleTestUtils {
       b match {
         case d: Double if a.abs <= min && d.abs <= min =>
           minNumbersSignsMayDiffer || a * d >= 0
-        case d: Double => (a - d) / a <= tolPC
+        case d: Double => ((a - d) / a).abs <= tolPC
         case _ => false
       }
   }

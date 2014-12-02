@@ -1,7 +1,7 @@
 package evcel.instrument
 
 import evcel.daterange.{Day, Month}
-import evcel.maths.OptionRight
+import evcel.maths.{OptionType, OptionRight}
 import evcel.quantity.BDQty
 
 case class FuturesOption(market: String, delivery: Month, strike: BDQty, volume: BDQty, right: OptionRight,

@@ -3,7 +3,8 @@ package evcel.instrument.valuation
 import evcel.curve.ValuationContext
 import evcel.curve.marketdata.Act365
 import evcel.daterange.Month
-import evcel.instrument.{EuropeanOption, FuturesOption}
+import evcel.instrument.FuturesOption
+import evcel.maths.EuropeanOption
 import evcel.maths.models.BlackScholes
 import evcel.quantity.{Qty, UOM, BDQty}
 
