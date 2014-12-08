@@ -131,7 +131,7 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
       }
     }
 
-    it("Instruments"){
+    it("Tradeables"){
       info("Future")
       val future = Future("WTI", Jun / 2014, Qty("100.0", USD/MT),  Qty("10", MT))
       future.toJson.prettyPrint.parseJson.convertTo[Future] should equal (future)
@@ -158,10 +158,10 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
       swapLookalike.toJson.prettyPrint.parseJson.convertTo[CommoditySwapLookalike] should equal (swapLookalike)
 
       info("Abstract Instrument")
-      val instruments : List[Instrument] = List(future, swap1, swap2, swapLookalike)
+      val instruments : List[Tradeable] = List(future, swap1, swap2, swapLookalike)
       instruments.foreach{
-        case inst : Instrument => 
-          inst.toJson.prettyPrint.parseJson.convertTo[Instrument] should equal (inst)
+        case inst : Tradeable => 
+          inst.toJson.prettyPrint.parseJson.convertTo[Tradeable] should equal (inst)
       }
     }
   }

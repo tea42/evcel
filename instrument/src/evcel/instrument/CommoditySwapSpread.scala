@@ -4,10 +4,19 @@ import evcel.daterange.DateRange
 import evcel.instrument.valuation.SwapPricingRule
 import evcel.quantity.BDQty
 
-case class CommoditySwapSpread(spreadName: String, averagingPeriod: DateRange, strike: BDQty, volume: BDQty,
+case class CommoditySwapSpread(
+  spreadName: String, averagingPeriod: DateRange, 
+  strike: BDQty, volume: BDQty,
   pricingRule: SwapPricingRule,
-  bizDaysToSettlement: Option[Int] = None)
-  extends Instrument {
+  bizDaysToSettlement: Option[Int] = None
+)
+  extends Instrument 
+{
+  def instrumentType = CommoditySwapSpread
+}
+
+object CommoditySwapSpread extends InstrumentType{
+  def name = "Commodity Swap Spread"
 }
 
 

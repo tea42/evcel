@@ -21,7 +21,7 @@ trait Valuer {
     val mtmDown = value(vc.shiftPrice(pi, -dP), instr)
     (mtmUp - mtmDown) / (2 * dP)
   }
-  def positions(vc: ValuationContext, instr: Instrument): Iterable[HedgeInfo]
+  def positions(vc: ValuationContext, instr: Instrument): Seq[HedgeInfo] 
 }
 
 object Valuer {
@@ -72,6 +72,6 @@ class DefaultValuer extends Valuer {
     record.keys
   }
 
-  def positions(vc: ValuationContext, instr: Instrument): Iterable[HedgeInfo] =  
+  def positions(vc: ValuationContext, instr: Instrument): Seq[HedgeInfo] =  
     SVDPositions.positions(vc, instr)(this)
 }

@@ -9,6 +9,11 @@ import evcel.quantity.BDQty
  */
 case class FXForward(volume: BDQty, strike: BDQty, delivery: Day)
   extends Instrument {
+  def instrumentType = FXForward
+}
+
+object FXForward extends InstrumentType{
+  def name = "FXForward"
 }
 
 

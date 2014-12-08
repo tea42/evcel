@@ -14,6 +14,11 @@ object TestFuturesExpiryRules {
       FuturesExpiryRule("ICE NBP",
         (Sep / 2014 to Sep / 2015).map { m => m -> (m.firstDay - 9)}.toMap,
         (Sep / 2014 to Sep / 2015).map { m => m -> (m.firstDay - 10)}.toMap
+      ),
+     "ICE Brent" ->
+      FuturesExpiryRule("ICE Brent",
+        (Sep / 2014 to Sep / 2015).map { m => m -> (m.firstDay - 9)}.toMap,
+        (Sep / 2014 to Sep / 2015).map { m => m -> (m.firstDay - 10)}.toMap
       )
     )
   )

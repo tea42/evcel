@@ -23,12 +23,12 @@ class FutureHedgePortfolio(f: Future) extends HedgePortfolio {
         val volumeUOM = _volume.uom
         val volume = if(volumeUOM.isPerTimeUnit && !vc.params.positionAsPower) {
           require(volumeUOM.denominator == UOM.DAY, "Only handle per day at the moment " + volumeUOM)
-          _volume * Qty(f.delivery.size, UOM.DAY)
+          _volume * Qty(f.period.size, UOM.DAY)
         } else {
           _volume
         }.round(9)
-        FutureHedgeInfo(f.market, PeriodLabel(f.delivery), volume)
+        HedgeInfo(f.market, PeriodLabel(f.period), volume)
       case o => sys.error("Not valid: " + o)
-    }
+    }(scala.collection.breakOut)
   }
 }

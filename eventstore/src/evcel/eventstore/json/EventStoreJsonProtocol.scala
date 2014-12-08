@@ -12,6 +12,7 @@ import evcel.referencedata.{CalendarIdentifier, FuturesExpiryRule, FuturesExpiry
 import evcel.referencedata.calendar.CalendarData
 import evcel.referencedata.market.{Currency, CurrencyIdentifier, FuturesMarket, FuturesMarketIdentifier}
 import spray.json._
+import evcel.instrument.Tradeable
 
 object EventStoreJsonProtocol extends DefaultJsonProtocol {
   abstract class NamedFormat[T] extends RootJsonFormat[T] {
@@ -186,7 +187,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     Instrument.COMMODITY_SWAP_SPREAD, jsonFormat6(CommoditySwapSpread.apply)
   )
 
-  implicit val instrumentFormat = new TraitFormat[Instrument](
+  implicit val instrumentFormat = new TraitFormat[Tradeable](
     classOf[Future] -> futureFormat, 
     classOf[FuturesOption] -> futuresOptionFormat,
     classOf[CommoditySwap] -> commoditySwapFormat,
@@ -198,7 +199,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
       trade.id.toJson, 
       trade.tradeDay.toJson,
       trade.counterparty.toJson, 
-      trade.instrument.toJson,
+      trade.tradeable.toJson,
       trade.meta.toList.toJson
     )
     def read(value: JsValue) = value match{
@@ -207,7 +208,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
           idJson.convertTo[String],
           dayJson.convertTo[Day],
           cptyJson.convertTo[String],
-          instJson.convertTo[Instrument],
+          instJson.convertTo[Tradeable],
           metaJson.convertTo[List[(String, String)]].toMap
         )
       case _ => 

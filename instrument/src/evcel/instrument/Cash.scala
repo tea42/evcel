@@ -9,6 +9,11 @@ import evcel.quantity.BDQty
  */
 case class Cash(volume: BDQty, delivery: Option[Day])
   extends Instrument {
+  def instrumentType = Cash
+}
+
+object Cash extends InstrumentType{
+  def name = "Cash"
 }
 
 

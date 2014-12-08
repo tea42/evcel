@@ -11,7 +11,7 @@ class FuturePositionTest extends ValuationTest {
     val future = createFuture()
 
     future.positions(vc) shouldEqual
-      FutureHedgeInfo(future.market, PeriodLabel(future.delivery), future.volume) :: Nil
+      HedgeInfo(future.market, PeriodLabel(future.period), future.volume) :: Nil
   }
 
   test("future position - per day valuation") {
@@ -19,6 +19,6 @@ class FuturePositionTest extends ValuationTest {
     val future = createFutureNBP(nbp, oct)
     future.volume.uom shouldBe THM/DAY
     future.positions(vc) shouldEqual
-      FutureHedgeInfo(future.market, PeriodLabel(future.delivery), future.volume) :: Nil
+      HedgeInfo(future.market, PeriodLabel(future.period), future.volume) :: Nil
   }
 }

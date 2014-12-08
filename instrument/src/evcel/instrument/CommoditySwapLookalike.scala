@@ -13,13 +13,21 @@ import evcel.quantity.BDQty
  */
 case class CommoditySwapLookalike(futuresMarket: String, month: Month, strike: BDQty, volume: BDQty,
                                   bizDaysToSettlement: Option[Int] = None)
-  extends Instrument {
+  extends SingleInstrumentTradeable {
+
+  def tradeableType = CommoditySwapLookalike
 
   def asCommoditySwap(refData: ReferenceData) = {
     val ltd = refData.markets.futuresMarketOrThrow(futuresMarket).lastTradingDay(refData, month)
     val ndx = new FuturesFrontPeriodIndex(futuresMarket, 1, 0)
     new CommoditySwap(ndx.indexName, ltd, strike, volume, bizDaysToSettlement = bizDaysToSettlement)
   }
+
+  def instrumentType = CommoditySwapLookalike
+}
+
+object CommoditySwapLookalike extends InstrumentType with TradeableType{
+  val name = "Commodity Swap Lookalike"
 }
 
 
