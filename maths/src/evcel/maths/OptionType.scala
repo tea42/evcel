@@ -20,8 +20,8 @@ object OptionType {
   )
 
   def unapply(right: String): Option[OptionType] = right.toLowerCase.take(2) match {
-    case "am" => Some(EuropeanOption)
-    case "eu" => Some(AmericanOption)
+    case "am" => Some(AmericanOption)
+    case "eu" => Some(EuropeanOption)
     case "as" => Some(AsianOption)
     case _ => None
   }

@@ -1,5 +1,8 @@
 package evcel.instrument
 
+/**
+  * The thing traded in a trade. Commonly will be a single instrument
+  */
 trait Tradeable{
   def instruments : Seq[Instrument]
   def tradeableType : TradeableType
@@ -12,5 +15,15 @@ trait SingleInstrumentTradeable extends Tradeable with Instrument{
 
 trait TradeableType{
   def name : String
+  def samples : Seq[Tradeable]
+}
+
+object TradeableType{
+  val types = Vector[TradeableType](
+    Future, FuturesOption, 
+    CommoditySwap, CommoditySwapSpread, CommoditySwapLookalike,
+    FXForward,
+    Cash
+  )
 }
 

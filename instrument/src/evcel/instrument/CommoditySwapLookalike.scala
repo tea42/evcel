@@ -4,6 +4,10 @@ import evcel.referencedata.ReferenceData
 import evcel.daterange.Month
 import evcel.instrument.valuation.FuturesFrontPeriodIndex
 import evcel.quantity.BDQty
+import evcel.quantity.Qty._
+import evcel.quantity.UOM._
+import evcel.daterange.DateRangeSugar._
+import scala.language.reflectiveCalls
 
 /**
  * A swap that behaves the same as a future on the given market and month.
@@ -28,6 +32,22 @@ case class CommoditySwapLookalike(futuresMarket: String, month: Month, strike: B
 
 object CommoditySwapLookalike extends InstrumentType with TradeableType{
   val name = "Commodity Swap Lookalike"
+  def samples = Vector(
+    CommoditySwapLookalike(
+      "WTI",
+      Jun / 2014,
+      100(USD/BBL),
+      50(BBL),
+      bizDaysToSettlement = Some(10)
+    ),
+    CommoditySwapLookalike(
+      "WTI",
+      Jun / 2014,
+      100(USD/BBL),
+      50(BBL),
+      bizDaysToSettlement = Some(10)
+    )
+  )
 }
 
 
