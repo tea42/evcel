@@ -11,8 +11,11 @@ import org.scalatest.{FunSpecLike, Matchers, ShouldMatchers}
 
 import scala.language.reflectiveCalls
 import scala.math._
+import evcel.curve.marketdata.FuturesVolData
+import evcel.curve.marketdata.MarketDataTest
+import org.scalatest.FunSpecLike
 
-class UnitTestingEnvironmentTests extends MarketDataTest with FunSpecLike with Matchers with ShouldMatchers{
+class UnitTestingEnvironmentTests extends MarketDataTest with FunSpecLike with Matchers{
   describe("UnitTestingEnvironment"){
     it("Should work"){
       val env = UnitTestingEnvironment.fromMarketData(
