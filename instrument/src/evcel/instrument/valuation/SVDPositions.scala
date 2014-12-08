@@ -39,10 +39,9 @@ object SVDPositions{
     hedges.zipWithIndex.map {
       case (hedge, i) =>
         (hedge, Qty(solution.getEntry(i, 0), hedge.volume.uom))
-    }
+    }(scala.collection.breakOut)
   }
-
-  def positions(vc: ValuationContext, instr: Instrument)(implicit valuer : Valuer): Iterable[HedgeInfo] = {
+  def positions(vc: ValuationContext, instr: Instrument)(implicit valuer : Valuer): Seq[HedgeInfo] = {
     val hedgePortfolio = instr match {
       case s: CommoditySwapLookalike =>
         SwapPositionHedgePortolio(vc, s.asCommoditySwap(vc.refData))(valuer)
@@ -73,4 +72,5 @@ object SVDPositions{
       0.0
     }
   }
+
 }

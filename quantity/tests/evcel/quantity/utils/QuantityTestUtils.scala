@@ -22,16 +22,25 @@ object QuantityTestUtils {
   def matchQty(other: Qty) = QtyMatcher(other)
 
   implicit def withinToleranceMatcher(rhs : Qty) = new {
-    def +- (tol : Double) = new BeMatcher[Qty]{
-      def apply(lhs : Qty) : MatchResult = {
-        require(lhs.uom == rhs.uom, s"UOMs don't match - $lhs vs $rhs")
-        val matches = lhs.doubleValue >= rhs.doubleValue - tol && 
-          lhs.doubleValue <= rhs.doubleValue + tol
-          MatchResult(
-            matches,
-            s"$lhs was not in range $rhs +- $tol",
-            s"$lhs was in range $rhs +- $tol"
-          )
+    def +- (tol : Double) = new BeMatcher[Any]{
+      def apply(lhs_ : Any) : MatchResult = {
+        lhs_ match {
+          case lhs : Qty => 
+            require(lhs.uom == rhs.uom, s"UOMs don't match - $lhs vs $rhs")
+            val matches = lhs.doubleValue >= rhs.doubleValue - tol && 
+              lhs.doubleValue <= rhs.doubleValue + tol
+            MatchResult(
+              matches,
+              s"$lhs was not in range $rhs +- $tol",
+              s"$lhs was in range $rhs +- $tol"
+            )
+          case _ => 
+            MatchResult(
+              false,
+              s"$lhs_ is not of type Qty",
+              s"Broken Qty BeMatcher"
+            )
+        }
       }
     }
   }

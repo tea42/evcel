@@ -12,6 +12,8 @@ import evcel.referencedata.{CalendarIdentifier, FuturesExpiryRule, FuturesExpiry
 import evcel.referencedata.calendar.CalendarData
 import evcel.referencedata.market.{Currency, CurrencyIdentifier, FuturesMarket, FuturesMarketIdentifier}
 import spray.json._
+import evcel.instrument.Tradeable
+import evcel.instrument.FXForward
 
 object EventStoreJsonProtocol extends DefaultJsonProtocol {
   abstract class NamedFormat[T] extends RootJsonFormat[T] {
@@ -179,18 +181,32 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
   implicit val futureFormat = named(Instrument.FUTURE, jsonFormat4(Future.apply))
   implicit val futuresOptionFormat = named(Instrument.FUTURES_OPTION, jsonFormat9(FuturesOption.apply))
   implicit val commoditySwapFormat = named(Instrument.COMMODITY_SWAP, jsonFormat5(CommoditySwap.apply))
+  implicit val commoditySwapSpreadFormat = named(
+    Instrument.COMMODITY_SWAP_SPREAD, jsonFormat6(CommoditySwapSpread.apply)
+  )
   implicit val commoditySwapLookalikeFormat = named(
     Instrument.COMMODITY_SWAP_LOOKALIKE, jsonFormat5(CommoditySwapLookalike.apply)
   )
-  implicit val commoditySwapSpreadLookalikeFormat = named(
-    Instrument.COMMODITY_SWAP_SPREAD, jsonFormat6(CommoditySwapSpread.apply)
-  )
+  implicit val fxForwardFormat = named(Instrument.FX_FORWARD, jsonFormat3(FXForward.apply))
+  implicit val cashFormat = named(Instrument.CASH, jsonFormat2(Cash.apply))
 
+  implicit val tradeableFormat = new TraitFormat[Tradeable](
+    classOf[Future] -> futureFormat, 
+    classOf[FuturesOption] -> futuresOptionFormat,
+    classOf[CommoditySwap] -> commoditySwapFormat,
+    classOf[CommoditySwapSpread] -> commoditySwapSpreadFormat,
+    classOf[CommoditySwapLookalike] -> commoditySwapLookalikeFormat,
+    classOf[FXForward] -> fxForwardFormat,
+    classOf[Cash] -> cashFormat
+  )
   implicit val instrumentFormat = new TraitFormat[Instrument](
     classOf[Future] -> futureFormat, 
     classOf[FuturesOption] -> futuresOptionFormat,
     classOf[CommoditySwap] -> commoditySwapFormat,
-    classOf[CommoditySwapLookalike] -> commoditySwapLookalikeFormat
+    classOf[CommoditySwapSpread] -> commoditySwapSpreadFormat,
+    classOf[CommoditySwapLookalike] -> commoditySwapLookalikeFormat,
+    classOf[FXForward] -> fxForwardFormat,
+    classOf[Cash] -> cashFormat
   )
 
   implicit object TradeFormat extends RootJsonFormat[Trade]{
@@ -198,7 +214,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
       trade.id.toJson, 
       trade.tradeDay.toJson,
       trade.counterparty.toJson, 
-      trade.instrument.toJson,
+      trade.tradeable.toJson,
       trade.meta.toList.toJson
     )
     def read(value: JsValue) = value match{
@@ -207,7 +223,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
           idJson.convertTo[String],
           dayJson.convertTo[Day],
           cptyJson.convertTo[String],
-          instJson.convertTo[Instrument],
+          instJson.convertTo[Tradeable],
           metaJson.convertTo[List[(String, String)]].toMap
         )
       case _ => 

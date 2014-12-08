@@ -35,7 +35,7 @@ class TradeStoreTests extends FunSpec with Matchers{
       id = id,
       tradeDay = 1 / Jun / 2014,
       counterparty = "ACME INC",
-      instrument = Future("WTI", Aug / 2014, Qty("100.0", USD/MT), Qty("10", MT)),
+      tradeable = Future("WTI", Aug / 2014, Qty("100.0", USD/MT), Qty("10", MT)),
       meta = Map("Portfolio" -> "Book A")
     )
 
@@ -47,7 +47,7 @@ class TradeStoreTests extends FunSpec with Matchers{
             id = "1234",
             tradeDay = 1 / Jun / 2014,
             counterparty = "ACME INC",
-            instrument = Future("WTI", Aug / 2014, Qty("100.0", USD/MT), Qty("10", MT)),
+            tradeable = Future("WTI", Aug / 2014, Qty("100.0", USD/MT), Qty("10", MT)),
             meta = Map("Portfolio" -> "Book A")
           )
           Await.result(tradeStore.write(trade), 2 seconds) should equal(Offset(1))

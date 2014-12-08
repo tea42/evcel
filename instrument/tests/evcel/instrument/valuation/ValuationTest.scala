@@ -87,10 +87,10 @@ trait ValuationTest extends FunSuite with ShouldMatchers {
   }
 
   implicit def hedgeInfoEqual(implicit q: Equal[Qty]): Equal[HedgeInfo] = Equal.equal[HedgeInfo]{
-    case (lhs, rhs) => lhs.market == rhs.market && lhs.period == rhs.period && q.equal(lhs.volume, rhs.volume)
+    case (lhs, rhs) => lhs.riskMarket == rhs.riskMarket && lhs.riskPeriod == rhs.riskPeriod && q.equal(lhs.volume, rhs.volume)
   }
   implicit def hedgeInfoShow(implicit s: Show[Qty]): Show[HedgeInfo] = Show.shows[HedgeInfo]{
-    case hi => s"(${hi.market}, ${hi.period}, ${s.shows(hi.volume)})"
+    case hi => s"(${hi.riskMarket}, ${hi.riskPeriod}, ${s.shows(hi.volume)})"
   }
 
 }

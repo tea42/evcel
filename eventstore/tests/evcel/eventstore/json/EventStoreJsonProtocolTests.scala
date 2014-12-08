@@ -133,35 +133,38 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
 
     it("Instruments"){
       info("Future")
-      val future = Future("WTI", Jun / 2014, Qty("100.0", USD/MT),  Qty("10", MT))
-      future.toJson.prettyPrint.parseJson.convertTo[Future] should equal (future)
+      Future.samples.foreach{
+        future => 
+          future.toJson.prettyPrint.parseJson.convertTo[Future] should equal (future)
+      }
 
       info("Commodity Swap")
-      val swap1 = CommoditySwap("WTI", Jun / 2014, Qty("100.0", USD/MT), Qty("10", MT))
-      swap1.toJson.prettyPrint.parseJson.convertTo[CommoditySwap] should equal (swap1)
-
-      val swap2 = CommoditySwap("WTI", Jun / 2014, Qty("100.0", USD/MT), Qty("10", MT), 
-        bizDaysToSettlement = Some(5))
-      swap2.toJson.prettyPrint.parseJson.convertTo[CommoditySwap] should equal (swap2)
+      CommoditySwap.samples.foreach{
+        swap => 
+          swap.toJson.prettyPrint.parseJson.convertTo[CommoditySwap] should equal (swap)
+      }
 
       info("Commodity Swap Spread")
-      val swaps1 = CommoditySwapSpread("WTI vs Brent", Jun / 2014, Qty("100.0", USD/MT), Qty("10", MT),
-        pricingRule = NonCommonSwapPricingRule)
-      swaps1.toJson.prettyPrint.parseJson.convertTo[CommoditySwapSpread] should equal (swaps1)
-
-      val swaps2 = CommoditySwapSpread("WTI vs Brent", Jun / 2014, Qty("100.0", USD/MT), Qty("10", MT),
-        bizDaysToSettlement = Some(5), pricingRule = CommonSwapPricingRule)
-      swaps2.toJson.prettyPrint.parseJson.convertTo[CommoditySwapSpread] should equal (swaps2)
+      CommoditySwapSpread.samples.foreach{
+        spread => 
+          spread.toJson.prettyPrint.parseJson.convertTo[CommoditySwapSpread] should equal (spread)
+      }
 
       info("Commodity Swap Lookalike")
-      val swapLookalike = CommoditySwapLookalike("WTI", Jun / 2014, Qty("100.0", USD/MT), Qty("10", MT))
-      swapLookalike.toJson.prettyPrint.parseJson.convertTo[CommoditySwapLookalike] should equal (swapLookalike)
+      CommoditySwapLookalike.samples.foreach{
+        swap => 
+          swap.toJson.prettyPrint.parseJson.convertTo[CommoditySwapLookalike] should equal (swap)
+      }
 
       info("Abstract Instrument")
-      val instruments : List[Instrument] = List(future, swap1, swap2, swapLookalike)
-      instruments.foreach{
+      InstrumentType.types.flatMap(_.samples).foreach{
         case inst : Instrument => 
           inst.toJson.prettyPrint.parseJson.convertTo[Instrument] should equal (inst)
+      }
+      info("Abstract Tradeable")
+      TradeableType.types.flatMap(_.samples).foreach{
+        case inst : Tradeable => 
+          inst.toJson.prettyPrint.parseJson.convertTo[Tradeable] should equal (inst)
       }
     }
   }

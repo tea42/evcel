@@ -9,6 +9,7 @@ import evcel.instrument.{CommoditySwap, CommoditySwapSpread, Future, Instrument}
 import evcel.quantity.{UOM, DblQty, BDQty, Qty}
 
 import scalaz.Scalaz._
+import evcel.instrument.HedgeInstrument
 
 class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDays: Map[Index, Iterable[Day]],
   period: DateRange, keys: List[PriceIdentifier]) extends HedgePortfolio {
@@ -66,11 +67,11 @@ class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDa
             PeriodLabel(month)
           case o => sys.error("Invalid: " + o)
         }
-        SwapHedgeInfo(swapHedge.index, periodLabel, volume)
-      case (f: Future, volume) => FutureHedgeInfo(f.market, PeriodLabel(f.delivery), volume)
+        HedgeInfo(swapHedge.index, periodLabel, volume)
+      case (f: Future, volume) => HedgeInfo(f.market, PeriodLabel(f.period), volume)
       case o => sys.error("Not valid: " + o)
     }
-    combinedPeriods.groupBy { hi => (hi.market, hi.period)}.map {
+    combinedPeriods.groupBy { hi => (hi.riskMarket, hi.riskPeriod)}.map {
       case ((_, DateRangePeriodLabel(dr)), grouped) =>
         val isPerTimeUnit = grouped.map(_.volume.uom).head.isPerTimeUnit
         val volume = if (isPerTimeUnit) {
@@ -88,7 +89,7 @@ class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDa
 
         // round because we get volumes like 1.99999999999 after svd
         grouped.head.copyWithVolume(volume.round(9))
-    }.toSeq
+    }(scala.collection.breakOut)
   }
 }
 

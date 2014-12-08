@@ -99,8 +99,8 @@ case class SwapSpreadLikeValuer(
 
 object SwapLikeValuer {
   def apply(vc: ValuationContext, f: Future): SingleUnderlyingSwapLikeValuer = {
-    val ltd = vc.futureExpiryDayOrThrow(f.market, f.delivery)
-    new SingleUnderlyingSwapLikeValuer(vc, FuturesContractIndex(f.market, f.delivery), ltd, f.strike, f.volume)
+    val ltd = vc.futureExpiryDayOrThrow(f.market, f.period)
+    new SingleUnderlyingSwapLikeValuer(vc, FuturesContractIndex(f.market, f.period), ltd, f.strike, f.volume)
   }
 
   def apply(vc: ValuationContext, swap: CommoditySwap): SingleUnderlyingSwapLikeValuer = {
