@@ -28,12 +28,12 @@ def module(name : String, upstream : Module*) : Module = {
 }
 
 val utils = module("utils")
-val maths = module("maths")
-val daterange = module("daterange", maths)
+val daterange = module("daterange")
+val maths = module("maths", daterange, utils)
 val quantity = module("quantity", maths, utils)
 val pivot = module("pivot", quantity, daterange)
 val referencedata = module("referencedata", daterange, quantity)
-val curve = module_("curve", List(referencedata, quantity, daterange, utils), List(referencedata))
+val curve = module_("curve", List(referencedata, quantity, maths, utils), List(referencedata))
 val instrument = module_("instrument", List(curve), List(curve, quantity))
 
 val eventstore = module("eventstore", instrument, curve, utils)

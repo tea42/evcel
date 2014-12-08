@@ -1,0 +1,2 @@
+org.scalatest scalatest_{scala_version_base} {scalatest_version}
+

@@ -58,6 +58,14 @@ object EVCelBuild extends Build {
     scalaSource in Test := baseDirectory.value / "tests"
   ).dependsOn(maths, utils)
 
+  lazy val pivot = module("pivot").settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+    ),
+    scalaSource in Compile := baseDirectory.value / "src",
+    scalaSource in Test := baseDirectory.value / "tests"
+  ).dependsOn(quantity, daterange)
+
   lazy val instrument = module("instrument").settings(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.0" % "test"
@@ -72,7 +80,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(instrument % "compile->compile;test->test", curve % "test->test", quantity % "test->test")
+  ).dependsOn(pivot, instrument % "compile->compile;test->test", curve % "test->test", quantity % "test->test")
 
   lazy val xl = module("xl").settings(
     libraryDependencies ++= Seq(
