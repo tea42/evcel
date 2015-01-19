@@ -2,6 +2,8 @@ package evcel.quantity
 
 import java.text.DecimalFormat
 
+import evcel.maths.Numberlike
+
 import scala.language.implicitConversions
 import UOM._
 
@@ -222,5 +224,18 @@ object Qty {
 
     def toQty : DblQty = Qty(value, UOM.SCALAR)
   }
-}
 
+  implicit object QtyNumberlike extends Numberlike[Qty]{
+    override def add(x: Qty, y: Qty): Qty = x + y
+
+    override def divide(x: Qty, y: Qty): Qty = x / y
+
+    override def multiply(x: Qty, y: Qty): Qty = x * y
+
+    override def subtract(x: Qty, y: Qty): Qty = x - y
+
+    override def multiply(x: Qty, y: Double): Qty = x * Qty(y, UOM.SCALAR)
+
+    override def divide(x: Qty, y: Double): Qty = x / Qty(y, UOM.SCALAR)
+  }
+}

@@ -4,7 +4,6 @@ import evcel.curve.{EnvironmentParams, ValuationContext}
 import evcel.curve.curves.FuturesPriceIdentifier
 import evcel.curve.environment.PriceIdentifier
 import evcel.daterange._
-import evcel.instrument.valuation.Valuer._
 import evcel.instrument.{CommoditySwap, CommoditySwapSpread, Future, Instrument}
 import evcel.quantity.{UOM, DblQty, BDQty, Qty}
 
@@ -95,7 +94,7 @@ class SwapPositionHedgePortolio(vc: ValuationContext, indexes: List[Index], obDa
 
 object SwapPositionHedgePortolio {
   def apply(vc: ValuationContext, swap: CommoditySwap)(implicit valuer: Valuer): SwapPositionHedgePortolio = {
-    val keys = valuer.priceKeys(vc, swap).toList.sortWith(_.point < _.point)
+    val keys = valuer.priceKeys(vc, swap).toList.sortWith(_.point.firstDay < _.point.firstDay)
     val swapValuer = SwapLikeValuer(vc, swap)
     new SwapPositionHedgePortolio(
       vc, swapValuer.index :: Nil, Map(swapValuer.index -> swapValuer.observationDays), swapValuer.averagingPeriod, keys
@@ -103,7 +102,7 @@ object SwapPositionHedgePortolio {
   }
 
   def apply(vc: ValuationContext, swap: CommoditySwapSpread)(implicit valuer: Valuer): SwapPositionHedgePortolio = {
-    val keys = valuer.priceKeys(vc, swap).toList.sortWith(_.point < _.point)
+    val keys = valuer.priceKeys(vc, swap).toList.sortWith(_.point.firstDay < _.point.firstDay)
     val swapValuer = SwapLikeValuer(vc, swap)
     val obDays = swapValuer.indexes.map(i => i -> swapValuer.observationDays(i)).toMap
     new SwapPositionHedgePortolio(vc, swapValuer.indexes, obDays, swapValuer.period, keys)

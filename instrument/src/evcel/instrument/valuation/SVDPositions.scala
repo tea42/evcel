@@ -19,7 +19,7 @@ object SVDPositions{
     val instrumentKeys = portfolioKeys ++ hedgeKeys
 
     val allKeys = instrumentKeys.values.flatten.toSeq.distinct.sortWith{
-      case (p1:PriceIdentifier, p2: PriceIdentifier) => p1.point < p2.point
+      case (p1:PriceIdentifier, p2: PriceIdentifier) => p1.point.firstDay < p2.point.firstDay
     }
     val jacobian = new Array2DRowRealMatrix(allKeys.size, hedges.size)
     val hedgePos = new Array2DRowRealMatrix(allKeys.size, 1)

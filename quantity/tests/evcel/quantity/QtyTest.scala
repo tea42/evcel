@@ -1,5 +1,7 @@
 package evcel.quantity
 
+import evcel.daterange.Month
+import evcel.maths.LinearInterpolation
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 import org.scalatest._
@@ -169,8 +171,8 @@ class QtyTest extends FunSuite with Matchers {
 
   test("compare") {
     import Qty._
-    (1(USD) < 2.0(USD)) shouldBe (true)
-    (2(USD) > 1(USD)) shouldBe (true)
+    (1(USD) < 2.0(USD)) shouldBe true
+    (2(USD) > 1(USD)) shouldBe true
     List(1(SCALAR), Qty.NULL, 0(BBL)).foreach{
       q => 
         intercept[RuntimeException] {
@@ -181,9 +183,15 @@ class QtyTest extends FunSuite with Matchers {
       2(USD) > 1
     }
 
-    (2(USD) > 0) shouldBe (true)
-    (2(USD) >= 0) shouldBe (true)
-    (0.0(USD) >= 0) shouldBe (true)
-    (2.0(USD) < 0) shouldBe (false)
+    (2(USD) > 0) shouldBe true
+    (2(USD) >= 0) shouldBe true
+    (0.0(USD) >= 0) shouldBe true
+    (2.0(USD) < 0) shouldBe false
+  }
+
+  test("match interpolation request for type class conversion") {
+    val months = Vector(Month(2015, 1), Month(2015, 2), Month(2015, 4), Month(2015, 5))
+    val prices: Vector[Qty] = Vector(10.0, 20.0, 40.0, 50.0).map(Qty(_, USD/BBL))
+    LinearInterpolation.interpolate(months, prices, Month(2015, 3)) shouldBe Qty(30.0, USD/BBL)
   }
 }
