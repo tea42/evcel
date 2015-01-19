@@ -38,5 +38,14 @@ class DayTests extends FunSpec with Matchers {
       (31 / Dec / 1999).toString should equal ("1999-12-31")
       (25 / Sep / 14).toString should equal ("2014-09-25")
     }
+
+    it("should support excel day representation") {
+      Day.fromExcel(42429.00) shouldBe Day(2016, 2, 29)
+      Day(2016, 2, 29).toExcel shouldBe 42429.00
+
+      intercept[RuntimeException] {
+        Day.fromExcel(0.0)
+      }.getMessage shouldBe "requirement failed: Excel represents days from 1.0, 0.0 is not a valid day."
+    }
   }
 }

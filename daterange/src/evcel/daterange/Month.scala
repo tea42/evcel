@@ -1,6 +1,8 @@
 package evcel.daterange
 
-case class Month(year: Int, monthNumber: Int) extends DateRange {
+import scala.language.implicitConversions
+
+case class Month(year: Int, monthNumber: Int) extends DateRange with Ordered[Month] {
   require(year > 0 && year < 3000, s"Invalid year: $year")
   require(monthNumber > 0 && monthNumber <= 12, s"Invalid month: $monthNumber")
 
@@ -21,14 +23,8 @@ case class Month(year: Int, monthNumber: Int) extends DateRange {
 
   override def toString = f"$year%4d-$monthNumber%02d"
 
-  override def compare(rhs: DateRange) = rhs match {
-    case m: Month =>
-      if (year == m.year)
-        monthNumber - m.monthNumber
-      else
-        year - m.year
-    case o => super.compare(o)
-  }
+  override def compare(that: Month): Int =
+    Month.MonthChronological.ordinal(this).compare(Month.MonthChronological.ordinal(that))
 
   def +(n: Int) = {
     var m = this
@@ -61,4 +57,8 @@ object Month extends TenorType {
   }
 
   def parse(str: String) = unapply(str).getOrElse(sys.error("Invalid month: " + str))
+
+  implicit object MonthChronological extends Chronological[Month] {
+    override def ordinal(t: Month): Int = t.year * 12 + (t.monthNumber - 1)
+  }
 }

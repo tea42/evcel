@@ -1,11 +1,15 @@
 package evcel.daterange
+import scala.language.implicitConversions
 
-class Day private (val year: Int, val month: Int, val dayNumber: Int) extends DateRange {
+class Day private (@transient val year: Int, @transient val month: Int, @transient val dayNumber: Int)
+  extends DateRange with Ordered[Day] {
+
+  val julianDayNumber = Day.julianDayNumber(year, month, dayNumber)
+
   def firstDay = this
   def lastDay = this
 
   def containingMonth = Month(year, month)
-  val julianDayNumber = Day.julianDayNumber(year, month, dayNumber)
   override def hashCode = julianDayNumber
   override def equals(that: Any) = that match {
     case other: Day =>
@@ -21,11 +25,7 @@ class Day private (val year: Int, val month: Int, val dayNumber: Int) extends Da
   def next: Day = Day.dayFromJulianDayNumber(julianDayNumber + 1)
   def previous: Day = Day.dayFromJulianDayNumber(julianDayNumber - 1)
 
-  override def compare(rhs: DateRange): Int = rhs match {
-    case d: Day => julianDayNumber - d.julianDayNumber
-    case o => super.compare(o)
-  }
-
+  override def compare(that: Day): Int = julianDayNumber.compare(that.julianDayNumber)
 
   def +(n: Int) = Day.dayFromJulianDayNumber(julianDayNumber + n)
   def -(n: Int): Day = this.+(-n)
@@ -63,6 +63,10 @@ class Day private (val year: Int, val month: Int, val dayNumber: Int) extends Da
 
   def min(other: Day) = if(this < other) this else other
   def max(other: Day) = if(this > other) this else other
+
+  def toExcel = (this - Day(1899, 12, 30)).doubleValue
+
+  private def readResolve() : Object = Day.dayFromJulianDayNumber(julianDayNumber)
 }
 
 object Day extends TenorType {
@@ -90,6 +94,11 @@ object Day extends TenorType {
     dayFromJulianDayNumber(
       julianDayNumber(y, m, d)
     )
+  }
+
+  def fromExcel(excelDay: Double) = {
+    require(excelDay > 0.0, s"Excel represents days from 1.0, $excelDay is not a valid day.")
+    Day(1899, 12, 30) + excelDay.toInt
   }
 
   /**
@@ -132,5 +141,8 @@ object Day extends TenorType {
     }
     (year, month, day)
   }
-}
 
+  implicit object DayChronological extends Chronological[Day] {
+    override def ordinal(t: Day): Int = t.julianDayNumber
+  }
+}
