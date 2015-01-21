@@ -1,12 +1,15 @@
 package evcel.quantity
 
-import evcel.utils.{Enumerate, Cache}
+import evcel.utils._
 import org.apache.commons.math3.util.ArithmeticUtils
 import pimpathon.GenTraversableLikeCapturer
 import scala.annotation.tailrec
 import scalaz.Scalaz._
 import pimpathon.genTraversableLike._
 import pimpathon.multiMap._
+import scala.math.BigDecimal
+import scala.util.{Either, Left, Right}
+import scala.collection.immutable.Nil
 
 case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
   /**
@@ -77,22 +80,26 @@ case class UOM(dimension: UOMRatio, secondary: UOMRatio) {
     num.mappend(den)
   }
 
-  def in(other: UOM, conversions: Option[QtyConversions] = None): Option[BigDecimal] = if (this == other) {
-    Some(Qty.bdOne)
-  } else {
-    def toUOMAndPower(single: Map[Int, Int]) = {
-      require(single.size == 1, "Can't convert from/to: " + (this, other, single))
-      val (prime, power) = single.head
-      (UOM.primeToUOM(prime), power)
-    }
-    val (oldUOM, power) = toUOMAndPower(asPrimeMap -- other.asPrimeMap.keySet)
-    val (newUOM, powerN) = toUOMAndPower(other.asPrimeMap -- asPrimeMap.keySet)
-    require(power == powerN, "Powers should match: " + (power, powerN))
+  def in(other: UOM, conversions: QtyConversions = QtyConversions(Map.empty)): Either[EvcelFail, BigDecimal] = {
+    if (this == other) {
+      Right(Qty.bdOne)
+    } else {
+      def toUOMAndPower(single: Map[Int, Int]) = {
+        require(single.size == 1, "Can't convert from/to: " + (this, other, single))
+        val (prime, power) = single.head
+        (UOM.primeToUOM(prime), power)
+      }
+      val (oldUOM, power) = toUOMAndPower(asPrimeMap -- other.asPrimeMap.keySet)
+      val (newUOM, powerN) = toUOMAndPower(other.asPrimeMap -- asPrimeMap.keySet)
+      require(power == powerN, "Powers should match: " + (power, powerN))
 
-    oldUOM.div(newUOM) match {
-      case (UOM.SCALAR, scale) => Some(scale.pow(power))
-      case _ => // custom conversion
-        conversions.flatMap(_.rate(oldUOM, newUOM)).map(r => r.pow(power))
+      oldUOM.div(newUOM) match {
+        case (UOM.SCALAR, scale) => Right(scale.pow(power))
+        case _ => // custom conversion
+          conversions.rate(oldUOM, newUOM).map(r => r.pow(power)).toRight(
+            GeneralEvcelFail(s"Can't convert $this to $other")
+          )
+      }
     }
   }
 

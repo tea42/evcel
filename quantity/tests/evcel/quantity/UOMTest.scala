@@ -61,13 +61,13 @@ class UOMTest extends FunSuite with Matchers {
   }
 
   test("test simple conversion") {
-    USD in USD shouldEqual Some(BigDecimal(1.0))
-    USD in US_CENT shouldEqual Some(BigDecimal(100))
-    US_CENT in USD shouldEqual Some(BigDecimal(.01))
+    USD in USD shouldEqual Right(BigDecimal(1.0))
+    USD in US_CENT shouldEqual Right(BigDecimal(100))
+    US_CENT in USD shouldEqual Right(BigDecimal(.01))
 
-    (BBL / USD).in(GAL / USD) shouldEqual Some(BigDecimal(42.0))
-    (USD / BBL).in(USD / GAL) shouldEqual Some(1 / BigDecimal(42.0))
-    (USD / (BBL * BBL)).in(USD / (GAL * GAL)) shouldEqual Some(1 / BigDecimal(42.0 * 42.0))
+    (BBL / USD).in(GAL / USD) shouldEqual Right(BigDecimal(42.0))
+    (USD / BBL).in(USD / GAL) shouldEqual Right(1 / BigDecimal(42.0))
+    (USD / (BBL * BBL)).in(USD / (GAL * GAL)) shouldEqual Right(1 / BigDecimal(42.0 * 42.0))
 
     intercept[RuntimeException] {
       BBL * BBL in GAL
@@ -82,9 +82,9 @@ class UOMTest extends FunSuite with Matchers {
 
   test("test custom conversion") {
     val conv = new QtyConversions(Map((MT, BBL) -> 7.45))
-    BBL in MT shouldEqual None
-    BBL in (MT, Some(conv)) shouldEqual Some(1 / BigDecimal(7.45))
-    MT in (BBL, Some(conv)) shouldEqual Some(BigDecimal(7.45))
+    BBL in MT should be ('left)
+    BBL in (MT, conv) shouldEqual Right(1 / BigDecimal(7.45))
+    MT in (BBL, conv) shouldEqual Right(BigDecimal(7.45))
   }
 
   test("numerator") {

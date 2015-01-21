@@ -2,18 +2,17 @@ package evcel.eventstore.json
 
 import evcel.curve.environment._
 import evcel.curve.marketdata._
-import evcel.daterange.{DateRange, Day, Month, SimpleDateRange}
+import evcel.daterange._
 import evcel.instrument._
 import evcel.instrument.trade.Trade
-import evcel.instrument.valuation.{CommonSwapPricingRule, NonCommonSwapPricingRule, SwapPricingRule}
 import evcel.maths.{OptionType, OptionRight}
-import evcel.quantity.{BDQty, Qty, QtyConversions, UOM, UOMRatio}
-import evcel.referencedata.{CalendarIdentifier, FuturesExpiryRule, FuturesExpiryRuleIdentifier, ReferenceDataIdentifier, ReferenceDataTrait}
+import evcel.quantity._
+import evcel.referencedata._
 import evcel.referencedata.calendar.CalendarData
-import evcel.referencedata.market.{Currency, CurrencyIdentifier, FuturesMarket, FuturesMarketIdentifier}
+import evcel.referencedata.market._
 import spray.json._
-import evcel.instrument.Tradeable
-import evcel.instrument.FXForward
+import scala.math.BigDecimal
+import scala.collection.immutable.Nil
 
 object EventStoreJsonProtocol extends DefaultJsonProtocol {
   abstract class NamedFormat[T] extends RootJsonFormat[T] {
@@ -64,7 +63,8 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     }
   })
 
-  implicit val simpleDateRangeFormat : NamedFormat[SimpleDateRange] = named(DateRange.SIMPLE, jsonFormat2(SimpleDateRange))
+  implicit val simpleDateRangeFormat : NamedFormat[SimpleDateRange] = 
+    named(DateRange.SIMPLE, jsonFormat2(SimpleDateRange))
   implicit val monthFormat : NamedFormat[Month] = named(DateRange.MONTH, jsonFormat2(Month.apply))
 
   implicit val dateRangeFormat :TraitFormat[DateRange] = new TraitFormat[DateRange](
@@ -166,8 +166,8 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     }
   }
 
-  implicit val swapPricingRuleFormat = new RootJsonFormat[SwapPricingRule]{
-    def write(pr : SwapPricingRule) = pr match {
+  implicit val swapPricingRuleFormat = new RootJsonFormat[SwapSpreadPricingRule]{
+    def write(pr : SwapSpreadPricingRule) = pr match {
       case CommonSwapPricingRule            => JsString("CommonSwapPricingRule")
       case NonCommonSwapPricingRule         => JsString("NonCommonSwapPricingRule")
     }
@@ -175,12 +175,22 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
       case JsString("CommonSwapPricingRule")            => CommonSwapPricingRule
       case JsString("NonCommonSwapPricingRule")         => NonCommonSwapPricingRule
       case _ => 
-        deserializationError(s"SwapPricingRule expected - got $json")
+        deserializationError(s"SwapSpreadPricingRule expected - got $json")
     }
   }
+  implicit val spotMarketIndexFormat = named(Index.SPOT, jsonFormat1(SpotMarketIndex.apply))
+  implicit val futuresFrontPeriodIndexFormat = 
+    named(Index.FUTURES_FRONT_PERIOD, jsonFormat3(FuturesFrontPeriodIndex.apply))
+  implicit val futuresContractIndexFormat = named(Index.FUTURES_CONTRACT, jsonFormat2(FuturesContractIndex.apply))
+  implicit val indexFormat = new TraitFormat[Index](
+    classOf[SpotMarketIndex] -> spotMarketIndexFormat,
+    classOf[FuturesFrontPeriodIndex] -> futuresFrontPeriodIndexFormat,
+    classOf[FuturesContractIndex] -> futuresContractIndexFormat
+  )
   implicit val futureFormat = named(Instrument.FUTURE, jsonFormat4(Future.apply))
   implicit val futuresOptionFormat = named(Instrument.FUTURES_OPTION, jsonFormat9(FuturesOption.apply))
   implicit val commoditySwapFormat = named(Instrument.COMMODITY_SWAP, jsonFormat5(CommoditySwap.apply))
+  implicit val indexSpreadFormat = jsonFormat2(IndexSpread.apply)
   implicit val commoditySwapSpreadFormat = named(
     Instrument.COMMODITY_SWAP_SPREAD, jsonFormat6(CommoditySwapSpread.apply)
   )
@@ -234,7 +244,8 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
   implicit val calendarIdentifierFormat = named(ReferenceDataTrait.CALENDAR, jsonFormat1(CalendarIdentifier))
   implicit val futuresExpiryRuleIdentifierFormat = named(
     ReferenceDataTrait.FUTURES_EXPIRY_RULE, jsonFormat1(FuturesExpiryRuleIdentifier))
-  implicit val futuresMarketIdentifierFormat = named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat1(FuturesMarketIdentifier))
+  implicit val futuresMarketIdentifierFormat = 
+    named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat1(FuturesMarketIdentifier))
   implicit val currencyIdentifierFormat = named(ReferenceDataTrait.CURRENCY, jsonFormat1(CurrencyIdentifier))
   implicit val referenceDataIdentifierFormat = new TraitFormat[ReferenceDataIdentifier](
     classOf[CalendarIdentifier] -> calendarIdentifierFormat,
@@ -247,8 +258,10 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     def write(qc : QtyConversions) = qc.rates.toList.toJson
     def read(json : JsValue) = QtyConversions(json.convertTo[List[((UOM, UOM), BigDecimal)]].toMap)
   }
-  implicit val futuresExpiryRuleFormat = named(ReferenceDataTrait.FUTURES_EXPIRY_RULE, jsonFormat3(FuturesExpiryRule.apply))
-  implicit val futuresMarketRuleFormat = named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat5(FuturesMarket.apply))
+  implicit val futuresExpiryRuleFormat = 
+    named(ReferenceDataTrait.FUTURES_EXPIRY_RULE, jsonFormat3(FuturesExpiryRule.apply))
+  implicit val volumeCalcRuleFormat = jsonFormat1(VolumeCalcRuleLabel.apply)
+  implicit val futuresMarketRuleFormat = named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat6(FuturesMarket.apply))
   implicit val calendarDataFormat = named(ReferenceDataTrait.CALENDAR, jsonFormat1(CalendarData))
   implicit val currencyFormat = named(ReferenceDataTrait.CURRENCY, jsonFormat5(Currency.apply))
   implicit val referenceDataTraitFormat = new TraitFormat[ReferenceDataTrait](

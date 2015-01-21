@@ -4,6 +4,7 @@ import evcel.daterange.Day
 import evcel.quantity.UOM
 import evcel.quantity.UOM._
 import evcel.referencedata.{ReferenceDataTrait, ReferenceDataIdentifier, ReferenceData}
+import evcel.utils.EitherUtils._
 
 /**
  * @param daysToSpot 0, 1 or 2

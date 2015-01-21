@@ -8,7 +8,9 @@ import evcel.daterange.Day
   * Convenience methods for building market data
   */
 trait MarketDataTest{
-  def futuresPrices(prices : (Month, BDQty)*) = FuturesPriceData(prices.toList)
+  def futuresPrices(prices : (Month, BDQty)*) = {
+    FuturesPriceData(prices.toList)
+  }
 
   def futuresVols(
     firstSmile : (Month, BDQty, List[(Double, BDQty)]), 

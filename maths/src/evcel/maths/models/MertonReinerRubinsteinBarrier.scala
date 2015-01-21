@@ -45,16 +45,20 @@ class MertonReinerRubinsteinBarrier private(periodicity: Periodicity, right: Opt
     phi * S * exp((b - r) * T) * CND(phi * X2) - phi * X * exp(-r * T) * CND(phi * X2 - phi * v * sqrt(T))
 
   private def C =
-    phi * S * exp((b - r) * T) * (H / S).pow(2 * (mu + 1)) * CND(eta * y1) - phi * X * exp(-r * T) * (H / S).pow(2 * mu) * CND(eta * y1 - eta * v * sqrt(T))
+    phi * S * exp((b - r) * T) * (H / S).pow(2 * (mu + 1)) * CND(eta * y1) - 
+      phi * X * exp(-r * T) * (H / S).pow(2 * mu) * CND(eta * y1 - eta * v * sqrt(T))
 
   private def D =
-    phi * S * exp((b - r) * T) * (H / S).pow(2 * (mu + 1)) * CND(eta * y2) - phi * X * exp(-r * T) * (H / S).pow(2 * mu) * CND(eta * y2 - eta * v * sqrt(T))
+    phi * S * exp((b - r) * T) * (H / S).pow(2 * (mu + 1)) * CND(eta * y2) - 
+      phi * X * exp(-r * T) * (H / S).pow(2 * mu) * CND(eta * y2 - eta * v * sqrt(T))
 
   private def E =
-    rebate * exp(-r * T) * (CND(eta * X2 - eta * v * sqrt(T)) - (H / S).pow(2 * mu) * CND(eta * y2 - eta * v * sqrt(T)))
+    rebate * exp(-r * T) * (CND(eta * X2 - eta * v * sqrt(T)) - 
+      (H / S).pow(2 * mu) * CND(eta * y2 - eta * v * sqrt(T)))
 
   private def F =
-    rebate * ((H / S).pow(mu + lambda) * CND(eta * z) + (H / S).pow(mu - lambda) * CND(eta * z - 2 * eta * lambda * v * sqrt(T)))
+    rebate * ((H / S).pow(mu + lambda) * CND(eta * z) + 
+      (H / S).pow(mu - lambda) * CND(eta * z - 2 * eta * lambda * v * sqrt(T)))
 
   def undiscountedValue = value * exp(r * T)
 

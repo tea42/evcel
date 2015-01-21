@@ -1,18 +1,20 @@
 package evcel.referencedata.market
 
 import evcel.quantity.UOM
+import evcel.utils.{GeneralEvcelFail, EvcelFail}
+import scala.util.{Left, Right, Either}
 
 class Markets(
   futuresMarkets: Map[String, FuturesMarket],
   spotMarkets: Map[String, SpotMarket],
   currencies: Map[UOM, Currency]
   ) {
-  def futuresMarket(market: String) = futuresMarkets.get(market)
-  def futuresMarketOrThrow(name: String) = futuresMarket(name).getOrElse(sys.error(s"No futures market $name"))
+  def futuresMarket(label: String) : Either[EvcelFail, FuturesMarket] = 
+    futuresMarkets.get(label).toRight(GeneralEvcelFail(s"Futures market $label is unknown"))
 
-  def spotMarket(market: String) = spotMarkets.get(market)
-  def spotMarketOrThrow(market: String) = spotMarket(market).getOrElse(sys.error(s"No spot market $market"))
+  def spotMarket(market: String) : Either[EvcelFail, SpotMarket] = 
+    spotMarkets.get(market).toRight(GeneralEvcelFail(s"Spot market $market is unknown"))
 
-  def currency(uom: UOM): Option[Currency] = currencies.get(uom)
-  def currencyOrThrow(uom: UOM) = currency(uom).getOrElse(sys.error(s"No currency for $uom"))
+  def currency(uom: UOM): Either[EvcelFail, Currency] = 
+    currencies.get(uom).toRight(GeneralEvcelFail(s"No refernce data for currency $uom"))
 }

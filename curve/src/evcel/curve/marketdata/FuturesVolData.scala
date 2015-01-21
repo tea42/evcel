@@ -14,7 +14,7 @@ case class FuturesVolData(data: List[(Month, BDQty, List[(Double, BDQty)])])
 {
   def buildCurve(market : String, marketDay: MarketDay, refData: ReferenceData) = {
     refData.futuresExpiryRules.expiryRule(market) match {
-      case Some(expiryRule) =>
+      case Right(expiryRule) =>
 
         val atmVols = data.map{
           case (month, atmVol, _) => (month, atmVol.checkedPercent)
@@ -45,7 +45,7 @@ case class FuturesVolData(data: List[(Month, BDQty, List[(Double, BDQty)])])
           spreads(delta)
         }
         Right(FuturesVols(market, marketDay, expiryRule, atmVols, deltaSpreads _))
-      case None =>
+      case Left(_) =>
         Left(MarketData.CantBuildCurve(FuturesVolsIdentifier(market), marketDay, "No expiry rule found"))
     }
   }

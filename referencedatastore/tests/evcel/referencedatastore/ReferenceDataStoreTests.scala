@@ -1,22 +1,18 @@
 package evcel.referencedatastore
 
-import org.scalatest.FunSpec
+import org.scalatest.{FunSpec, Matchers}
 import evcel.eventstore.kafka.KafkaTestUtils
 import kafka.admin.AdminUtils
-import evcel.referencedata.CalendarIdentifier
+import evcel.referencedata.{CalendarIdentifier, FuturesExpiryRuleIdentifier, FuturesExpiryRule}
 import evcel.referencedata.calendar.CalendarData
 import evcel.daterange.DateRangeSugar._
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import evcel.eventstore.EventStore.Offset
-import evcel.referencedata.market.FuturesMarketIdentifier
-import evcel.referencedata.market.FuturesMarket
+import evcel.referencedata.market.{FuturesMarketIdentifier, FuturesMarket, VolumeCalcRuleLabel}
 import evcel.quantity.UOM._
-import evcel.referencedata.FuturesExpiryRuleIdentifier
-import evcel.referencedata.FuturesExpiryRule
-import scala.language.reflectiveCalls
-import scala.language.postfixOps
-import org.scalatest.Matchers
+import scala.language.{reflectiveCalls, postfixOps}
+import scala.util.Right
 
 class ReferenceDataStoreTests extends FunSpec with Matchers{
   def withReferenceDataStore(fn : ReferenceDataStore => Unit){
@@ -44,7 +40,7 @@ class ReferenceDataStoreTests extends FunSpec with Matchers{
 
           val (marketKey, market) = (
             FuturesMarketIdentifier("WTI"),
-            FuturesMarket("WTI", "CALENDAR", USD/MT)
+            FuturesMarket("WTI", "CALENDAR", USD/MT, MT, VolumeCalcRuleLabel.Default)
           )
           Await.result(store.write(marketKey, market), 2 seconds) should equal (Offset(2))
           store.read(Offset(2), marketKey) should equal (Right(market))

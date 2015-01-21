@@ -11,7 +11,7 @@ import evcel.maths.EuropeanOption
 
 case class FuturesOption(
   market: String, period: Month, 
-  strike: BDQty, volume: BDQty, right: OptionRight,
+  strike: BDQty, quotedVolume: BDQty, right: OptionRight,
   optionType: OptionType,
   isCashSettled: Boolean = false, 
   bizDaysAfterExpiryToSettlement: Int = 0, 

@@ -1,28 +1,31 @@
 package evcel.curve
 
 import evcel.referencedata.calendar.TestCalendars
-import evcel.referencedata.TestFuturesExpiryRules
+import evcel.referencedata.{TestFuturesExpiryRules, ReferenceData}
 import evcel.curve.environment._
 import evcel.curve.marketdata._
-import evcel.referencedata.market.TestMarkets
+import evcel.referencedata.market.{TestMarkets, FXPair, SpotMarket}
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.breakOut
-import evcel.quantity.UOM
-import evcel.referencedata.ReferenceData
+import evcel.quantity.{UOM, Qty}
+import scala.util.{Either, Left, Right}
+import evcel.utils.{EvcelFail, EitherTestPimps}
+import evcel.daterange.{Day, Month}
 
-object UnitTestingEnvironment {
+object UnitTestingEnvironment extends EitherTestPimps{
   def testRefData = ReferenceData(
     TestFuturesExpiryRules.Test,
     TestCalendars.Empty,
     TestMarkets.Default
   )
 
-  def apply(marketDay_ : MarketDay, data: PartialFunction[AtomicDatumIdentifier, Any]): ValuationContext = {
+  def futuresMarket(name : String) = TestMarkets.Default.futuresMarket(name).R
+  def apply(marketDay_ : MarketDay, data: PartialFunction[AtomicDatumIdentifier, Qty]): ValuationContext = {
     new ValuationContext(
       new AtomicEnvironment {
         def marketDay = marketDay_
 
-        def apply(point: AtomicDatumIdentifier): Either[AtomicEnvironmentFail, Any]  = {
+        def apply(point: AtomicDatumIdentifier): Either[EvcelFail, Qty]  = {
           if(data.isDefinedAt(point))
             Right(data(point))
           else
@@ -31,7 +34,7 @@ object UnitTestingEnvironment {
       },
       testRefData,
       EnvironmentParams.Default
-    )
+    ) 
   }
 
   def fromMarketData(
@@ -66,7 +69,7 @@ object UnitTestingEnvironment {
     new ValuationContext(
       new AtomicEnvironment{
         def marketDay = marketDay_
-        def apply(point: AtomicDatumIdentifier): Either[AtomicEnvironmentFail, Any]  = {
+        def apply(point: AtomicDatumIdentifier): Either[EvcelFail, Qty]  = {
           curves.get(point.curveIdentifier) match {
             case Some(Right(curve)) => curve.apply(point.point)
             case Some(Left(e)) => {
@@ -80,10 +83,10 @@ object UnitTestingEnvironment {
       },
       testRefData,
       EnvironmentParams.Default
-    )
+    ) 
   }
 
   def Null(marketDay: MarketDay) = apply(marketDay, {
-    case a => a.nullValue(testRefData)
+    case a => a.nullValue
   })
 }

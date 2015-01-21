@@ -22,8 +22,8 @@ class DiscountCurveTests extends FunSpec with Matchers {
         Act365,
         rates = Nil
       )
-      curve.discountRate(marketDay) should equal(1.0)
-      curve.discountRate(marketDay + 100) should equal(1.0)
+      curve.discountRate(marketDay).doubleValue should equal(1.0)
+      curve.discountRate(marketDay + 100).doubleValue should equal(1.0)
     }
 
     it("Should be a simple exponential if given a single rate") {
@@ -35,8 +35,8 @@ class DiscountCurveTests extends FunSpec with Matchers {
         Act365,
         rates = List((marketDay + 10, Percent(zeroRate * 100.0)))
       )
-      curve.discountRate(marketDay) should equal(1.0)
-      curve.discountRate(marketDay + 10) should equal(exp(-zeroRate * 10.0 / 365.0) +- 1e-9)
+      curve.discountRate(marketDay).doubleValue should equal(1.0)
+      curve.discountRate(marketDay + 10).doubleValue should equal(exp(-zeroRate * 10.0 / 365.0) +- 1e-9)
     }
 
     it("Should match the simple exponential if given two identical rates") {
@@ -59,7 +59,8 @@ class DiscountCurveTests extends FunSpec with Matchers {
       )
 
       for (i <- 0 to 100 by 5) {
-        twoPointCurve.discountRate(marketDay + i) should be(simpleCurve.discountRate(marketDay + i) +- 1e-9)
+        twoPointCurve.discountRate(marketDay + i).doubleValue should be
+          (simpleCurve.discountRate(marketDay + i).doubleValue +- 1e-9)
       }
     }
 
@@ -82,12 +83,12 @@ class DiscountCurveTests extends FunSpec with Matchers {
         )
       )
       def fwdRate(from: Day, to: Day) = {
-        -log(curve.discountRate(to) / curve.discountRate(from)) / Act365.timeBetween(from, to)
+        -log(curve.discountRate(to).doubleValue / curve.discountRate(from).doubleValue) / Act365.timeBetween(from, to)
       }
       intercept[RuntimeException] {
         curve(marketDay - 1)
       }
-      curve.discountRate(marketDay) should be(1.0 +- 1e-9)
+      curve.discountRate(marketDay).doubleValue should be(1.0 +- 1e-9)
       fwdRate(marketDay, marketDay + 1) should be(z1 +- 1e-9)
       fwdRate(marketDay + 1, marketDay + 20) should be(z1 +- 1e-9)
       fwdRate(marketDay + 10, d1) should be(z1 +- 1e-9)

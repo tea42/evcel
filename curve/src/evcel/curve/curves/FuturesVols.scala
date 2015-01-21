@@ -1,17 +1,18 @@
 package evcel.curve.curves
 
 import com.opengamma.analytics.math.interpolation.ConstrainedCubicSplineInterpolator
-import evcel.referencedata.ReferenceData
+import evcel.referencedata.{ReferenceData, FuturesExpiryRule}
 import evcel.curve.environment._
 import evcel.curve.marketdata.{Act365, FuturesVolData}
 import evcel.daterange.Month
 import evcel.maths.Call
-import evcel.curve.marketdata.FuturesVolData
-import evcel.curve.marketdata.Act365
-import evcel.referencedata.FuturesExpiryRule
 import evcel.maths.models.BlackScholes
 import evcel.quantity.{Percent, Qty}
 import evcel.curve.environment.MarketDay._
+import scala.util.{Either, Right}
+import evcel.utils.EvcelFail
+import evcel.utils.EitherUtils._
+import evcel.referencedata.market.FuturesMarket
 
 /**
  * A non-sticky vol smile. Sticky might best be done by converting to a strike based
@@ -23,22 +24,19 @@ case class FuturesVols(
     expiryRule: FuturesExpiryRule,
     atmVols : Month => Double,
     deltaSpreads: (Month, Double) => Double) extends Curve {
-  def apply(point: Any): Either[AtomicEnvironmentFail, Qty] = {
+  def apply(point: Any): Either[EvcelFail, Qty] = {
     point match {
       case (month: Month, strike: Qty, forwardPrice: Qty) =>
         require(strike.uom == forwardPrice.uom, s"Mismatching strike/forward prices $strike/$forwardPrice")
-        val vol = interpolateVol(month, strike.doubleValue, forwardPrice.doubleValue)
-        Right(Percent(vol * 100.0))
+        for (expiryDay <- expiryRule.optionExpiryDay(month)) yield {
+          val atmVol = atmVols(month)
+          val T = Act365.timeBetween(marketDay.day, expiryDay)
+          val deltaOfStrike = 
+            new BlackScholes(Call, forwardPrice.doubleValue, strike.doubleValue, T, atmVol).analyticDelta
+          val spread = deltaSpreads(month, deltaOfStrike)
+          Percent((atmVol + spread) * 100.0)
+        }
     }
-  }
-  private[curves] def interpolateVol(month: Month, X: Double, F: Double) = {
-    val atmVol = atmVols(month)
-    val T = Act365.timeBetween(
-      marketDay.day, expiryRule.optionExpiryDayOrThrow(month)
-    )
-    val deltaOfStrike = new BlackScholes(Call, F, X, T, atmVol).analyticDelta
-    val spread = deltaSpreads(month, deltaOfStrike)
-    atmVol + spread
   }
 }
 
@@ -74,23 +72,25 @@ object FuturesVols {
 }
 
 case class FuturesVolIdentifier(
-  market: String,
+  market: FuturesMarket,
   month: Month,
   strike: Qty,
   forwardPrice: Qty)
     extends AtomicDatumIdentifier {
-  def curveIdentifier = FuturesVolsIdentifier(market)
+  def curveIdentifier = FuturesVolsIdentifier(market.name)
   def point = (month, strike, forwardPrice)
-  override def nullValue(refData: ReferenceData) = Percent(10)
+  override def nullValue = Percent(10)
 
   override def forwardStateValue(refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay) = {
-    val expiry = refData.futuresExpiryRules.expiryRule(market).map(_.optionExpiryDayOrThrow(month)).getOrElse(
-      sys.error(s"Invalid market: $market")
-    )
-    if (forwardMarketDay >= expiry.endOfDay) {
-      sys.error(s"$this has expired on $forwardMarketDay")
+    val expiryRule = refData.futuresExpiryRules.expiryRule(market.name)
+    val expiryDay = expiryRule.flatMap(_.optionExpiryDay(month))
+    expiryDay.flatMap{
+      expiry => 
+        if (forwardMarketDay >= expiry.endOfDay) {
+          sys.error(s"$this has expired on $forwardMarketDay")
+        }
+        original(this)
     }
-    original(this)
   }
 }
 

@@ -1,12 +1,11 @@
 package evcel.pivot
 
 import evcel.quantity.Qty
-import evcel.daterange.Day
-import evcel.daterange.DateRange
-import evcel.daterange.PeriodLabel
-import evcel.daterange.DateRangePeriodLabel
-import scala.collection.immutable.VectorBuilder
+import evcel.daterange._
+import scala.collection.immutable.{VectorBuilder, Nil}
 import java.util.concurrent.atomic.AtomicLong
+import evcel.utils.{EvcelFail, GeneralEvcelFail}
+import scala.math.Ordered
 
 trait PivotValue {
   def content : Seq[_]
@@ -52,9 +51,14 @@ trait PivotField{
     try{
       Value(Vector[GoodType](value))
     } catch {
-      case e : Exception => ExceptionPivotValue(e)
+      case e : Exception => ExceptionPivotValue(GeneralEvcelFail(e.getMessage))
     }
   }
+
+  def pivotValue(valueOrFailure : Either[EvcelFail, GoodType]) : PivotValue = valueOrFailure.fold(
+    ExceptionPivotValue(_),
+    pivotValue(_)
+  )
 
   // When merging 
   // - Any Exception value found becomes the merged result
@@ -161,6 +165,10 @@ case class IdSummingQtyField(name : String) extends PivotField with DistinctMerg
   type GoodType = (Long, Qty)
   protected def valueConstructor = Value(_)
   def pivotValue(q : Qty) : PivotValue = pivotValue((IdSummingQtyField.nextID(), q))
+  def pivotValueFromEither(e : Either[EvcelFail, Qty]) : PivotValue = e.fold(
+    ExceptionPivotValue(_),
+    {q : Qty => pivotValue((IdSummingQtyField.nextID(), q))}
+  )
   val singleValueComparator : PartialFunction[(Any, Any), Int] = {
     case ((lId : Long, lQty : Qty), (rId : Long, rQty : Qty)) => 
       QtyField.singleValueComparator((lQty, rQty))
@@ -235,8 +243,8 @@ case class StringPivotField(val name : String) extends StringPivotFieldTrait
 // be known at compile time.
 case class TradeMetaField(override val name : String) extends StringPivotFieldTrait
 
-case class ExceptionPivotValue(e : Exception) extends PivotValue with Ordered[ExceptionPivotValue]{
+case class ExceptionPivotValue(e : EvcelFail) extends PivotValue with Ordered[ExceptionPivotValue]{
   val content = Vector(e)
-  def compare(rhs : ExceptionPivotValue) = e.getMessage.compare(rhs.e.getMessage)
+  def compare(rhs : ExceptionPivotValue) = e.s.compare(rhs.e.s)
 }
 

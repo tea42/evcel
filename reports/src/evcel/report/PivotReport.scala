@@ -2,7 +2,7 @@ package evcel.report
 
 import evcel.curve.ValuationContext
 import evcel.instrument.trade.Trade
-import evcel.instrument.valuation.Valuer
+import evcel.valuation.Valuer
 import evcel.pivot._
 import scalaz.syntax.std.boolean._
 import scala.collection.immutable.VectorBuilder
@@ -43,10 +43,11 @@ object PivotReport{
       PivotTable(fields, rows)
     }
 
-    val columnTrees : Seq[(ColumnFieldsTree, Seq[ColumnValuesTree])] = layout.columnFieldTrees.zip(tablesByColumnFieldTree).map{
-      case (columnFieldTree, columnTable) => 
-        (columnFieldTree, ColumnValuesTree.build(columnTable, columnFieldTree))
-    }
+    val columnTrees : Seq[(ColumnFieldsTree, Seq[ColumnValuesTree])] = 
+      layout.columnFieldTrees.zip(tablesByColumnFieldTree).map{
+        case (columnFieldTree, columnTable) => 
+          (columnFieldTree, ColumnValuesTree.build(columnTable, columnFieldTree))
+      }
     val measures : MeasureValues = MeasureValues.build(
       rowTable,
       columnTrees, 

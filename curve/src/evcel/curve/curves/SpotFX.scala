@@ -20,10 +20,10 @@ case class BaseFXRateKey(baseCCY: UOM, otherCCY: UOM) extends AtomicDatumIdentif
   override def forwardStateValue(refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay) = {
     val pair = FXPair(otherCCY, baseCCY)
     val newSpotDate = refData.fxMarket(pair).spotDate(refData, forwardMarketDay.day)
-    Right(ValuationContext(original, refData, EnvironmentParams.Default).forwardFX(pair, newSpotDate))
+    ValuationContext(original, refData, EnvironmentParams.Default).forwardFX(pair, newSpotDate)
   }
 
-  override def nullValue(refData: ReferenceData): Any = Qty(1, baseCCY / otherCCY)
+  override def nullValue = Qty(1, baseCCY / otherCCY)
 
   override def point: Any = FXPair(otherCCY, baseCCY)
 }

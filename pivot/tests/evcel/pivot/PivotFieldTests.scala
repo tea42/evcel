@@ -1,15 +1,14 @@
 package evcel.pivot
 
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.{FunSpec, Matchers}
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 import scala.util.Random
-import evcel.quantity.Qty
-import evcel.quantity.UOM
+import evcel.quantity.{Qty, UOM}
+import evcel.utils.GeneralEvcelFail
 
 class PivotFieldTests extends FunSpec with Matchers{
-  private def exceptionValue(msg : String) = ExceptionPivotValue(new RuntimeException(msg))
+  private def exceptionValue(msg : String) = ExceptionPivotValue(GeneralEvcelFail(msg))
   private val stringField = StringPivotField("fred")
 
   describe("General sorting"){
@@ -21,7 +20,7 @@ class PivotFieldTests extends FunSpec with Matchers{
     it("Should leave singleton collections alone"){
       Vector(
         NullPivotValue,
-        ExceptionPivotValue(new RuntimeException("bang!")),
+        ExceptionPivotValue(GeneralEvcelFail("bang!")),
         stringField.pivotValue("mike")
       ).foreach {
         v => 
@@ -82,7 +81,7 @@ class PivotFieldTests extends FunSpec with Matchers{
 
       Vector(
         NullPivotValue,
-        ExceptionPivotValue(new RuntimeException("bang!")),
+        ExceptionPivotValue(GeneralEvcelFail("bang!")),
         stringField.pivotValue("mike")
       ).foreach {
         v => 

@@ -34,7 +34,6 @@ class FuturesVolsTests extends FunSpec with Matchers {
       val vols = makeFuturesVols(
         (Dec / 2014, Percent("20"), List((0.5, Percent("25"))))
       )
-      vols.interpolateVol(Dec / 2014, X = 100.0, F = 110.0) should equal(0.45 +- 1e-6)
       vols.apply((Dec/2014, 100.0(USD/MT), 110.0(USD/MT))).right.get.checkedDouble(PERCENT) should
         equal(45.0 +- 1e-6)
     }
@@ -48,9 +47,10 @@ class FuturesVolsTests extends FunSpec with Matchers {
             (0.7, Percent("25"))))
       )
       // Deep OTM call
-      vols.interpolateVol(Dec / 2014, X = 100.0, F = 1.0) should equal(0.2 +- 1e-6)
+      vols.apply((Dec / 2014, 100.0(USD/MT), 1.0(USD/MT))).right.get.checkedDouble(PERCENT) should equal(20.0 +- 1e-6)
       // Deep ITM call
-      vols.interpolateVol(Dec / 2014, X = 100.0, F = 1.0e6) should equal(0.5 +- 1e-6)
+      vols.apply((Dec / 2014, 100.0(USD/MT), 1.0e6(USD/MT))).right.get.checkedDouble(PERCENT) should 
+        equal (50.0 +- 1e-6)
     }
   }
 }

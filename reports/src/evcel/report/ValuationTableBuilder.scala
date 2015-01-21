@@ -3,11 +3,13 @@ package evcel.report
 import evcel.curve.ValuationContext
 import evcel.instrument.Instrument
 import evcel.instrument.trade.Trade
-import evcel.instrument.valuation.HedgeInfo
-import evcel.instrument.valuation.Valuer
-import evcel.instrument.valuation.Valuer._
+import evcel.valuation.Valuer
+import evcel.valuation.Valuer._
 import evcel.pivot._
 import evcel.quantity.Qty
+import evcel.utils.EitherUtils._
+import scala.util.{Either, Left, Right}
+import evcel.utils.EvcelFail
 
 /**
   * Builds a pivot table of trade, instrument and valuation data.
@@ -70,14 +72,21 @@ case class ValuationTableBuilder(
     
     val positionTable = if (positionFields.nonEmpty){
       implicit val valuer_ = valuer.get
-      val hedges = instrument.positions(vc.get).map(PivotHedgeInfo(_)).filter(_.satisfies(positionFilters))
-      PivotTable(positionFields, hedges)
+      val rows = instrument.positions(vc.get) match {
+        case Left(err) => 
+          Vector(PivotRow(positionFields)(Vector.fill(positionFields.size)(ExceptionPivotValue(err))))
+        case Right(positions) => 
+          positions.map{
+            case (hedgeInstrument, volume) => PivotHedgeInfo(hedgeInstrument, volume)
+          }.filter(_.satisfies(positionFilters))
+      }
+      PivotTable(positionFields, rows)
     } else 
       PivotTable.Null
 
     if (fields.contains(MTMField)){
       implicit val valuer_ = valuer.get
-      val mtm = MTMField.pivotValue(instrument.mtm(vc.get))
+      val mtm = MTMField.pivotValueFromEither(instrument.mtm(vc.get))
       PivotTable.addSingleRow(
         PivotRow(MTMField, mtm),
         positionTable

@@ -1,7 +1,8 @@
 package evcel.referencedata
 
-import evcel.daterange.Day
-import evcel.daterange.Month
+import evcel.daterange.{Day, Month}
+import scala.util.Either
+import evcel.utils.{EvcelFail, GeneralEvcelFail}
 
 case class FuturesExpiryRule(
   market: String, 
@@ -10,17 +11,14 @@ case class FuturesExpiryRule(
 ) 
   extends ReferenceDataTrait
 {
-  def futureExpiryDay(month: Month): Option[Day] = futureExpiries.get(month)
-  def futureExpiryDayOrThrow(month: Month): Day =
-    futureExpiryDay(month).getOrElse(sys.error(s"No known option expiry for $market/$month"))
-  def optionExpiryDay(month: Month): Option[Day] =
-    optionExpiries.get(month)
-  def optionExpiryDayOrThrow(month: Month): Day =
-    optionExpiryDay(month).getOrElse(sys.error(s"No known option expiry for $market/$month"))
+  def futureExpiryDay(month: Month): Either[EvcelFail, Day] = 
+    futureExpiries.get(month).toRight(GeneralEvcelFail(s"Expiry not known for $market, $month"))
+  def optionExpiryDay(month: Month): Either[EvcelFail, Day] =
+    optionExpiries.get(month).toRight(GeneralEvcelFail(s"Option expiry not known for $market, $month"))
 }
 
 case class FuturesExpiryRuleIdentifier(market : String) extends ReferenceDataIdentifier
 
 class FuturesExpiryRules(rules: Map[String, FuturesExpiryRule]) {
-  def expiryRule(market: String) = rules.get(market)
+  def expiryRule(market: String) = rules.get(market).toRight(GeneralEvcelFail(s"No expiry rule for $market"))
 }

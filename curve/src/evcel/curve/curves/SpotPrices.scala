@@ -6,6 +6,9 @@ import evcel.curve.environment._
 import evcel.curve.environment.MarketDay._
 import evcel.daterange._
 import evcel.quantity.Qty
+import evcel.utils.EitherUtils._
+import scala.util.{Either, Left}
+import evcel.referencedata.market.SpotMarket
 
 case class SpotPrices(market: String, marketDay: MarketDay, prices: Map[DateRange, Qty]) extends Curve {
   def isMonthly = prices.keys.forall(_.isInstanceOf[Month])
@@ -25,17 +28,15 @@ case class SpotPrices(market: String, marketDay: MarketDay, prices: Map[DateRang
   }
 }
 
-case class SpotPriceIdentifier(market: String, day: Day) extends PriceIdentifier {
-  val curveIdentifier = SpotPricesIdentifier(market)
+case class SpotPriceIdentifier(market: SpotMarket, day: Day) extends PriceIdentifier {
+  val curveIdentifier = SpotPricesIdentifier(market.name)
   val point = day
-  override def nullValue(refData: ReferenceData) = {
-    val priceUOM = refData.markets.spotMarketOrThrow(market).priceUOM
-    Qty("321", priceUOM)
+  override def nullValue = {
+    Qty("321", market.priceUOM)
   }
 
   override def dP(vc: ValuationContext) = {
-    val priceUOM = vc.refData.markets.spotMarketOrThrow(market).priceUOM
-    Qty(".25", priceUOM)
+    Qty(".25", market.priceUOM)
   }
 
   override def forwardStateValue(

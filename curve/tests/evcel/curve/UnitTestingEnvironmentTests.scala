@@ -7,15 +7,15 @@ import evcel.quantity.{Percent, Qty}
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 import evcel.referencedata.market.FXPair
-import org.scalatest.{FunSpecLike, Matchers, ShouldMatchers}
-
+import org.scalatest._
 import scala.language.reflectiveCalls
 import scala.math._
-import evcel.curve.marketdata.FuturesVolData
-import evcel.curve.marketdata.MarketDataTest
-import org.scalatest.FunSpecLike
+import evcel.daterange._
+import evcel.utils.EitherTestPimps
 
-class UnitTestingEnvironmentTests extends MarketDataTest with FunSpecLike with Matchers{
+
+class UnitTestingEnvironmentTests extends MarketDataTest with FunSpecLike with Matchers with 
+EitherValues with EitherTestPimps{
   describe("UnitTestingEnvironment"){
     it("Should work"){
       val env = UnitTestingEnvironment.fromMarketData(
@@ -32,33 +32,30 @@ class UnitTestingEnvironmentTests extends MarketDataTest with FunSpecLike with M
 
         "Nymex WTI"          -> FuturesVolData(List((Sep / 2014, Percent("20"), Nil)))
       )
-      env.futuresPrice("Nymex WTI", Sep/2014) shouldEqual Qty("100", USD/MT)
-      intercept[RuntimeException]{
-        env.futuresPrice("Nymex WTI", Jul/2014) 
-      }
-      env.futuresPrice("PORK BELLIES", Sep/2014) shouldEqual Qty("123", USD/MT)
+      val wti = env.futuresMarket("Nymex WTI").R
+      val porkBellies = env.futuresMarket("PORK BELLIES").R
+      env.futuresPrice(wti, Sep/2014).R shouldEqual Qty("100", USD/MT)
+      env.futuresPrice(wti, Jul/2014)  should be ('left)
+      env.futuresPrice(porkBellies, Sep/2014).R shouldEqual Qty("123", USD/MT)
 
-      env.discountRate(USD, 10 / Sep / 2015) should be (exp(-0.05) +- 1e-5)
-      intercept[RuntimeException]{
-        env.discountRate(GBP, 10 / Sep / 2015)
-      }
+      env.discountRate(USD, 10 / Sep / 2015).R.doubleValue should be (exp(-0.05) +- 1e-5)
 
-      env.futuresVol("Nymex WTI", Sep / 2014, Qty("110", USD/MT))
+      env.discountRate(GBP, 10 / Sep / 2015) should be ('left)
 
-      env.spotFX(FXPair(USD, GBP)) shouldEqual Qty("0.625", GBP/USD)
-      env.spotFX(FXPair(GBP, USD)) shouldEqual Qty("1.6", USD/GBP)
+      env.futuresVol(wti, Sep / 2014, Qty("110", USD/MT))
 
-      intercept[RuntimeException] {
-        env.spotFX(FXPair(CAD, USD))
-      }.getMessage shouldEqual "No market data provided for BaseFXRateKey(USD,CAD)"
+      env.spotFX(FXPair(USD, GBP)).R shouldEqual Qty("0.625", GBP/USD)
+      env.spotFX(FXPair(GBP, USD)).R shouldEqual Qty("1.6", USD/GBP)
 
-      env.spotFX(FXPair(GBP, EUR)) shouldEqual (Qty("1.25", USD/EUR).invert * Qty("1.6", USD/GBP))
-      env.spotFX(FXPair(EUR, GBP)) shouldEqual env.spotFX(FXPair(GBP, EUR)).invert
+      env.spotFX(FXPair(CAD, USD)) should be ('left)
+
+      env.spotFX(FXPair(GBP, EUR)).R shouldEqual (Qty("1.25", USD/EUR).invert * Qty("1.6", USD/GBP))
+      env.spotFX(FXPair(EUR, GBP)).R shouldEqual env.spotFX(FXPair(GBP, EUR)).R.invert
 
       val forwardDay = 10 / Mar / 2015
       val eurusd = FXPair(EUR, USD)
-      env.forwardFX(eurusd, forwardDay) shouldEqual (
-        env.todayFX(eurusd) *
+      env.forwardFX(eurusd, forwardDay).R shouldEqual (
+        env.todayFX(eurusd).R *
           // exp^((rd - rf) * T)
           math.exp((0.05 - 0.03) * Act365.timeBetween(env.marketDay.day, forwardDay)).toQty
         )

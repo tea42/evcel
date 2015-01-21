@@ -159,10 +159,12 @@ case class PivotReportPrinter(report : PivotReport){
       List(rowText, measureText).mkString(AREA_SEP)
   }
 
-  lazy val separator = Vector("-" * rowAreaHeadings.size + "-||-" + measureArea.headOption.map("-" * _.size).getOrElse(""))
+  lazy val separator = 
+    Vector("-" * rowAreaHeadings.size + "-||-" + measureArea.headOption.map("-" * _.size).getOrElse(""))
 
   def formatted : String = (topArea ++ separator ++ bottomArea).mkString("\n")
   def formattedAsCode : String = 
-    "val expected = \n" + formatted.split("\n").mkString("  \"\"\"|", "$\n     |", "$\"\"\".stripMargin.replace(\"$\", \"\")")
+    "val expected = \n" + 
+    formatted.split("\n").mkString("  \"\"\"|", "$\n     |", "$\"\"\".stripMargin.replace(\"$\", \"\")")
 
 }

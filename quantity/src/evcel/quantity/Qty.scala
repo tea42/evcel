@@ -1,13 +1,17 @@
 package evcel.quantity
 
 import java.text.DecimalFormat
-
 import evcel.maths.Numberlike
-
 import scala.language.implicitConversions
 import UOM._
-
 import scala.math.BigDecimal.RoundingMode
+import scala.math.{BigDecimal, Ordered}
+import scala.util.{Either, Left, Right}
+import evcel.utils.EvcelFail
+import evcel.utils.EitherUtils._
+
+
+
 
 trait Qty extends Ordered[Qty] {
   def +(other: Qty): Qty
@@ -35,7 +39,7 @@ trait Qty extends Ordered[Qty] {
   def unary_- : Qty
   def invert: Qty
   def abs: Qty
-  def in(other: UOM, conv: Option[QtyConversions] = None): Option[Qty]
+  def in(other: UOM, conv: QtyConversions = QtyConversions(Map.empty)): Either[EvcelFail, Qty]
   override def toString = doubleValue + " " + uom
 
   def toFormattedString(dp: Int) = if (dp < 16) { // DecimalFormat doesn't work after 16 decimal places
@@ -54,7 +58,7 @@ trait Qty extends Ordered[Qty] {
   def round(nDP: Int): Qty
 
   def one: Qty
-  def inBaseCcy: Qty = in(uom.inBaseCcy).getOrElse(sys.error("Can't convert to base ccy"))
+  def inBaseCcy: Either[EvcelFail, Qty] = in(uom.inBaseCcy)
 
   def compare(that : Qty) = {
     require(that.uom == uom, s"UOMs don't match: $this, $that")
@@ -101,7 +105,7 @@ class DblQty private[quantity] (private val value: Double, val uom: UOM) extends
   def invert = new DblQty(1 / value, uom.invert)
   def abs = new DblQty(math.abs(value), uom)
 
-  override def in(other: UOM, conv: Option[QtyConversions]) = {
+  override def in(other: UOM, conv: QtyConversions) = {
     uom.in(other, conv).map(scale => Qty(this.value * scale, other))
   }
 
@@ -146,6 +150,7 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
   }
 
   def mult(other: BDQty) = this.*(other).asInstanceOf[BDQty]
+  def plus(other: BDQty) = this.+(other).asInstanceOf[BDQty]
 
   def /(other: Qty) = other match {
     case _: DblQty => dblQty./(other)
@@ -160,7 +165,7 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
   def invert = new BDQty(Qty.bdOne / value, uom.invert)
   def abs = new BDQty(value.abs, uom)
 
-  override def in(other: UOM, conv: Option[QtyConversions]) = {
+  override def in(other: UOM, conv: QtyConversions) = {
     uom.in(other, conv).map(scale => Qty(this.value * scale, other))
   }
 
@@ -184,10 +189,17 @@ class BDQty private[quantity] (private val value: BigDecimal, val uom: UOM) exte
   def one: BDQty = new BDQty(Qty.bdOne, uom)
 }
 
+object BDQty{
+  
+  def sum(qtys: Iterable[BDQty]) = {
+    qtys.foldLeft[BDQty](Qty.NULL)(_ plus _)
+  }
+}
+
 object Qty {
   val bdOne = BigDecimal(1.0)
 
-  val NULL = Qty(BigDecimal(0), UOM.NULL)
+  val NULL : BDQty = Qty(BigDecimal(0), UOM.NULL)
 
   def apply(value: Int, uom: UOM): BDQty = new BDQty(value, uom)
 

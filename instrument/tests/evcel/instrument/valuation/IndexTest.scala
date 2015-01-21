@@ -2,6 +2,7 @@ package evcel.instrument.valuation
 
 import evcel.curve.UnitTestingEnvironment
 import org.scalatest.{ShouldMatchers, FunSuite}
+import evcel.instrument.{FuturesFrontPeriodIndex, Index}
 
 class IndexTest extends FunSuite with ShouldMatchers {
 
@@ -12,8 +13,7 @@ class IndexTest extends FunSuite with ShouldMatchers {
       new FuturesFrontPeriodIndex("Nymex WTI", 2, 3),
       new FuturesFrontPeriodIndex("Nymex WTI", 2, 0),
       new FuturesFrontPeriodIndex("Nymex WTI", 1, 3))
-    indexes.foreach(i => FuturesFrontPeriodIndex.parse(i.toString) shouldEqual Some(i))
-    FuturesFrontPeriodIndex.parse("Nymex WTI") shouldEqual None
+    indexes.foreach(i => Index.parse(i.toString) shouldEqual i)
   }
 
   test("test to string") {
