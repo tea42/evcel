@@ -6,6 +6,7 @@ import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 import org.scalatest._
 import evcel.quantity.utils.QuantityTestUtils._
+import evcel.utils.EitherUtils._
 
 class QtyTest extends FunSuite with Matchers {
 
@@ -155,13 +156,13 @@ class QtyTest extends FunSuite with Matchers {
   }
 
   test("conversion") {
-    1(USD) in US_CENT shouldEqual Some(100(US_CENT))
-    (1(USD) in US_CENT).flatMap(_ in USD) shouldEqual Some(1(USD))
-    100(US_CENT) in USD shouldEqual Some(1(USD))
-    1(BBL) in GAL shouldEqual Some(42(GAL))
+    1(USD) in US_CENT shouldEqual Right(100(US_CENT))
+    (1(USD) in US_CENT).flatMap(_ in USD) shouldEqual Right(1(USD))
+    100(US_CENT) in USD shouldEqual Right(1(USD))
+    1(BBL) in GAL shouldEqual Right(42(GAL))
     val conv = new QtyConversions(Map((MT, BBL) -> 7.45))
-    1(MT) in BBL shouldEqual None
-    1(MT).in(BBL, Some(conv)) shouldEqual Some(7.45(BBL))
+    1(MT) in BBL should be ('left)
+    1(MT).in(BBL, conv) shouldEqual Right(7.45(BBL))
   }
 
   test("abs") {

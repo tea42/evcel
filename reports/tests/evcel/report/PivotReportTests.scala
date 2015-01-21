@@ -13,8 +13,8 @@ import evcel.curve.marketdata.MarketDataTest
 import evcel.curve.environment.MarketDay
 import evcel.curve.environment.MarketDay._
 import evcel.curve.UnitTestingEnvironment
-import evcel.instrument.valuation.Valuer
-import evcel.instrument.valuation.DefaultValuer
+import evcel.valuation.Valuer
+import evcel.valuation.DefaultValuer
 import evcel.instrument.Instrument
 import evcel.pivot.PivotTable
 import evcel.pivot.PivotField

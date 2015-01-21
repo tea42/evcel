@@ -1,7 +1,7 @@
 package evcel.instrument
 
-import evcel.quantity.BDQty
-import evcel.quantity.Qty
+import evcel.quantity.{BDQty, Qty}
+import evcel.daterange.PeriodLabel
 
 trait Instrument extends Product{
   def instrumentType : InstrumentType
@@ -15,15 +15,6 @@ object Instrument{
   val COMMODITY_SWAP_SPREAD = "Commodity Swap Spread"
   val FX_FORWARD = "FX Forward"
   val CASH = "Cash"
-}
-
-/**
-  * In general, instruments don't have a single volume. E.g. market spreads between MT/BBl volumes of 
-  * different commodities. However the standard instruments used to hedge portfolios will need 
-  * a volume of some sort that is used to describe the position.
-  */
-trait HedgeInstrument extends Instrument{
-  def volume: Qty
 }
 
 trait InstrumentType {

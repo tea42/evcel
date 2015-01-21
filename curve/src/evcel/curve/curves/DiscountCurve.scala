@@ -1,21 +1,21 @@
 package evcel.curve.curves
 
 import evcel.referencedata.ReferenceData
-import evcel.quantity.Percent
+import evcel.quantity._
 import evcel.daterange.Day
-import evcel.quantity.UOM
 import evcel.quantity.UOM._
 import evcel.curve.marketdata._
 import evcel.curve.environment._
 import scala.math._
-import evcel.quantity.Qty
 import evcel.utils.EitherUtils._
+import scala.util.{Either, Left, Right}
+import scala.collection.immutable.Nil
 
 abstract class DiscountCurve extends Curve {
-  private[curves] def discountRate(day: Day): Double
+  private[curves] def discountRate(day: Day): DblQty
   def currency: UOM
   def marketDay: Day
-  def apply(point: Any): Either[AtomicEnvironmentFail, Double] with Product with Serializable = {
+  def apply(point: Any): Either[AtomicEnvironmentFail, DblQty] with Product with Serializable = {
     point match {
       case day: Day =>
         require(day >= marketDay, s"Asked for discount rate for $day - market day is $marketDay")
@@ -32,28 +32,28 @@ case class ForwardRateBasedDiscountCurve(
   forwardRates: List[DiscountCurve.ForwardRateData])
     extends DiscountCurve {
 
-  private[curves] def discountRate(day: Day): Double = {
+  private[curves] def discountRate(day: Day): DblQty = {
     forwardRates.find(_.toDay >= day) match {
       case Some(DiscountCurve.ForwardRateData(fromDay, toDay, fromDiscount, toDiscount, forwardRate)) =>
-        fromDiscount * exp(-forwardRate * dayCount.timeBetween(fromDay, day))
+        Qty(fromDiscount * exp(-forwardRate * dayCount.timeBetween(fromDay, day)), UOM.SCALAR)
       case None =>
         val DiscountCurve.ForwardRateData(_, lastDay, _, lastDiscount, lastForwardRate) = forwardRates.last
-        lastDiscount * exp(-lastForwardRate * dayCount.timeBetween(lastDay, day))
+        Qty(lastDiscount * exp(-lastForwardRate * dayCount.timeBetween(lastDay, day)), UOM.SCALAR)
     }
   }
 }
 
 case class UndiscountedDiscountCurve(marketDay: Day, currency: UOM) extends DiscountCurve {
-  private[curves] def discountRate(day: Day) = 1.0
+  private[curves] def discountRate(day: Day) = Qty(1.0, UOM.SCALAR)
 }
 
 case class DiscountRateIdentifier(currency: UOM, day: Day) extends AtomicDatumIdentifier {
   def curveIdentifier = ZeroRatesIdentifier(currency)
   def point = day
-  override def nullValue(refData: ReferenceData) = 1.0
+  override def nullValue = Qty(1.0, UOM.SCALAR)
 
   override def forwardStateValue(refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay) = {
-    for(d1 <- original.double(this); d2 <- original.double(copy(day = forwardMarketDay.day))) yield d1 / d2
+    for(d1 <- original(this); d2 <- original(copy(day = forwardMarketDay.day))) yield d1 / d2
   }
 }
 

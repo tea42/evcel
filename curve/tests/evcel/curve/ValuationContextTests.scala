@@ -9,10 +9,13 @@ import evcel.quantity.{Percent, Qty}
 import evcel.quantity.Qty._
 import evcel.referencedata.market.FXPair
 import org.scalatest.{FunSuite, FunSpecLike, ShouldMatchers}
-
+import evcel.quantity.utils.QuantityTestUtils._
 import scala.language.reflectiveCalls
+import evcel.utils.EitherTestPimps
+import org.scalatest.matchers.ShouldMatchers
 
-class ValuationContextTests extends FunSuite with MarketDataTest with ShouldMatchers{
+
+class ValuationContextTests extends FunSuite with MarketDataTest with ShouldMatchers with EitherTestPimps{
 
   val vc = UnitTestingEnvironment.fromMarketData(
     (10 / Sep / 2014).endOfDay,
@@ -30,45 +33,45 @@ class ValuationContextTests extends FunSuite with MarketDataTest with ShouldMatc
   )
 
   test("spot fx") {
-    vc.spotFX(FXPair(GBP, GBP)) shouldEqual Qty(1, SCALAR)
-    vc.spotFX(FXPair(GBP, USD)) shouldEqual Qty(1.6, USD/GBP)
-    vc.spotFX(FXPair(USD, GBP)) shouldEqual Qty(1.6, USD/GBP).invert
-    vc.spotFX(FXPair(GBP, EUR)) shouldEqual vc.spotFX(FXPair(USD, GBP)).invert * vc.spotFX(FXPair(USD, EUR))
-    vc.spotFX(FXPair(EUR, GBP)) shouldEqual vc.spotFX(FXPair(GBP, EUR)).invert
+    vc.spotFX(FXPair(GBP, GBP)).R shouldEqual Qty(1, SCALAR)
+    vc.spotFX(FXPair(GBP, USD)).R shouldEqual Qty(1.6, USD/GBP)
+    vc.spotFX(FXPair(USD, GBP)).R shouldEqual Qty(1.6, USD/GBP).invert
+    vc.spotFX(FXPair(GBP, EUR)).R shouldEqual vc.spotFX(FXPair(USD, GBP)).R.invert * vc.spotFX(FXPair(USD, EUR)).R
+    vc.spotFX(FXPair(EUR, GBP)).R shouldEqual vc.spotFX(FXPair(GBP, EUR)).R.invert
   }
 
   test("today fx") {
-    vc.todayFX(FXPair(GBP, GBP)) shouldEqual Qty(1, SCALAR)
+    vc.todayFX(FXPair(GBP, GBP)).R shouldEqual Qty(1, SCALAR)
 
-    vc.todayFX(FXPair(GBP, USD)) shouldEqual
+    vc.todayFX(FXPair(GBP, USD)).R shouldEqual
       Qty(1.6, USD/GBP) *
-        (vc.discountRate(GBP, vc.marketDay.day + 2) / vc.discountRate(USD, vc.marketDay.day + 2)).toQty
+        vc.discountRate(GBP, vc.marketDay.day + 2).R / vc.discountRate(USD, vc.marketDay.day + 2).R
 
-    vc.todayFX(FXPair(GBP, EUR)) shouldEqual
-      vc.spotFX(FXPair(USD, GBP)).invert * vc.spotFX(FXPair(USD, EUR)) *
-        (vc.discountRate(GBP, vc.marketDay.day + 2) / vc.discountRate(EUR, vc.marketDay.day + 2)).toQty
+    vc.todayFX(FXPair(GBP, EUR)).R should be
+      (vc.spotFX(FXPair(USD, GBP)).R.invert * vc.spotFX(FXPair(USD, EUR)).R *
+        vc.discountRate(GBP, vc.marketDay.day + 2).R / vc.discountRate(EUR, vc.marketDay.day + 2).R +- 1e-9)
   }
 
   test("forward fx") {
     val day = vc.marketDay.day + 150
-    vc.forwardFX(FXPair(GBP, GBP), day) shouldEqual Qty(1, SCALAR)
+    vc.forwardFX(FXPair(GBP, GBP), day).R shouldEqual Qty(1, SCALAR)
 
-    vc.forwardFX(FXPair(GBP, USD), day) shouldEqual
+    vc.forwardFX(FXPair(GBP, USD), day).R shouldEqual
       Qty(1.6, USD/GBP) *
-        (vc.discountRate(GBP, vc.marketDay.day + 2) / vc.discountRate(USD, vc.marketDay.day + 2)).toQty *
-        (vc.discountRate(GBP, day) / vc.discountRate(USD, day)).toQty
+        vc.discountRate(GBP, vc.marketDay.day + 2).R / vc.discountRate(USD, vc.marketDay.day + 2).R *
+        vc.discountRate(GBP, day).R / vc.discountRate(USD, day).R
 
-    vc.forwardFX(FXPair(GBP, EUR), day) shouldEqual
-      vc.spotFX(FXPair(USD, GBP)).invert * vc.spotFX(FXPair(USD, EUR)) *
-        (vc.discountRate(GBP, vc.marketDay.day + 2) / vc.discountRate(EUR, vc.marketDay.day + 2)).toQty *
-        (vc.discountRate(GBP, day) / vc.discountRate(EUR, day)).toQty
+    vc.forwardFX(FXPair(GBP, EUR), day).R should be
+      (vc.spotFX(FXPair(USD, GBP)).R.invert * vc.spotFX(FXPair(USD, EUR)).R *
+        vc.discountRate(GBP, vc.marketDay.day + 2).R / vc.discountRate(EUR, vc.marketDay.day + 2).R *
+        vc.discountRate(GBP, day).R / vc.discountRate(EUR, day).R +- 1e-9)
   }
 
   test("forwardState for discount curve") {
     val forwardDate = vc.marketDay.day + 150
-    vc.forwardState(forwardDate.endOfDay).discountRate(USD, forwardDate) shouldEqual 1.0
-    vc.forwardState(forwardDate.endOfDay).discountRate(USD, forwardDate + 50) shouldEqual
-      vc.discountRate(USD, forwardDate + 50) / vc.discountRate(USD, forwardDate)
+    vc.forwardState(forwardDate.endOfDay).discountRate(USD, forwardDate).R.doubleValue shouldEqual 1.0
+    vc.forwardState(forwardDate.endOfDay).discountRate(USD, forwardDate + 50).R shouldEqual
+      vc.discountRate(USD, forwardDate + 50).R / vc.discountRate(USD, forwardDate).R
   }
 
   test("forwardstate for spotfx") {

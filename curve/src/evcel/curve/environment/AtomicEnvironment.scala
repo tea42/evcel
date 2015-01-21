@@ -1,21 +1,16 @@
 package evcel.curve.environment
 
 import evcel.quantity.Qty
+import scala.util.Either
+import evcel.utils.EvcelFail
 
 
 trait AtomicEnvironment {
   def marketDay: MarketDay
-  def apply(id: AtomicDatumIdentifier): Either[AtomicEnvironmentFail, Any]
-  def typedApply[T](id: AtomicDatumIdentifier): Either[AtomicEnvironmentFail, T] =
-    apply(id).asInstanceOf[Either[AtomicEnvironmentFail, T]]
-
-  def qty(id: AtomicDatumIdentifier): Either[AtomicEnvironmentFail, Qty] = typedApply[Qty](id)
-  def double(id: AtomicDatumIdentifier): Either[AtomicEnvironmentFail, Double] = typedApply[Double](id)
+  def apply(id: AtomicDatumIdentifier): Either[EvcelFail, Qty]
 }
 
-trait AtomicEnvironmentFail {
-  def s: String
-}
+trait AtomicEnvironmentFail extends EvcelFail
 
 case class GeneralAtomicEnvironmentFail(s: String) extends AtomicEnvironmentFail
 

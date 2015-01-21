@@ -8,9 +8,10 @@ case class PivotInstrument(instrument : Instrument) extends PivotRow{
 
   // Somewhat ugly that we are relying on the pivot fields to be listed in the same
   // order as the member variables - however should fail immediately if this isn't the case
-  @transient private lazy val pivotValuesMap : Map[PivotField, PivotValue] = fields.zip(instrument.productIterator.toList).map{
-    case (field, any) => field -> field.pivotValue(any.asInstanceOf[field.GoodType])
-  }.toMap
+  @transient private lazy val pivotValuesMap : Map[PivotField, PivotValue] = 
+    fields.zip(instrument.productIterator.toList).map{
+      case (field, any) => field -> field.pivotValue(any.asInstanceOf[field.GoodType])
+    }.toMap
   def pivotValue(field : PivotField) = pivotValuesMap(field)
 }
 

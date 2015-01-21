@@ -27,20 +27,21 @@ def module(name : String, upstream : Module*) : Module = {
   module_(name, upstream.toList, testUpstream = Nil)
 }
 
-val utils = module("utils")
 val daterange = module("daterange")
+val utils = module("utils", daterange)
 val maths = module("maths", daterange, utils)
 val quantity = module("quantity", maths, utils)
 val pivot = module("pivot", quantity, daterange)
 val referencedata = module("referencedata", daterange, quantity)
-val curve = module_("curve", List(referencedata, quantity, maths, utils), List(referencedata))
+val curve = module_("curve", List(referencedata, quantity, maths, utils), List(referencedata, quantity, utils))
 val instrument = module_("instrument", List(curve), List(curve, quantity))
+val valuation = module_("valuation", List(instrument, curve), List(curve, quantity))
 
 val eventstore = module("eventstore", instrument, curve, utils)
 val marketdatastore = module_("marketdatastore", List(eventstore), List(eventstore, curve))
 val referencedatastore = module_("referencedatastore", List(referencedata, eventstore), List(eventstore))
 val tradestore = module_("tradestore", List(instrument, eventstore), List(eventstore))
-val reports = module_("reports", List(pivot, instrument), List(curve, instrument))
+val reports = module_("reports", List(pivot, valuation), List(curve, instrument, valuation))
 val xl = module("xl", reports)
 val server = module("server", referencedatastore, marketdatastore, tradestore, xl)
 

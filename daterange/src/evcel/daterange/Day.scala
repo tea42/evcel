@@ -9,6 +9,9 @@ class Day private (@transient val year: Int, @transient val month: Int, @transie
   def firstDay = this
   def lastDay = this
 
+  override def isDay = true
+  override def asDay = this
+
   def containingMonth = Month(year, month)
   override def hashCode = julianDayNumber
   override def equals(that: Any) = that match {

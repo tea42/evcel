@@ -6,6 +6,9 @@ import evcel.curve.environment._
 import evcel.curve.environment.MarketDay._
 import evcel.daterange.Month
 import evcel.quantity.Qty
+import evcel.utils.EitherUtils._
+import scala.util.{Either, Left, Right}
+import evcel.referencedata.market.FuturesMarket
 
 case class FuturesPrices(market: String, marketDay: MarketDay, prices: Map[Month, Qty]) extends Curve {
   def apply(point: Any): Either[AtomicEnvironmentFail, Qty] = {
@@ -20,30 +23,30 @@ case class FuturesPrices(market: String, marketDay: MarketDay, prices: Map[Month
   }
 }
 
-case class FuturesPriceIdentifier(market: String, month: Month) extends PriceIdentifier {
-  val curveIdentifier = FuturesPricesIdentifier(market)
+case class FuturesPriceIdentifier(market: FuturesMarket, month: Month) extends PriceIdentifier {
+  val curveIdentifier = FuturesPricesIdentifier(market.name)
   val point = month
-  override def nullValue(refData: ReferenceData) = {
-    val priceUOM = refData.markets.futuresMarketOrThrow(market).priceUOM
-    Qty("123", priceUOM)
+  override def nullValue = {
+    Qty("123", market.priceUOM)
   }
 
   override def dP(vc: ValuationContext) = {
-    val priceUOM = vc.refData.markets.futuresMarketOrThrow(market).priceUOM
-    Qty(".25", priceUOM)
+    Qty(".25", market.priceUOM)
   }
 
-  override def forwardStateValue(
-    refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay
-    ) = {
-    val ltd = refData.futuresExpiryRules.expiryRule(market).map(_.futureExpiryDayOrThrow(month)).getOrElse(
-      sys.error(s"Invalid market: $market")
-    )
-    if (forwardMarketDay >= ltd.endOfDay) {
-      sys.error(s"$this has expired on $forwardMarketDay")
+  override def forwardStateValue(refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay) = {
+    for {
+      rule <- refData.futuresExpiryRules.expiryRule(market.name)
+      ltd <- rule.futureExpiryDay(month)
+      value <- original(this)
+    } yield {
+      if (forwardMarketDay >= ltd.endOfDay) {
+        sys.error(s"$this has expired on $forwardMarketDay")
+      }
+      value
     }
-    original(this)
   }
+          
 }
 
 

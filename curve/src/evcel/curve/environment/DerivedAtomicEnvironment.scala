@@ -4,6 +4,9 @@ import com.google.common.collect.Sets
 import evcel.referencedata.ReferenceData
 import scala.collection.JavaConverters._
 import evcel.utils.EitherUtils._
+import scala.util.Either
+import evcel.utils.EvcelFail
+import evcel.quantity.Qty
 
 abstract class DerivedAtomicEnvironment(original: AtomicEnvironment)
   extends AtomicEnvironment {
@@ -18,11 +21,11 @@ case class ForwardStateEnvironment(refData: ReferenceData, original: AtomicEnvir
 
 case class PerturbedAtomicEnvironment(
   original: AtomicEnvironment,
-  perturbation: PartialFunction[AtomicDatumIdentifier, Any])
+  perturbation: PartialFunction[AtomicDatumIdentifier, Either[EvcelFail, Qty]])
     extends DerivedAtomicEnvironment(original) {
 
   def apply(k: AtomicDatumIdentifier) = if(perturbation.isDefinedAt(k))
-    Right(perturbation.apply(k))
+    perturbation.apply(k)
   else
     original.apply(k)
 }
@@ -35,6 +38,6 @@ case class KeyRecordingAtomicEnvironment(original: AtomicEnvironment, refData: R
 
   def apply(k: AtomicDatumIdentifier) = {
     identifiers.add(k)
-    original.apply(k).recover { case _ => k.nullValue(refData)}
+    original.apply(k) orElse Right(k.nullValue)
   }
 }

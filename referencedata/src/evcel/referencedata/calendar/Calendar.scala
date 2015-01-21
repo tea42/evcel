@@ -2,6 +2,7 @@ package evcel.referencedata.calendar
 
 import evcel.daterange.{DateRange, Day}
 import evcel.referencedata.ReferenceDataTrait
+import evcel.utils.GeneralEvcelFail
 
 trait Calendar {
   def isHoliday(day: Day): Boolean
@@ -38,5 +39,5 @@ case object SimpleGasCalendar extends Calendar {
 }
 
 class Calendars(map: Map[String, Calendar]) {
-  def calendar(name: String) = map.get(name)
+  def calendar(name: String) = map.get(name).toRight(GeneralEvcelFail(s"Calendar $name unknown"))
 }

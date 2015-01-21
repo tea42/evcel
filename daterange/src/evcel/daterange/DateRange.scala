@@ -34,6 +34,12 @@ trait DateRange {
       this
     }
   }
+
+  def isDay = firstDay == lastDay
+  def asDay = {
+    require(isDay, s"$this is not a Day")
+    firstDay
+  }
 }
 
 object DateRange{

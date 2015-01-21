@@ -14,7 +14,7 @@ class FXMarketTest extends FunSuite with ShouldMatchers {
 
   def hols(holidays: Map[String, Set[Day]]) = new Calendars(Map.empty) {
     override def calendar(name: String) = {
-      Some(new SimpleCalendar(Holidays(holidays(name))))
+      Right(new SimpleCalendar(Holidays(holidays(name))))
     }
   }
 

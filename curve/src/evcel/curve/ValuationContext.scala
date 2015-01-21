@@ -6,82 +6,88 @@ import evcel.curve.environment._
 import evcel.daterange.{DateRange, Day, Month}
 import evcel.quantity.{Qty, UOM}
 import evcel.quantity.Qty._
-import evcel.referencedata.market.FXPair
+import evcel.quantity.UOM._
+import evcel.referencedata.market.{FXPair, SpotMarket, FuturesMarket}
 import evcel.utils.EitherUtils._
 import evcel.referencedata.ReferenceData
+import evcel.utils.EvcelFail
+import scala.util.{Either, Right}
 
 case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, params: EnvironmentParams) {
-  def futuresPrice(market: String, month: Month) =
-    atomic.qty(FuturesPriceIdentifier(market, month)).getOrErrorLeft(_.s)
-  def spotPrice(market: String, day: Day) =
-    atomic.qty(SpotPriceIdentifier(market, day)).getOrErrorLeft(_.s)
+  def futuresPrice(market: FuturesMarket, month: Month) : Either[EvcelFail, Qty] =
+    atomic(FuturesPriceIdentifier(market, month))
+  def spotPrice(market: SpotMarket, day: Day) =
+    atomic(SpotPriceIdentifier(market, day))
   def discountRate(currency: UOM, day: Day) =
-    atomic.double(DiscountRateIdentifier(currency, day)).getOrErrorLeft(_.s)
+    atomic(DiscountRateIdentifier(currency, day))
 
   /**
    * spot fx discounted back to today
    */
-  def todayFX(pair: FXPair): Qty = {
+  def todayFX(pair: FXPair): Either[EvcelFail, Qty] = {
     val fxMarket = refData.fxMarket(pair)
     val spotDay = fxMarket.spotDate(refData, marketDay.day)
-    val spotRate = spotFX(pair)
-    val foreignDiscount = discountRate(pair.foreignCurrency, spotDay)
-    val domesticDiscount = discountRate(pair.domesticCurrency, spotDay)
-    spotRate * (foreignDiscount / domesticDiscount).toQty
+    for {
+      spotRate <- spotFX(pair)
+      foreignDiscount <- discountRate(pair.foreignCurrency, spotDay)
+      domesticDiscount <- discountRate(pair.domesticCurrency, spotDay)
+    } yield {
+      spotRate * (foreignDiscount / domesticDiscount)
+    }
   }
 
-  def spotFX(pair: FXPair): Qty = {
+  def spotFX(pair: FXPair): Either[EvcelFail, Qty] = {
     if(pair.domesticCurrency == baseCCY)
-      atomic.qty(new BaseFXRateKey(baseCCY, pair.foreignCurrency)).getOrErrorLeft(_.s)
+      atomic(new BaseFXRateKey(baseCCY, pair.foreignCurrency))
     else if(pair.foreignCurrency == baseCCY)
-      atomic.qty(new BaseFXRateKey(baseCCY, pair.domesticCurrency)).getOrErrorLeft(_.s).invert
-    else
-      spotFX(FXPair(baseCCY, pair.domesticCurrency)) * spotFX(FXPair(pair.foreignCurrency, baseCCY))
+      atomic(new BaseFXRateKey(baseCCY, pair.domesticCurrency)).map(_.invert)
+    else{
+      for {
+        baseToDomestic <- spotFX(FXPair(baseCCY, pair.domesticCurrency)) 
+        foreignToBase <- spotFX(FXPair(pair.foreignCurrency, baseCCY))
+      } yield {
+        baseToDomestic * foreignToBase
+      }
+    }
   }
   def forwardFX(pair: FXPair, day: Day) = {
-    val rd = discountRate(pair.domesticCurrency, day)
-    val rf = discountRate(pair.foreignCurrency, day)
-    todayFX(pair) * Qty(rf / rd, UOM.SCALAR)
+    for {
+      rd <- discountRate(pair.domesticCurrency, day)
+      rf <- discountRate(pair.foreignCurrency, day)
+      todaysFX <- todayFX(pair)
+    } yield {
+      todaysFX * rf / rd
+    }
   }
 
-  def futuresVol(market: String, month: Month, strike: Qty) =
-    atomic.qty(FuturesVolIdentifier(market, month, strike, futuresPrice(market, month))).getOrErrorLeft(_.s)
+  def futuresVol(market: FuturesMarket, month: Month, strike: Qty) =
+    futuresPrice(market, month).flatMap{
+      F => 
+        atomic(FuturesVolIdentifier(market, month, strike, F))
+  }
 
   def baseCCY = params.baseCCY
   def valuationCcy = params.valuationCcy
 
   def marketDay = atomic.marketDay
-  def futureExpiryDay(market: String, month: Month): Option[Day] =
+  def futureExpiryDay(market: String, month: Month): Either[EvcelFail, Day] =
     refData.futuresExpiryRules.expiryRule(market).flatMap(_.futureExpiryDay(month))
-  def futureExpiryDayOrThrow(market: String, month: Month): Day =
-    futureExpiryDay(market, month).getOrElse(sys.error(s"No expiry for $market, $month"))
-  def optionExpiryDay(market: String, month: Month): Option[Day] =
+  def optionExpiryDay(market: String, month: Month): Either[EvcelFail, Day] =
     refData.futuresExpiryRules.expiryRule(market).flatMap(_.optionExpiryDay(month))
 
-  def futuresCalendar(market: String): Option[Calendar] =
-    futuresMarket(market).flatMap(m => refData.calendars.calendar(m.calendarName))
-  def futuresCalendarOrThrow(market: String): Calendar =
-    futuresCalendar(market).getOrElse(sys.error(s"No calendar for $market"))
-  def spotCalendar(market: String): Option[Calendar] =
+  def spotCalendar(market: String): Either[EvcelFail, Calendar] =
     spotMarket(market).flatMap(m => refData.calendars.calendar(m.calendarName))
-  def spotCalendarOrThrow(market: String): Calendar =
-    spotCalendar(market).getOrElse(sys.error(s"No calendar for $market"))
-
   def futuresMarket(name: String) = refData.markets.futuresMarket(name)
-  def futuresMarketOrThrow(name: String) = refData.markets.futuresMarketOrThrow(name)
   def spotMarket(name: String) = refData.markets.spotMarket(name)
 
-  def marketConversions(name: String) =
-    futuresMarket(name).flatMap(_.conversions).orElse(spotMarket(name).flatMap(_.conversions))
-
-  def shiftFuturesPrice(market: String, month: Month, dP: Qty) = copy(atomic =
+  def shiftFuturesPrice(market: FuturesMarket, month: Month, dP: Qty) = copy(atomic =
     PerturbedAtomicEnvironment(
-    atomic, { case FuturesPriceIdentifier(`market`, `month`) => futuresPrice(market, month) + dP})
+    atomic, { case FuturesPriceIdentifier(`market`, `month`) => futuresPrice(market, month).map(_ + dP)})
   )
 
-  def shiftSpotPrice(market: String, period: DateRange, dP: Qty) = copy(atomic =
+  def shiftSpotPrice(market: SpotMarket, period: DateRange, dP: Qty) = copy(atomic =
     PerturbedAtomicEnvironment(
-    atomic, { case SpotPriceIdentifier(`market`, day) if period.contains(day) => spotPrice(market, day) + dP})
+    atomic, { case SpotPriceIdentifier(`market`, day) if period.contains(day) => spotPrice(market, day).map(_ + dP)})
   )
 
   def shiftPrice(pi: PriceIdentifier, dP: Qty) = pi match {
@@ -90,7 +96,7 @@ case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, p
     case o => sys.error("Invalid: " + o)
   }
 
-  private def price(pi: PriceIdentifier) = atomic.qty(pi).getOrErrorLeft(_.s)
+  private def price(pi: PriceIdentifier) = atomic(pi).getOrErrorLeft(_.s)
 
   def keyRecordingVC: (ValuationContext, KeyRecordingAtomicEnvironment) = {
     val record = KeyRecordingAtomicEnvironment(atomic, refData)
@@ -99,7 +105,13 @@ case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, p
 
   def forwardState(forwardDay: MarketDay) = copy(atomic = ForwardStateEnvironment(refData, atomic, forwardDay))
 
-  def undiscounted = copy(atomic = PerturbedAtomicEnvironment(atomic, { case DiscountRateIdentifier(_, _) => 1.0 }))
+  def undiscounted = {
+    val perturbed = PerturbedAtomicEnvironment(
+      atomic, 
+      { case DiscountRateIdentifier(_, _) => Right(Qty(1.0, SCALAR)) }
+    )
+    copy(atomic = perturbed)
+  }
 
   def withParam(f: EnvironmentParams => EnvironmentParams) = copy(params = f(params))
   def withValuationCCY(ccy: UOM) = withParam(_.withValuationCcy(ccy))

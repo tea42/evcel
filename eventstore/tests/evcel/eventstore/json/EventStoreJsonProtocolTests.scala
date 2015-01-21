@@ -2,20 +2,20 @@ package evcel.eventstore.json
 
 import evcel.curve.marketdata._
 import evcel.daterange.DateRangeSugar._
-import evcel.daterange.{SimpleDateRange, DateRange, Day, Month}
+import evcel.daterange._
 import evcel.eventstore.json.EventStoreJsonProtocol._
 import evcel.quantity.{BDQty, Percent, Qty}
 import evcel.quantity.UOM._
 import org.scalatest.{FunSpec, Matchers}
 import spray.json._
 import scala.language.reflectiveCalls
-import evcel.referencedata.FuturesExpiryRule
-import evcel.referencedata.market.{Currency, FuturesMarket}
+import evcel.referencedata.{FuturesExpiryRule, ReferenceDataTrait}
+import evcel.referencedata.market.{Currency, FuturesMarket, VolumeCalcRuleLabel}
 import evcel.referencedata.calendar.CalendarData
-import evcel.referencedata.ReferenceDataTrait
 import evcel.instrument._
 import evcel.quantity.Qty._
-import evcel.instrument.valuation.{NonCommonSwapPricingRule, CommonSwapPricingRule}
+import evcel.instrument.{NonCommonSwapPricingRule, CommonSwapPricingRule}
+import scala.collection.immutable.Nil
 
 class EventStoreJsonProtocolTests extends FunSpec with Matchers {
   describe("EventStoreProtocol must be able to round trip") {
@@ -112,7 +112,7 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
       expiries.toJson.prettyPrint.parseJson.convertTo[FuturesExpiryRule] should equal(expiries)
 
       info("Futures Markets")
-      val market = FuturesMarket("WTI", "CALENDAR", USD/MT)
+      val market = FuturesMarket("WTI", "CALENDAR", USD/MT, MT, VolumeCalcRuleLabel.Default)
       market.toJson.prettyPrint.parseJson.convertTo[FuturesMarket] should equal (market)
 
       info("Currency")
