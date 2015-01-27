@@ -1,12 +1,13 @@
 package evcel.valuation
 
+import evcel.curve.ValuationContext
 import evcel.referencedata.calendar.Calendar
 import evcel.daterange.{Day, Month}
 import scala.util.{Either, Left, Right}
 import evcel.utils.{EvcelFail, GeneralEvcelFail}
 import evcel.instrument.{Future, HedgeInstrument}
 import evcel.referencedata.{FuturesExpiryRule, ReferenceData}
-import evcel.referencedata.market.{FuturesMarket, VolumeCalcRule}
+import evcel.referencedata.market.{FuturesContractIndexLabel, FuturesMarket, VolumeCalcRule}
 import evcel.quantity.{Qty, QtyConversions}
 import evcel.utils.EitherUtils._
 
@@ -32,6 +33,21 @@ case class RichFuturesMarket(
       case Right(_) => Right(month)
       case Left(_) => Left(GeneralEvcelFail(s"Failed to find observedMonth for $name and $observationDay"))
     }
+  }
+
+  /**
+   * Returns the forward price for the month if it is still live on vc.marketDay,
+   * otherwise returns the fixing as observed on the last trading day of the month.
+   */
+  def price(vc: ValuationContext, month: Month): Either[EvcelFail, Qty] = {
+    index(vc.refData, month).forwardPriceOrLTDFixing(vc)
+  }
+
+  def index(refData: ReferenceData, month: Month): RichFuturesContractIndex = {
+    RichFuturesContractIndex(refData, FuturesContractIndexLabel(market.name, month), market.level).getOrErrorLeft(
+      // since we already have a rich market, going to rich index shouldn't fail
+      fail => sys.error(s"Couldn't create RichIndex from ${this.market}, $month")
+    )
   }
 
   def optionExpiryDay(month : Month) : Either[EvcelFail, Day] = expiryRule.optionExpiryDay(month)

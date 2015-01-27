@@ -1,6 +1,8 @@
 package evcel.valuation
 
 import evcel.daterange._
+import evcel.referencedata.Level
+import evcel.referencedata.market.{FuturesFrontPeriodIndexLabel, IndexLabel}
 import evcel.valuation.Valuer._
 import evcel.quantity.Qty
 import evcel.quantity.Qty._
@@ -50,8 +52,8 @@ class SwapPositionTest extends ValuationTest {
     val undiscVC = vc.undiscounted
     val mkt = RichFuturesMarket(vc.refData, wti).R
     val ltd = mkt.lastTradingDay(oct).R
-    val index = FuturesFrontPeriodIndex(wti, nearby = 1, rollEarlyDays = 0)
-    val richIndex = RichIndex(vc.refData, index).R
+    val index = FuturesFrontPeriodIndexLabel(wti, nearby = 1, rollEarlyDays = 0)
+    val richIndex = RichIndex(vc.refData, index, Level.Close).R
     val settDay = mkt.calendar.addBusinessDays(ltd, 5)
     val positions = swap.positions(undiscVC).R
     positions shouldEqual Map(richIndex.unitHedge(ltd) -> Right(swap.quotedVolume.doubleValue))
@@ -79,7 +81,7 @@ class SwapPositionTest extends ValuationTest {
   test("swap on published index") {
     val vc = createVC()
     var swap = createSingSwap()
-    val index = RichIndex(vc.refData, swap.index).R
+    val index = RichIndex(vc.refData, swap.index, Level.Close).R
     val observationDays = index.observationDays(swap.averagingPeriod)
     swap = createSingSwap(volume = Qty((observationDays.size * 13).toString, MT))
     val positions = swap.positions(vc).R
@@ -108,7 +110,7 @@ class SwapPositionTest extends ValuationTest {
   test("swap on futures front period index") {
     val vc = createVC()
     var swap = createSwap()
-    val index = RichIndex(vc.refData, swap.index).R
+    val index = RichIndex(vc.refData, swap.index, Level.Close).R
     val observationDays = index.observationDays(swap.averagingPeriod)
     val V = Qty((observationDays.size * 13).toString, BBL)
     swap = createSwap(volume = V)
@@ -151,7 +153,7 @@ class SwapPositionTest extends ValuationTest {
       SimpleDateRange(Day(2014, 10, 3), Day(2014, 10, 6)), oct)
 
     val market = RichFuturesMarket(vc.refData, nbp).R
-    val index = RichIndex(vc.refData, Index.parse(nbp1st)).R
+    val index = RichIndex(vc.refData, IndexLabel.parse(nbp1st), Level.Close).R
     for(period <- periods) {
       val swap = createSwapNBP(period = period, volume = Qty(123, THM/DAY))
 
@@ -184,7 +186,7 @@ class SwapPositionTest extends ValuationTest {
 
   test("nbp swap - thm/day - daily tenor") {
     val vc = createVC().withParam(_.withTenor(Some(Day)))
-    val index = RichIndex(vc.refData, Index.parse(nbp1st)).R
+    val index = RichIndex(vc.refData, IndexLabel.parse(nbp1st), Level.Close).R
 
     val period = SimpleDateRange(Day(2014, 10, 3), Day(2014, 10, 6))  //Friday -> Monday
     val observationDays = period.days
@@ -206,7 +208,7 @@ class SwapPositionTest extends ValuationTest {
   test("swap on spread index") {
     val valContext = createVC()
     var singSwap = createSingSwap()
-    val index = RichIndex(valContext.refData, singSwap.index).R
+    val index = RichIndex(valContext.refData, singSwap.index, Level.Close).R
     val observationDays = index.observationDays(singSwap.averagingPeriod)
     singSwap = createSingSwap(volume = Qty((observationDays.size * 13).toString, MT))
     val wtiSwap = createSwap(volume = -singSwap.volume.in(BBL, index.marketConversions).R)

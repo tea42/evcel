@@ -4,6 +4,15 @@ import java.lang.reflect.Method
 
 import scala.util.control.NonFatal
 
+/**
+ * Extend to give an Object an Enumerable interface for all the member variables of type `typ`
+ *
+ * For example the UOM object could extend with type=classOf[UOM]. Then all the vals of type
+ * UOM in the object would be accessible through this interface.
+ *
+ * The interface provides a way to list all the members of the object of type `typ`. Also gives
+ * a method to create from strings.
+ */
 class Enumerate[T](typ: Class[T], names: T => Seq[String]) {
   private lazy val fieldsAndValues: Seq[(String, T)] = try {
     def isFieldOfCorrectType(method: Method) = {

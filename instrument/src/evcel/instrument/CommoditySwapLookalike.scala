@@ -1,11 +1,12 @@
 package evcel.instrument
 
-import evcel.referencedata.ReferenceData
+import evcel.referencedata.{Level, ReferenceData}
 import evcel.daterange.Month
 import evcel.quantity.BDQty
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 import evcel.daterange.DateRangeSugar._
+import evcel.referencedata.market.FuturesFrontPeriodIndexLabel
 import scala.language.reflectiveCalls
 import scala.util.Either
 import evcel.utils.EvcelFail
@@ -18,7 +19,7 @@ import evcel.utils.EitherUtils._
  *  CommoditySwap("nymex wti 1st month", averagingPeriod = lastTradingDay(Feb))
  */
 case class CommoditySwapLookalike(futuresMarket: String, month: Month, strike: BDQty, quotedVolume: BDQty,
-                                  bizDaysToSettlement: Option[Int] = None)
+                                  bizDaysToSettlement: Option[Int] = None, level: Level = Level.Close)
   extends SingleInstrumentTradeable {
 
   def tradeableType = CommoditySwapLookalike
@@ -28,7 +29,7 @@ case class CommoditySwapLookalike(futuresMarket: String, month: Month, strike: B
       expiryRule <- refData.futuresExpiryRule(futuresMarket)
       ltd <- expiryRule.futureExpiryDay(month)
     } yield {
-      val ndx = new FuturesFrontPeriodIndex(futuresMarket, 1, 0)
+      val ndx = new FuturesFrontPeriodIndexLabel(futuresMarket, 1, 0)
       new CommoditySwap(ndx, ltd, strike, quotedVolume, bizDaysToSettlement = bizDaysToSettlement)
     }
 

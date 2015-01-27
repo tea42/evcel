@@ -162,7 +162,7 @@ abstract class EventStore[K, V](topic : String, kafkaPort : Int){
 
     val maybeValue = Option(history.get(key)).flatMap{
       treeMap => 
-        Option(treeMap.headMap(offset, true).lastEntry).map(_.getValue)
+        Option(treeMap.headMap(offset, true).lastEntry).map(_.getValue) // inclusive = true
     }
     maybeValue.toRight(left = EventStore.NotFound(topic, key, offset))
   }

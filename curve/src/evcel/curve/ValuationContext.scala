@@ -1,16 +1,16 @@
 package evcel.curve
 
-import evcel.referencedata.calendar.Calendar
 import evcel.curve.curves._
 import evcel.curve.environment._
 import evcel.daterange.{DateRange, Day, Month}
-import evcel.quantity.{Qty, UOM}
-import evcel.quantity.Qty._
 import evcel.quantity.UOM._
-import evcel.referencedata.market.{FXPair, SpotMarket, FuturesMarket}
-import evcel.utils.EitherUtils._
+import evcel.quantity.{Qty, UOM}
 import evcel.referencedata.ReferenceData
+import evcel.referencedata.calendar.Calendar
+import evcel.referencedata.market._
+import evcel.utils.EitherUtils._
 import evcel.utils.EvcelFail
+
 import scala.util.{Either, Right}
 
 case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, params: EnvironmentParams) {
@@ -20,6 +20,13 @@ case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, p
     atomic(SpotPriceIdentifier(market, day))
   def discountRate(currency: UOM, day: Day) =
     atomic(DiscountRateIdentifier(currency, day))
+  def fixing(index: Index, observationDay: Day): Either[EvcelFail, Qty] = {
+      index.observable(refData, observationDay).flatMap(
+        ndx => atomic(PriceFixingIdentifier(ndx, observationDay))
+      )
+  }
+  def fixing(spotMarket: SpotMarket, observationDay: Day): Either[EvcelFail, Qty] =
+    fixing(SpotIndex(spotMarket), observationDay)
 
   /**
    * spot fx discounted back to today

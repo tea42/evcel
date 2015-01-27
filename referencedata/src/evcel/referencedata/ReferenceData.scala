@@ -14,6 +14,7 @@ object ReferenceDataTrait{
   val CALENDAR = "Calendar"
   val FUTURES_EXPIRY_RULE = "FuturesExpiryRule"
   val FUTURES_MARKET = "FuturesMarket"
+  val IndexLabel = "IndexLabel"
   val CURRENCY = "Currency"
 }
 

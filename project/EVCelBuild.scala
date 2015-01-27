@@ -48,7 +48,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  )
+  ).dependsOn(utils)
 
   lazy val quantity = module("quantity").settings(
     libraryDependencies ++= Seq(
@@ -104,15 +104,17 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(daterange, quantity)
+  ).dependsOn(daterange, quantity, utils % "test->test")
 
   lazy val curve = module("curve").settings(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.0" % "test"
     ),
     scalaSource in Compile := baseDirectory.value / "src",
-    scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(calendar, utils, quantity %  "compile->compile;test->test", daterange, referencedata % "compile->compile;test->test", utils % "test->test")
+    scalaSource in Test := baseDirectory.value / "tests",
+    resourceDirectory in Test := baseDirectory.value / "test-resources"
+  ).dependsOn(calendar, utils, quantity %  "compile->compile;test->test",
+      daterange, referencedata % "compile->compile;test->test", utils % "test->test")
 
   lazy val eventstore = module("eventstore").settings(
     libraryDependencies ++= Seq(

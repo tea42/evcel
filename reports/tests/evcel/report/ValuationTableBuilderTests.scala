@@ -1,5 +1,6 @@
 package evcel.report
 
+import evcel.referencedata.market.IndexLabel
 import org.scalatest.{FunSpec, Matchers}
 import evcel.daterange.DateRangeSugar._
 import evcel.curve.environment.MarketDay._
@@ -16,7 +17,7 @@ import evcel.daterange._
 import evcel.instrument.trade.Trade
 import evcel.valuation.Valuer._
 import evcel.pivot.{PivotField, PivotTable, PivotRow}
-import evcel.referencedata.TestFuturesExpiryRules
+import evcel.referencedata.{Level, TestFuturesExpiryRules}
 import evcel.curve.environment.{MarketDay, TimeOfDay}
 import evcel.maths.models.BlackScholes
 import evcel.maths.{Call, EuropeanOption}
@@ -30,12 +31,12 @@ class ValuationTableBuilderTests extends FunSpec with MarketDataTest with Matche
   val market = "Nymex WTI"
   val F = Qty("100", USD / BBL)
   val K = Qty("101", USD / BBL)
+  val marketDay = (1 / Jun / 2014).endOfDay
   val valuationContext = UnitTestingEnvironment.fromMarketData(
     marketDay,
     market -> futuresPrices(Nov / 2014 -> F, Dec / 2014 -> F)
   )
-  val index = Index.parse("Nymex WTI nearby 1")
-  val marketDay = (1 / Jun / 2014).endOfDay
+  val index = IndexLabel.parse("Nymex WTI nearby 1")
   val liveSwap = new CommoditySwap(
     index, Oct / 2014, K, Qty("123", BBL)
   )
@@ -85,7 +86,7 @@ class ValuationTableBuilderTests extends FunSpec with MarketDataTest with Matche
       val table = buildTable(liveSwap, vc = vc)
       val rows = table.pivotRows
       rows.forall(singleValue[String](_, RiskMarketField) === index)
-      val richIndex = RichIndex(vc.refData, index).R
+      val richIndex = RichIndex(vc.refData, index, Level.Close).R
       rows.map(singleValue(_, RiskPeriodField).asInstanceOf[DateRangePeriodLabel].dr).toSet should 
         equal (richIndex.observationDays(liveSwap.averagingPeriod).toSet)
       val positions : Iterable[Qty] = rows.map{
@@ -170,7 +171,7 @@ class ValuationTableBuilderTests extends FunSpec with MarketDataTest with Matche
         marketDay, 
         market -> futuresPrices(nov -> Fnov, dec -> Fdec)
       )
-      val index = Index.parse("Nymex WTI nearby 1")
+      val index = IndexLabel.parse("Nymex WTI nearby 1")
       val K = Qty("91", USD / BBL)
       val swap = new CommoditySwap(
         index, oct, K, Qty("1", BBL)

@@ -1,12 +1,13 @@
 package evcel.valuation
 
+import evcel.curve.environment.MarketDay
 import evcel.referencedata.calendar.Calendar
 import evcel.daterange.{DateRange, Day, Month}
 import scala.util.{Either, Right}
 import evcel.utils.{EitherUtils, EvcelFail}
 import evcel.quantity.{UOM, Qty, QtyConversions}
-import evcel.referencedata.ReferenceData
-import evcel.referencedata.market.VolumeCalcRule
+import evcel.referencedata.{Level, ReferenceData}
+import evcel.referencedata.market._
 import evcel.curve.ValuationContext
 import evcel.curve.environment.MarketDay._
 import evcel.utils.EitherUtils._
@@ -30,9 +31,16 @@ trait RichIndex{
     }
   }
 
+  /**
+   * hasFixed is defined here so we that can override for each index as MarketDay becomes more detailed
+   */
+  def hasFixed(fixingDay: Day, marketDay: MarketDay) = {
+    (marketDay.day == fixingDay && marketDay.timeOfDay.fixingsShouldExist) || marketDay.day > fixingDay
+  }
+
   def unitHedge(averagingPeriod : DateRange) = {
     val swap = CommoditySwap(
-      index, averagingPeriod, 
+      index.label, averagingPeriod,
       Qty(0, priceUOM),
       Qty(1, quotedVolumeUOM), 
       // TODO - should default biz days be reference data?
@@ -59,63 +67,106 @@ abstract class RichFuturesBasedIndex extends RichIndex{
 object RichFuturesBasedIndex{
   def apply(refData : ReferenceData, index : Index) : Either[EvcelFail, RichFuturesBasedIndex] = {
     index match {
-      case FuturesFrontPeriodIndex(marketName, nearby, rollEarlyDays) => 
-        for {market <- RichFuturesMarket(refData, marketName)}
+      case ndx:FuturesFrontPeriodIndex =>
+        for {market <- RichFuturesMarket(refData, ndx.market.name)}
           yield
-            RichFuturesFrontPeriodIndex(market, nearby, rollEarlyDays)
+            RichFuturesFrontPeriodIndex(ndx, market, ndx.label.nearby, ndx.label.rollEarlyDays)
 
-      case FuturesContractIndex(marketLabel, month) => 
-        for {market <- RichFuturesMarket(refData, marketLabel)}
+      case ndx@FuturesContractIndex(indexLabel, market, level) =>
+        for {market <- RichFuturesMarket(refData, market.name)}
           yield
-            RichFuturesContractIndex(market, month)
+            RichFuturesContractIndex(ndx, market, indexLabel.month)
         
     }
   }
+
+  def apply(refData : ReferenceData, label : IndexLabel, level: Level) : Either[EvcelFail, RichFuturesBasedIndex] = {
+    Index(refData, label, level).flatMap(i => apply(refData, i))
+  }
+
 }
 
-case class RichFuturesFrontPeriodIndex(market : RichFuturesMarket, nearby : Int, rollEarlyDays : Int) 
+case class RichFuturesFrontPeriodIndex(index: FuturesFrontPeriodIndex,
+                                       market : RichFuturesMarket, nearby : Int, rollEarlyDays : Int)
   extends RichFuturesBasedIndex
 {
   def observedMonth(observationDay : Day) : Either[EvcelFail, Month] = {
-    
     market.frontMonth(market.calendar.addBusinessDays(observationDay, rollEarlyDays)).map(
       _ + (nearby - 1)
     )
   }
-  val index = FuturesFrontPeriodIndex(market.name, nearby, rollEarlyDays)
+
+  def lastTradingDay(month: Month) = {
+    market.lastTradingDay(month - (nearby - 1)).map(ltd =>
+      market.calendar.addBusinessDays(ltd, -rollEarlyDays)
+    )
+  }
+
   def price(vc : ValuationContext, observationDay : Day) : Either[EvcelFail, Qty] = {
-    observedMonth(observationDay).flatMap{
-      month => 
+    observedMonth(observationDay).flatMap(month =>
+      lastTradingDay(month).flatMap(ltd =>
+        if (hasFixed(ltd, vc.marketDay))
+          vc.fixing(index, observationDay)
+        else
+          vc.futuresPrice(market.market, month)
+      )
+    )
+  }
+}
+
+case class RichFuturesContractIndex(index: FuturesContractIndex,
+                                    market : RichFuturesMarket, month : Month) extends RichFuturesBasedIndex{
+  def observedMonth(observationDay : Day) : Either[EvcelFail, Month] = Right(month)
+
+  def price(vc : ValuationContext, observationDay : Day) : Either[EvcelFail, Qty] = {
+    market.lastTradingDay(month).flatMap { ltd =>
+      if (hasFixed(ltd, vc.marketDay)) {
+        vc.fixing(index, observationDay)
+      } else {
         vc.futuresPrice(market.market, month)
+      }
+    }
+  }
+
+  def forwardPriceOrLTDFixing(vc: ValuationContext): Either[EvcelFail, Qty] = {
+    market.lastTradingDay(month).flatMap { ltd =>
+      if (hasFixed(ltd, vc.marketDay)) {
+        vc.fixing(index, ltd)
+      } else {
+        vc.futuresPrice(market.market, month)
+      }
     }
   }
 }
 
-case class RichFuturesContractIndex(market : RichFuturesMarket, month : Month) extends RichFuturesBasedIndex{
-  def observedMonth(observationDay : Day) : Either[EvcelFail, Month] = Right(month)
-  val index = FuturesContractIndex(market.name, month)
-  // TODO - obs days should take account of last trading day
-  def price(vc : ValuationContext, observationDay : Day) : Either[EvcelFail, Qty] = {
-    vc.futuresPrice(market.market, month)
+object RichFuturesContractIndex {
+  def apply(refData : ReferenceData, label: FuturesContractIndexLabel, level: Level)
+        : Either[EvcelFail, RichFuturesContractIndex] = {
+    for(fm <- refData.futuresMarket(label.marketName);
+        fci = FuturesContractIndex(label, fm, level);
+        rfm <- RichFuturesMarket(refData, fm.name)
+    ) yield RichFuturesContractIndex(fci, rfm, label.month)
   }
 }
 
 object RichIndex{
   def apply(refData : ReferenceData, index : Index) : Either[EvcelFail, RichIndex] = {
     index match {
-      case SpotMarketIndex(marketLabel) => 
-        for (market <- RichSpotMarket(refData, marketLabel))
+      case s@SpotIndex(spotMarket) =>
+        for (market <- RichSpotMarket(refData, spotMarket.name))
           yield
-            RichSpotMarketIndex(market)
+            RichSpotMarketIndex(s, market)
       case _ => 
         RichFuturesBasedIndex(refData, index)
     }
   }
 
+  def apply(refData : ReferenceData, label : IndexLabel, level: Level) : Either[EvcelFail, RichIndex] = {
+    Index(refData, label, level).flatMap(i => apply(refData, i))
+  }
 }
 
-case class RichSpotMarketIndex(market : RichSpotMarket) extends RichIndex{
-  val index = SpotMarketIndex(market.name)
+case class RichSpotMarketIndex(index: SpotIndex, market : RichSpotMarket) extends RichIndex{
   def priceUOM = market.priceUOM
   def quotedVolumeUOM = market.quotedVolumeUOM
   def marketConversions = market.conversions
@@ -127,8 +178,10 @@ case class RichSpotMarketIndex(market : RichSpotMarket) extends RichIndex{
   }
 
   def price(vc : ValuationContext, observationDay : Day) = {
-    // TODO - vc shouldn't need observation day here
-    vc.spotPrice(market.market, observationDay)
+    if(hasFixed(observationDay, vc.marketDay))
+      vc.fixing(index, observationDay)
+    else
+      vc.spotPrice(market.market, observationDay)
   }
 }
 
@@ -168,8 +221,10 @@ case class RichIndexSpread(index1 : RichIndex, index2 : RichIndex){
 object RichIndexSpread{
   def apply(refData : ReferenceData, spread : IndexSpread) : Either[EvcelFail, RichIndexSpread] = {
     for {
-      richIndex1 <- RichIndex(refData, spread.index1)
-      richIndex2 <- RichIndex(refData, spread.index2)
+      index1 <- Index(refData, spread.spread.index1, spread.level1)
+      index2 <- Index(refData, spread.spread.index2, spread.level2)
+      richIndex1 <- RichIndex(refData, index1)
+      richIndex2 <- RichIndex(refData, index2)
     }
       yield
         RichIndexSpread(richIndex1, richIndex2)
