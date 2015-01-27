@@ -1,7 +1,6 @@
 import sbt._
 import Keys._
 
-import scoverage.ScoverageSbtPlugin._
 import scala.util.Properties
 
 object EVCelBuild extends Build {
@@ -12,7 +11,8 @@ object EVCelBuild extends Build {
   val buildScalaVersion = "2.10.4"
   val buildScalaMajorVersion = "2.10"
 
-  lazy val buildSettings = Defaults.defaultSettings ++ Seq(
+  lazy val buildSettings = Defaults.coreDefaultSettings ++ Seq(
+    updateOptions := updateOptions.value.withCachedResolution(cachedResoluton = true),
     organization := buildOrganisation,
     version := buildVersion,
     scalaVersion := buildScalaVersion,
@@ -173,6 +173,7 @@ object EVCelBuild extends Build {
       id = name,
       base = file(name),
       settings = buildSettings
-    ).settings(instrumentSettings: _*)
+        ++ addCommandAlias("gen-idea-with-sources", ";update-classifiers;update-sbt-classifiers;gen-idea sbt-classifiers")
+    )
   }
 }
