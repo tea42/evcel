@@ -1,11 +1,12 @@
-package evcel.valuation
+package evcel.curve
 
-import evcel.referencedata.calendar.Calendar
-import scala.util.Either
-import evcel.utils.EvcelFail
-import evcel.utils.EitherUtils._
 import evcel.referencedata.ReferenceData
+import evcel.referencedata.calendar.Calendar
 import evcel.referencedata.market.{SpotMarket, VolumeCalcRule}
+import evcel.utils.EitherUtils._
+import evcel.utils.EvcelFail
+
+import scala.util.Either
 
 case class RichSpotMarket(
   market : SpotMarket,

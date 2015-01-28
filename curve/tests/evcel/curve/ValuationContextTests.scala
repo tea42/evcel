@@ -4,10 +4,11 @@ package evcel.curve
 import evcel.curve.environment.MarketDay._
 import evcel.curve.marketdata._
 import evcel.daterange.DateRangeSugar._
+import evcel.daterange.{Month, Day}
 import evcel.quantity.UOM._
 import evcel.quantity.{Percent, Qty}
 import evcel.quantity.Qty._
-import evcel.referencedata.market.FXPair
+import evcel.referencedata.market.{TestMarkets, FXPair}
 import org.scalatest.{FunSuite, FunSpecLike, ShouldMatchers}
 import evcel.quantity.utils.QuantityTestUtils._
 import scala.language.reflectiveCalls
@@ -80,6 +81,30 @@ class ValuationContextTests extends FunSuite with MarketDataTest with ShouldMatc
     val forwardSpotDate = vc.refData.fxMarket(pair).spotDate(vc.refData, forwardDate)
     vc.forwardState(forwardDate.endOfDay).spotFX(pair) shouldEqual
       vc.forwardFX(pair, forwardSpotDate)
+  }
+
+  test("fixings") {
+    val wti = TestMarkets.NYMEX_WTI
+    val wti1st = TestMarkets.NYMEX_WTI_1st_MONTH
+    val marketDay = Day(2014, 12, 31).endOfDay
+    val vc = TestMarketData.valuationContext(md = marketDay)
+    vc.fixing(wti1st, Day(2012, 12, 2)) should be('left)
+    vc.fixing(wti1st, Day(2016, 12, 2)) should be('left)
+    vc.fixing(wti1st, Day(2014, 12, 2)) shouldEqual Right(Qty(66.88, USD/BBL))
+    vc.fixing(wti1st, marketDay.day) shouldEqual Right(Qty(53.27, USD/BBL))
+
+    // forwardState shouldn't change things as the day is still in the past
+    vc.forwardState(marketDay.nextDay).fixing(wti1st, marketDay.day) shouldEqual Right(Qty(53.27, USD / BBL))
+
+    // if we move past the original environment market day then we're going to have to proxy the fixing
+    // with forward prices. for wti on the 1st of Jan that means Feb forward price.
+    vc.forwardState(marketDay.nextDay).fixing(wti1st, marketDay.nextDay.day) shouldEqual
+      vc.futuresPrice(wti, Month(2015, 2))
+
+    intercept[RuntimeException] {
+      vc.forwardState(marketDay.nextDay).fixing(wti1st, marketDay.nextDay.nextDay.day)
+    }.getMessage shouldEqual
+      "Looking for a fixing for a day that hasn't fixed yet: 2015-01-02/MarketDay(2015-01-01,TimeOfDay(false,true))"
   }
 
 }

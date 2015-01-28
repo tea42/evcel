@@ -1,6 +1,6 @@
 package evcel.valuation
 
-import evcel.curve.UnitTestingEnvironment
+import evcel.curve.{RichFuturesMarket, UnitTestingEnvironment}
 import evcel.curve.curves.{FuturesVolIdentifier, DiscountRateIdentifier, FuturesPriceIdentifier}
 import evcel.daterange.DateRangeSugar.{Oct, Nov}
 import evcel.curve.environment.MarketDay._

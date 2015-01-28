@@ -4,7 +4,7 @@ import evcel.referencedata.Level
 import evcel.referencedata.market.{IndexLabelSpread, FuturesDerivedIndexLabel}
 import evcel.utils.{EvcelFail, EitherUtils}
 import evcel.instrument._
-import evcel.curve.{ValuationContext, EnvironmentParams}
+import evcel.curve._
 import evcel.daterange.{DateRange, Day, Month}
 import evcel.utils.EitherUtils._
 import scala.util.{Either, Left, Right}

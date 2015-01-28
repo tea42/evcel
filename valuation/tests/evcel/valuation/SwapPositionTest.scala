@@ -1,5 +1,6 @@
 package evcel.valuation
 
+import evcel.curve.{RichFuturesMarket, RichIndex}
 import evcel.daterange._
 import evcel.referencedata.Level
 import evcel.referencedata.market.{FuturesFrontPeriodIndexLabel, IndexLabel}

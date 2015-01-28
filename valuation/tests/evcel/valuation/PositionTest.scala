@@ -1,5 +1,6 @@
 package evcel.valuation
 
+import evcel.curve.RichIndex
 import evcel.quantity.Qty
 import evcel.quantity.UOM._
 

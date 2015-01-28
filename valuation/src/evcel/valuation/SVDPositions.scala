@@ -1,6 +1,6 @@
 package evcel.valuation
 
-import evcel.curve.ValuationContext
+import evcel.curve.{RichIndex, ValuationContext}
 import evcel.curve.environment.{MarketDay, PriceIdentifier}
 import evcel.valuation.Valuer._
 import evcel.instrument._

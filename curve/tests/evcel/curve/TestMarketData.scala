@@ -12,13 +12,12 @@ import evcel.utils.EitherTestPimps
 import scala.io.Source
 
 object TestMarketData extends EitherTestPimps {
-
-  lazy val fixingsSource = Source.fromURL(getClass.getResource("/evcel/curve/fixings.csv"))
-  lazy val forwardSource = Source.fromURL(getClass.getResource("/evcel/curve/forwardprices.csv"))
+  lazy val fixingsSource = Source.fromURL(getClass.getResource("/evcel/curve/fixings.csv")).getLines().toList
+  lazy val forwardSource = Source.fromURL(getClass.getResource("/evcel/curve/forwardprices.csv")).getLines().toList
 
   def valuationContext(refData: ReferenceData = UnitTestingEnvironment.testRefData,
-                       md:MarketDay = MarketDay(Day(2015, 1, 15), TimeOfDay.end)) = {
-    val fixingsData = fixingsSource.getLines().map{
+                       md:MarketDay = MarketDay(Day(2014, 12, 31), TimeOfDay.end)) = {
+    val fixingsData = fixingsSource.map{
       line =>
         val indexStr :: levelStr :: dayStr :: price :: Nil = line.split('\t').toList
 
@@ -26,11 +25,11 @@ object TestMarketData extends EitherTestPimps {
         val level = Level.fromNameOrThrow(levelStr)
         val ndx = Index.apply(refData, label, level).right.getOrElse(sys.error(s"index: $label/$level"))
         val day = Day.fromISO(dayStr).getOrElse(sys.error(s"day: $dayStr"))
-        val fci = ndx.observable(refData, day).R
+        val fci = RichIndex(refData, ndx).R.observable(refData, day).R
         PriceFixingIdentifier(fci, day) -> PriceFixingData(Qty(price, ndx.priceUOM))
     }.toList
 
-    val forwardPriceData = forwardSource.getLines().map{
+    val forwardPriceData = forwardSource.map{
       line =>
         val market :: month :: price :: Nil = line.split('\t').toList
         val mkt = refData.futuresMarket(market).right.getOrElse(sys.error(s"market: $market"))

@@ -1,5 +1,6 @@
 package evcel.valuation
 
+import evcel.curve.{RichSpotMarket, RichFuturesMarket, RichIndexSpread, RichIndex}
 import evcel.curve.curves.{DiscountRateIdentifier, FuturesPriceIdentifier, SpotPriceIdentifier}
 import evcel.instrument.{CommoditySwapLookalike, CommoditySwap}
 import evcel.quantity.Qty

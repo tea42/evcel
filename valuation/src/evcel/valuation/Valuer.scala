@@ -1,6 +1,6 @@
 package evcel.valuation
 
-import evcel.curve.ValuationContext
+import evcel.curve.{RichFuturesMarket, RichIndexSpread, RichIndex, ValuationContext}
 import evcel.curve.environment.{PriceIdentifier, AtomicDatumIdentifier}
 import evcel.instrument._
 import evcel.quantity.{Qty, BDQty, DblQty}

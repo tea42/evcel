@@ -1,11 +1,12 @@
-package evcel.referencedata.market
+package evcel.curve
 
 import evcel.daterange.{Day, Month}
 import evcel.referencedata.Level
+import evcel.referencedata.market.{FuturesContractIndex, FuturesContractIndexLabel, Index, TestMarkets}
 import evcel.utils.EitherTestPimps
 import org.scalatest.{FunSuite, ShouldMatchers}
 
-class IndexTest extends FunSuite with ShouldMatchers with EitherTestPimps{
+class RichIndexTest extends FunSuite with ShouldMatchers with EitherTestPimps{
 
    test("test FFPI to FCI") {
      val refData = TestMarkets.testRefData
@@ -25,9 +26,10 @@ class IndexTest extends FunSuite with ShouldMatchers with EitherTestPimps{
 
      def test(ndx: Index, observationDay: Day,
               observedMonth: Month, observedOnPrevDay: Month, observedOnNextDay: Month) = {
-       ndx.observable(refData, observationDay) shouldEqual Right(fci(observedMonth))
-       ndx.observable(refData, observationDay.previous) shouldEqual Right(fci(observedOnPrevDay))
-       ndx.observable(refData, observationDay.next) shouldEqual Right(fci(observedOnNextDay))
+       val richIndex = RichIndex(refData, ndx).R
+       richIndex.observable(refData, observationDay) shouldEqual Right(fci(observedMonth))
+       richIndex.observable(refData, observationDay.previous) shouldEqual Right(fci(observedOnPrevDay))
+       richIndex.observable(refData, observationDay.next) shouldEqual Right(fci(observedOnNextDay))
      }
 
      test(wti10, ltd, month, observedOnPrevDay = month, observedOnNextDay = month + 1)
