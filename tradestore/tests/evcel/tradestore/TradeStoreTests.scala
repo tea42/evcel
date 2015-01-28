@@ -50,7 +50,7 @@ class TradeStoreTests extends FunSpec with Matchers{
             tradeable = Future("WTI", Aug / 2014, Qty("100.0", USD/MT), Qty("10", MT)),
             meta = Map("Portfolio" -> "Book A")
           )
-          Await.result(tradeStore.write(trade), 2 seconds) should equal(Offset(1))
+          Await.result(tradeStore.write(trade), 6 seconds) should equal(Offset(1))
           tradeStore.read(Offset(1), trade.id) should equal (Right(trade))
       }
     }

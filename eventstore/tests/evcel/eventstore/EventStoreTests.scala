@@ -67,11 +67,11 @@ class EventStoreTests extends FunSpec with Matchers{
     it("Shouldn't store duplicates"){
       withEventStore{
         store => 
-          Await.result(store.write("key1", "value1"), 2 seconds) should equal(Offset(1))
-          Await.result(store.write("key2", "value2"), 2 seconds) should equal(Offset(2))
+          Await.result(store.write("key1", "value1"), 6 seconds) should equal(Offset(1))
+          Await.result(store.write("key2", "value2"), 6 seconds) should equal(Offset(2))
 
           // Write a duplicate - offset should not increase
-          Await.result(store.write("key1", "value1"), 2 seconds) should equal(Offset(2))
+          Await.result(store.write("key1", "value1"), 6 seconds) should equal(Offset(2))
           // latest version should also not change
           store.lastOffsetInHistory() should equal (Offset(2))
       }

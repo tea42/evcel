@@ -50,7 +50,7 @@ class MarketDataStoreTests extends FunSpec with MarketDataTest with Matchers wit
             ))
           ).zipWithIndex.foreach{
             case ((key, data), i) => 
-              Await.result(store.write(marketDay, key, data), 2 seconds) should equal(Offset(i + 1))
+              Await.result(store.write(marketDay, key, data), 6 seconds) should equal(Offset(i + 1))
               store.read(Offset(i + 1), marketDay, key) should equal (Right(data))
           }
       }
