@@ -67,11 +67,11 @@ class EventStoreTests extends FunSpec with Matchers{
     it("Shouldn't store duplicates"){
       withEventStore{
         store => 
-          Await.result(store.write("key1", "value1"), 2 seconds) should equal(Offset(1))
-          Await.result(store.write("key2", "value2"), 2 seconds) should equal(Offset(2))
+          Await.result(store.write("key1", "value1"), 6 seconds) should equal(Offset(1))
+          Await.result(store.write("key2", "value2"), 6 seconds) should equal(Offset(2))
 
           // Write a duplicate - offset should not increase
-          Await.result(store.write("key1", "value1"), 2 seconds) should equal(Offset(2))
+          Await.result(store.write("key1", "value1"), 6 seconds) should equal(Offset(2))
           // latest version should also not change
           store.lastOffsetInHistory() should equal (Offset(2))
       }
@@ -135,14 +135,15 @@ class EventStoreTests extends FunSpec with Matchers{
           }
         }
 
+        val testWaitTime = 5 seconds
         // Broken(0) will be unchanged as 2 * 0 = 0
-        val offset1 = Await.result(store.write("0", Broken(0)), 1 second)
+        val offset1 = Await.result(store.write("0", Broken(0)), testWaitTime)
         offset1 should equal (Offset(1))
 
 
         // Broken(1) will throw an error as the deserializer will return Broken(2)
         intercept[RuntimeException]{
-          Await.result(store.write("1", Broken(1)), 1 second)
+          Await.result(store.write("1", Broken(1)), testWaitTime)
         }
         store.shutdown()
     }
