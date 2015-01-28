@@ -135,14 +135,15 @@ class EventStoreTests extends FunSpec with Matchers{
           }
         }
 
+        val testWaitTime = 5 seconds
         // Broken(0) will be unchanged as 2 * 0 = 0
-        val offset1 = Await.result(store.write("0", Broken(0)), 1 second)
+        val offset1 = Await.result(store.write("0", Broken(0)), testWaitTime)
         offset1 should equal (Offset(1))
 
 
         // Broken(1) will throw an error as the deserializer will return Broken(2)
         intercept[RuntimeException]{
-          Await.result(store.write("1", Broken(1)), 1 second)
+          Await.result(store.write("1", Broken(1)), testWaitTime)
         }
         store.shutdown()
     }
