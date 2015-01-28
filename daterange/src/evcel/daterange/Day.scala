@@ -1,6 +1,8 @@
 package evcel.daterange
 import scala.language.implicitConversions
 
+import evcel.utils.ParseInt
+
 class Day private (@transient val year: Int, @transient val month: Int, @transient val dayNumber: Int)
   extends DateRange with Ordered[Day] {
 
@@ -102,6 +104,13 @@ object Day extends TenorType {
   def fromExcel(excelDay: Double) = {
     require(excelDay > 0.0, s"Excel represents days from 1.0, $excelDay is not a valid day.")
     Day(1899, 12, 30) + excelDay.toInt
+  }
+
+  val StringFormat = """([\d]{4})\-([\d]{2})\-([\d]{2})""".r
+
+  def fromISO(dayString: String) = dayString match {
+    case StringFormat(ParseInt(year), ParseInt(month), ParseInt(day)) => Some(Day(year, month, day))
+    case _ => None
   }
 
   /**

@@ -1,16 +1,16 @@
 package evcel.curve
 
-import evcel.referencedata.calendar.TestCalendars
-import evcel.referencedata.{TestFuturesExpiryRules, ReferenceData}
+import evcel.curve.curves.PriceFixingIdentifier
 import evcel.curve.environment._
 import evcel.curve.marketdata._
-import evcel.referencedata.market.{TestMarkets, FXPair, SpotMarket}
-import java.util.concurrent.ConcurrentHashMap
-import scala.collection.breakOut
-import evcel.quantity.{UOM, Qty}
+import evcel.daterange.Day
+import evcel.quantity.{Qty, UOM}
+import evcel.referencedata.calendar.TestCalendars
+import evcel.referencedata.market.TestMarkets
+import evcel.referencedata.{ReferenceData, TestFuturesExpiryRules}
+import evcel.utils.{EitherTestPimps, EvcelFail}
+
 import scala.util.{Either, Left, Right}
-import evcel.utils.{EvcelFail, EitherTestPimps}
-import evcel.daterange.{Day, Month}
 
 object UnitTestingEnvironment extends EitherTestPimps{
   def testRefData = ReferenceData(
@@ -38,27 +38,31 @@ object UnitTestingEnvironment extends EitherTestPimps{
   }
 
   def fromMarketData(
-    marketDay_ : MarketDay, 
+    marketDay_ : MarketDay,
     data : (AnyRef, MarketData)*
   ): ValuationContext = {
 
     val curves = {
-      var map = Map[MarketDataIdentifier, Either[AnyRef, Curve]]()
+      var map = Map[(Day, MarketDataIdentifier), Either[AnyRef, Curve]]()
       data.foreach{
         case (market : String, fp : FuturesPriceData) =>
-          map += (FuturesPricesIdentifier(market) -> fp.buildCurve(market, marketDay_))
+          map += (marketDay_.day, FuturesPricesIdentifier(market)) -> fp.buildCurve(market, marketDay_)
 
         case (market : String, fv : FuturesVolData) =>
-          map += (FuturesVolsIdentifier(market) -> fv.buildCurve(market, marketDay_, testRefData))
+          map += (marketDay_.day, FuturesVolsIdentifier(market)) -> fv.buildCurve(market, marketDay_, testRefData)
 
         case (ccy : UOM, zr : ZeroRateData) =>
-          map += (ZeroRatesIdentifier(ccy) -> zr.buildCurve(ccy, marketDay_))
+          map += (marketDay_.day, ZeroRatesIdentifier(ccy)) -> zr.buildCurve(ccy, marketDay_)
 
         case ((from: UOM, to: UOM), spot: SpotFXData) =>
-          map += (SpotFXIdentifier(from, to) -> spot.buildCurve(from, to))
+          map += (marketDay_.day, SpotFXIdentifier(from, to)) -> spot.buildCurve(from, to)
 
         case (market : String, sp : SpotPriceData) =>
-          map += (SpotPricesIdentifier(market) -> sp.buildCurve(market, marketDay_))
+          map += (marketDay_.day, SpotPricesIdentifier(market)) -> sp.buildCurve(market, marketDay_)
+
+        case (pfi@PriceFixingIdentifier(index, obDay), f: PriceFixingData) =>
+          val id = PriceFixingsIdentifier(index.label, index.level)
+          map += (obDay, id) -> f.buildCurve
 
         case other => throw new RuntimeException(s"Unexpected pair $other")
 
@@ -70,14 +74,17 @@ object UnitTestingEnvironment extends EitherTestPimps{
       new AtomicEnvironment{
         def marketDay = marketDay_
         def apply(point: AtomicDatumIdentifier): Either[EvcelFail, Qty]  = {
-          curves.get(point.curveIdentifier) match {
+          val key = point match {
+            case PriceFixingIdentifier(index, obDay) => (obDay, point.curveIdentifier)
+            case _ => (marketDay_.day, point.curveIdentifier)
+          }
+          curves.get(key) match {
             case Some(Right(curve)) => curve.apply(point.point)
-            case Some(Left(e)) => {
+            case Some(Left(e)) =>
               Left(GeneralAtomicEnvironmentFail(
                 s"Couldn't build curve for $point from supplied market data due to $e"))
-              }
-            case None =>
-              Left(GeneralAtomicEnvironmentFail(s"No market data provided for $point"))
+            case _ =>
+              Left(GeneralAtomicEnvironmentFail(s"No market data for $key"))
           }
         }
       },

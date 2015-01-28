@@ -20,7 +20,8 @@ case class FuturesMarket(
   // will need a volumeCalcRule
   quotedVolumeUOM : UOM, 
   volumeCalcRuleLabel : VolumeCalcRuleLabel,
-  conversions: QtyConversions = QtyConversions(Map.empty)
+  conversions: QtyConversions = QtyConversions(Map.empty),
+  level: Level = Level.Close
 ) 
   extends ReferenceDataTrait
 

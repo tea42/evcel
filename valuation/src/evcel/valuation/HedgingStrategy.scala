@@ -1,5 +1,7 @@
 package evcel.valuation
 
+import evcel.referencedata.Level
+import evcel.referencedata.market.{IndexLabelSpread, FuturesDerivedIndexLabel}
 import evcel.utils.{EvcelFail, EitherUtils}
 import evcel.instrument._
 import evcel.curve.{ValuationContext, EnvironmentParams}
@@ -19,12 +21,11 @@ trait HedgingStrategy{
     * for those. Non-common pricing rule will be exact, common won't necessarily be.
     */
   protected def hedgeSwapSpreadAsSingleSwaps(cs : CommoditySwapSpread) : Either[EvcelFail, Seq[HedgeInstrument]] = {
-    val CommoditySwapSpread(IndexSpread(index1, index2), averagingPeriod, _, _, _, _) = cs
     for {
-      richIndex1 <- RichIndex(vc.refData, index1)
-      hedges1 <- hedgingInstruments(richIndex1.unitHedge(averagingPeriod))
-      richIndex2 <- RichIndex(vc.refData, index2)
-      hedges2 <- hedgingInstruments(richIndex2.unitHedge(averagingPeriod))
+      richIndex1 <- RichIndex(vc.refData, cs.indexSpread.index1, cs.index1Level)
+      hedges1 <- hedgingInstruments(richIndex1.unitHedge(cs.averagingPeriod))
+      richIndex2 <- RichIndex(vc.refData, cs.indexSpread.index2, cs.index2Level)
+      hedges2 <- hedgingInstruments(richIndex2.unitHedge(cs.averagingPeriod))
     } yield
       hedges1 ++ hedges2
   }
@@ -35,7 +36,7 @@ trait HedgingStrategy{
 
   protected def hedgeSwapWithTenorAppropriateSwaps(cs : CommoditySwap) = {
     val averagingPeriod = cs.averagingPeriod
-    for (richIndex <- RichIndex(vc.refData, cs.index))
+    for (richIndex <- RichIndex(vc.refData, cs.index, cs.level))
       yield {
         vc.params.tenor match {
           case Some(Month) | Some(Day) => 
@@ -48,14 +49,15 @@ trait HedgingStrategy{
       }
   }
 
-  protected def hedgeSwapWithFutures(index : FuturesDerivedIndex, averagingPeriod : DateRange) = {
+  protected def hedgeSwapWithFutures(index : FuturesDerivedIndexLabel, averagingPeriod : DateRange) = {
     for {
-      richIndex <- RichFuturesBasedIndex(vc.refData, index)
+      futuresMarket <- vc.refData.futuresMarket(index.underlyingMarketName)
+      richIndex <- RichFuturesBasedIndex(vc.refData, index, futuresMarket.level)
       months <- EitherUtils.mapOrErrorLeft(
           richIndex.observationDays(averagingPeriod),
           {day : Day => richIndex.observedMonth(day)})
     } yield {
-      months.distinct.map(richIndex.market.unitHedge(_))
+      months.distinct.map(richIndex.market.unitHedge)
     }
   }
 }
@@ -78,7 +80,7 @@ case class EquivalentFuturesHedgingStrategy(vc : ValuationContext) extends Hedgi
       case fo : FuturesOption => 
         hedgeWithFuture(fo.market, fo.period)
 
-      case cs @ CommoditySwap(index : FuturesDerivedIndex, averagingPeriod, _, _, _) => 
+      case cs @ CommoditySwap(index : FuturesDerivedIndexLabel, averagingPeriod, _, _, _, _) =>
         hedgeSwapWithFutures(index, averagingPeriod)
 
       case cs : CommoditySwap =>

@@ -39,6 +39,13 @@ class DayTests extends FunSpec with Matchers {
       (25 / Sep / 14).toString should equal ("2014-09-25")
     }
 
+    it("should parse iso dates") {
+      val days = Seq(1 / Jan / 2000, 31 / Dec / 1999, 25 / Sep / 14)
+      days.foreach{
+        day => Day.fromISO(day.toString) shouldEqual Some(day)
+      }
+    }
+
     it("should support excel day representation") {
       Day.fromExcel(42429.00) shouldBe Day(2016, 2, 29)
       Day(2016, 2, 29).toExcel shouldBe 42429.00

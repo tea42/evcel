@@ -1,6 +1,6 @@
 package evcel.valuation
 
-import evcel.instrument.{Index, Instrument, IndexSpread}
+import evcel.instrument.Instrument
 import evcel.referencedata.ReferenceData
 import evcel.daterange.{Month, Day}
 import scala.language.implicitConversions

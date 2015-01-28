@@ -27,8 +27,8 @@ def module(name : String, upstream : Module*) : Module = {
   module_(name, upstream.toList, testUpstream = Nil)
 }
 
-val daterange = module("daterange")
-val utils = module("utils", daterange)
+val utils = module("utils")
+val daterange = module("daterange", utils)
 val maths = module("maths", daterange, utils)
 val quantity = module("quantity", maths, utils)
 val pivot = module("pivot", quantity, daterange)

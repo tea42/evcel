@@ -3,6 +3,8 @@ package evcel.valuation
 import evcel.curve.curves.{DiscountRateIdentifier, FuturesPriceIdentifier, SpotPriceIdentifier}
 import evcel.instrument.{CommoditySwapLookalike, CommoditySwap}
 import evcel.quantity.Qty
+import evcel.referencedata.Level
+import evcel.referencedata.market.IndexSpread
 import evcel.valuation.Valuer._
 import evcel.quantity.UOM._
 import evcel.quantity.Qty._
@@ -36,7 +38,7 @@ class SwapLikeValuerTest extends ValuationTest with EitherTestPimps{
     val V = Qty("1000", MT)
     val swap = new CommoditySwap(sing, oct, K, V, bizDaysToSettlement = Some(5))
     val vc = createVC()
-    val spotIndex = RichIndex(vc.refData, sing).R
+    val spotIndex = RichIndex(vc.refData, sing, Level.Close).R
     val spotMarket = RichSpotMarket(vc.refData, sing.indexName).R
     val settDay = spotIndex.calendar.addBusinessDays(oct.lastDay, 5)
     val obDays = spotIndex.observationDays(oct)
@@ -73,8 +75,10 @@ class SwapLikeValuerTest extends ValuationTest with EitherTestPimps{
 
   test("swap on spread index") {
     val vc = createVC()
-    val richIndex = RichIndexSpread(vc.refData, createSingSpreadSwap().indexSpread).R
-    val observationDays = createSingSpreadSwap().averagingPeriod.days.filter(richIndex.commonCalendar.isBusinessDay)
+    val singSpreadSwap = createSingSpreadSwap()
+    val ndx = IndexSpread(singSpreadSwap.indexSpread, singSpreadSwap.index1Level, singSpreadSwap.index2Level)
+    val richIndex = RichIndexSpread(vc.refData, ndx).R
+    val observationDays = singSpreadSwap.averagingPeriod.days.filter(richIndex.commonCalendar.isBusinessDay)
     val K = Qty("10", USD/MT)
     val singSwap = createSingSwap(volume = Qty((observationDays.size * 13).toString, MT), strike = K)
     val mkt = RichFuturesMarket(vc.refData, wti).R

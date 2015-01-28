@@ -4,7 +4,7 @@ import evcel.curve.ValuationContext
 import evcel.curve.environment.{PriceIdentifier, AtomicDatumIdentifier}
 import evcel.instrument._
 import evcel.quantity.{Qty, BDQty, DblQty}
-import evcel.referencedata.market.FXPair
+import evcel.referencedata.market.{IndexSpread, FXPair}
 import scala.util.{Either, Right}
 import evcel.utils.{EvcelFail, GeneralEvcelFail}
 import evcel.utils.EitherUtils._
@@ -83,15 +83,15 @@ class DefaultValuer extends Valuer{
       case Future(marketLabel, period, strike, quotedVolume) => 
         for {
           market <- RichFuturesMarket(vc.refData, marketLabel)
-          price <- vc.futuresPrice(market.market, period)
+          price <- market.price(vc, period)
         } yield {
           val volume = market.volumeCalcRule.volume(quotedVolume, period)
           (price - strike) * volume
         }
 
-      case CommoditySwap(index, averagingPeriod, strike, quotedVolume, bizDaysToSettlement) => 
+      case CommoditySwap(index, averagingPeriod, strike, quotedVolume, bizDaysToSettlement, level) =>
         for {
-          richIndex <- RichIndex(vc.refData, index) 
+          richIndex <- RichIndex(vc.refData, index, level)
           discount <- settlementDiscount(richIndex.calendar, bizDaysToSettlement, averagingPeriod.lastDay)
           avePrice <- richIndex.averagePrice(vc, richIndex.observationDays(averagingPeriod))
         } yield {
@@ -99,21 +99,22 @@ class DefaultValuer extends Valuer{
           (avePrice - strike) * volume * discount
         }
 
-      case CommoditySwapSpread(indexSpread, averagingPeriod, strike, volume, pricingRule, bizDaysToSettlement) => 
+      case CommoditySwapSpread(indexSpread, averagingPeriod, strike, volume, pricingRule,
+                               bizDaysToSettlement, index1Level, index2Level) =>
         for{
-          richIndexSpread <- RichIndexSpread(vc.refData, indexSpread)
+          richIndexSpread <- RichIndexSpread(vc.refData, IndexSpread(indexSpread, index1Level, index2Level))
           discount <- settlementDiscount(richIndexSpread.commonCalendar, bizDaysToSettlement, averagingPeriod.lastDay)
           spreadPrice <- richIndexSpread.spreadPrice(vc, pricingRule, averagingPeriod, strike.uom)
         } yield {
           (spreadPrice - strike) * volume * discount
         }
 
-      case CommoditySwapLookalike(marketLabel, month, strike, quotedVolume, bizDaysToSettlement) => 
+      case CommoditySwapLookalike(marketLabel, month, strike, quotedVolume, bizDaysToSettlement, level) =>
         for {
           market <- RichFuturesMarket(vc.refData, marketLabel)
           ltd <- market.expiryRule.futureExpiryDay(month)
           discount <- settlementDiscount(market.calendar, bizDaysToSettlement, ltd)
-          price <- vc.futuresPrice(market.market, month)
+          price <- market.price(vc, month)
         } yield {
           val volume = market.volumeCalcRule.volume(quotedVolume, ltd)
           (price - strike) * volume * discount
@@ -125,7 +126,7 @@ class DefaultValuer extends Valuer{
       ) => {
         for {
           market <- RichFuturesMarket(vc.refData, marketLabel)
-          F <- vc.futuresPrice(market.market, month)
+          price <- vc.futuresPrice(market.market, month)
           vol <- vc.futuresVol(market.market, month, strike)
           expiryDay <- customExpiry match {
             case Some(d) => Right(d)
@@ -135,7 +136,7 @@ class DefaultValuer extends Valuer{
           discount <- settlementDiscount(market.calendar, Some(bizDaysAfterExpiryToSettlement), expiryDay)
         } yield {
           val value = new BlackScholes(
-            right, F.checkedDouble(strike.uom), strike.checkedDouble(strike.uom), vol.checkedPercent,time 
+            right, price.checkedDouble(strike.uom), strike.checkedDouble(strike.uom), vol.checkedPercent,time
           ).undiscountedValue * discount.doubleValue
 
           val volume = market.volumeCalcRule.volume(quotedVolume, month)

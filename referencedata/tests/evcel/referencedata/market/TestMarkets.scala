@@ -4,9 +4,17 @@ import evcel.quantity.QtyConversions
 import evcel.quantity.UOM._
 import evcel.quantity.QtyConversions
 import evcel.quantity.UOM._
+import evcel.referencedata.calendar.TestCalendars
+import evcel.referencedata.{TestFuturesExpiryRules, ReferenceData, Level}
 
 // should read from main refdata for markets
 object TestMarkets {
+  def testRefData = ReferenceData(
+    TestFuturesExpiryRules.Test,
+    TestCalendars.Empty,
+    TestMarkets.Default
+  )
+
   val conv = new QtyConversions(Map((MT -> BBL) -> 7.5))
   val NYMEX_WTI = new FuturesMarket(
     "Nymex WTI", "NYM", 
@@ -31,14 +39,18 @@ object TestMarkets {
     USD / MT, MT,
     VolumeCalcRuleLabel.Default, conversions = conv)
 
+  val SING_GO = new SpotMarket("Singapore Gasoil 0.05", "Platts Asia", USD/MT, MT, VolumeCalcRuleLabel.Default, conv)
+
+  val NYMEX_WTI_1st_MONTH =
+    FuturesFrontPeriodIndex(FuturesFrontPeriodIndexLabel("Nymex WTI", 1, 0), NYMEX_WTI, Level.Close)
+
   val Default = new Markets(
-    Vector(NYMEX_WTI, ICE_NBP, ICE_BRENT, RBOB, PORK).map{
+    Vector(NYMEX_WTI, ICE_NBP, ICE_BRENT, RBOB, PORK).map {
       m => m.name -> m
     }.toMap,
-    Map(
-      "Singapore Gasoil 0.05" -> 
-        new SpotMarket("Singapore Gasoil 0.05", "Platts Asia", USD/MT, MT, VolumeCalcRuleLabel.Default, conv)
-  ),
+    Vector(SING_GO).map {
+      m => m.name -> m
+    }.toMap,
   Map(
     USD -> Currency(USD, "USD", 2, "USD", spotDayUsesBothCalendars = false),
     GBP -> Currency(GBP, "GBP", 2, "GBP", spotDayUsesBothCalendars = false),

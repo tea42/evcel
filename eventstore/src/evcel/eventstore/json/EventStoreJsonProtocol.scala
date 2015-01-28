@@ -104,35 +104,11 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     }
   }
 
+  implicit object LevelConversionsFormat extends RootJsonFormat[Level] {
+    def write(level: Level) = level.name.toJson
 
-  implicit val futuresPricesIdentifierFormat  = named(MarketData.FUTURES_PRICES, jsonFormat1(FuturesPricesIdentifier))
-  implicit val futuresVolsIdentifierFormat    = named(MarketData.FUTURES_VOLS, jsonFormat1(FuturesVolsIdentifier))
-  implicit val zeroRateIdentifierFormat       = named(MarketData.ZERO_RATES, jsonFormat1(ZeroRatesIdentifier))
-  implicit val spotFXIdentifierFormat       = named(MarketData.SPOT_FX, jsonFormat2(SpotFXIdentifier))
-  implicit val spotPricesIdentifierFormat     = named(MarketData.SPOT_PRICES, jsonFormat1(SpotPricesIdentifier))
-
-  implicit val marketDataIdentifierFormat : TraitFormat[MarketDataIdentifier] = 
-    new TraitFormat[MarketDataIdentifier]( 
-      classOf[FuturesPricesIdentifier] -> futuresPricesIdentifierFormat,
-      classOf[FuturesVolsIdentifier] -> futuresVolsIdentifierFormat,
-      classOf[ZeroRatesIdentifier] -> zeroRateIdentifierFormat,
-      classOf[SpotFXIdentifier] -> spotFXIdentifierFormat,
-      classOf[SpotPricesIdentifier] -> spotPricesIdentifierFormat
-    )
-
-  implicit val futuresPricesFormat = named(MarketData.FUTURES_PRICES, jsonFormat1(FuturesPriceData.apply))
-  implicit val discountRateFormat = named(MarketData.ZERO_RATES, jsonFormat2(ZeroRateData.apply))
-  implicit val spotFXFormat = named(MarketData.SPOT_FX, jsonFormat1(SpotFXData.apply))
-  implicit val futuresVolFormat = named(MarketData.FUTURES_VOLS, jsonFormat1(FuturesVolData.apply))
-  implicit val spotPriceDataFormat = named(MarketData.SPOT_PRICES, jsonFormat1(SpotPriceData))
-
-  implicit val marketDataFormat = new TraitFormat[MarketData](
-    classOf[FuturesPriceData] -> futuresPricesFormat,
-    classOf[FuturesVolData] -> futuresVolFormat,
-    classOf[ZeroRateData] -> discountRateFormat,
-    classOf[SpotFXData] -> spotFXFormat,
-    classOf[SpotPriceData] -> spotPriceDataFormat
-  )
+    def read(json: JsValue) = Level.fromNameOrThrow(json.convertTo[String])
+  }
 
   implicit object MapMonthDayFormat extends RootJsonFormat[Map[Month, Day]] {
     def write(map: Map[Month, Day]) = JsArray(map.toList.map {
@@ -178,24 +154,24 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
         deserializationError(s"SwapSpreadPricingRule expected - got $json")
     }
   }
-  implicit val spotMarketIndexFormat = named(Index.SPOT, jsonFormat1(SpotMarketIndex.apply))
-  implicit val futuresFrontPeriodIndexFormat = 
-    named(Index.FUTURES_FRONT_PERIOD, jsonFormat3(FuturesFrontPeriodIndex.apply))
-  implicit val futuresContractIndexFormat = named(Index.FUTURES_CONTRACT, jsonFormat2(FuturesContractIndex.apply))
-  implicit val indexFormat = new TraitFormat[Index](
-    classOf[SpotMarketIndex] -> spotMarketIndexFormat,
-    classOf[FuturesFrontPeriodIndex] -> futuresFrontPeriodIndexFormat,
-    classOf[FuturesContractIndex] -> futuresContractIndexFormat
+  implicit val spotMarketIndexFormat = named(IndexLabel.SPOT, jsonFormat1(SpotMarketIndexLabel.apply))
+  implicit val futuresFrontPeriodIndexFormat =
+    named(IndexLabel.FUTURES_FRONT_PERIOD, jsonFormat3(FuturesFrontPeriodIndexLabel.apply))
+  implicit val futuresContractIndexFormat = named(IndexLabel.FUTURES_CONTRACT, jsonFormat2(FuturesContractIndexLabel.apply))
+  implicit val indexFormat = new TraitFormat[IndexLabel](
+    classOf[SpotMarketIndexLabel] -> spotMarketIndexFormat,
+    classOf[FuturesFrontPeriodIndexLabel] -> futuresFrontPeriodIndexFormat,
+    classOf[FuturesContractIndexLabel] -> futuresContractIndexFormat
   )
   implicit val futureFormat = named(Instrument.FUTURE, jsonFormat4(Future.apply))
   implicit val futuresOptionFormat = named(Instrument.FUTURES_OPTION, jsonFormat9(FuturesOption.apply))
-  implicit val commoditySwapFormat = named(Instrument.COMMODITY_SWAP, jsonFormat5(CommoditySwap.apply))
-  implicit val indexSpreadFormat = jsonFormat2(IndexSpread.apply)
+  implicit val commoditySwapFormat = named(Instrument.COMMODITY_SWAP, jsonFormat6(CommoditySwap.apply))
+  implicit val indexSpreadFormat = jsonFormat2(IndexLabelSpread.apply)
   implicit val commoditySwapSpreadFormat = named(
-    Instrument.COMMODITY_SWAP_SPREAD, jsonFormat6(CommoditySwapSpread.apply)
+    Instrument.COMMODITY_SWAP_SPREAD, jsonFormat8(CommoditySwapSpread.apply)
   )
   implicit val commoditySwapLookalikeFormat = named(
-    Instrument.COMMODITY_SWAP_LOOKALIKE, jsonFormat5(CommoditySwapLookalike.apply)
+    Instrument.COMMODITY_SWAP_LOOKALIKE, jsonFormat6(CommoditySwapLookalike.apply)
   )
   implicit val fxForwardFormat = named(Instrument.FX_FORWARD, jsonFormat3(FXForward.apply))
   implicit val cashFormat = named(Instrument.CASH, jsonFormat2(Cash.apply))
@@ -261,7 +237,7 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
   implicit val futuresExpiryRuleFormat = 
     named(ReferenceDataTrait.FUTURES_EXPIRY_RULE, jsonFormat3(FuturesExpiryRule.apply))
   implicit val volumeCalcRuleFormat = jsonFormat1(VolumeCalcRuleLabel.apply)
-  implicit val futuresMarketRuleFormat = named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat6(FuturesMarket.apply))
+  implicit val futuresMarketRuleFormat = named(ReferenceDataTrait.FUTURES_MARKET, jsonFormat7(FuturesMarket.apply))
   implicit val calendarDataFormat = named(ReferenceDataTrait.CALENDAR, jsonFormat1(CalendarData))
   implicit val currencyFormat = named(ReferenceDataTrait.CURRENCY, jsonFormat5(Currency.apply))
   implicit val referenceDataTraitFormat = new TraitFormat[ReferenceDataTrait](
@@ -269,5 +245,38 @@ object EventStoreJsonProtocol extends DefaultJsonProtocol {
     classOf[CalendarData] -> calendarDataFormat,
     classOf[Currency] -> currencyFormat,
     classOf[FuturesMarket] -> futuresMarketRuleFormat
+  )
+
+  implicit val futuresPricesIdentifierFormat  = named(MarketData.FUTURES_PRICES, jsonFormat1(FuturesPricesIdentifier))
+  implicit val priceFixingsIdentifierFormat  = named(MarketData.PRICE_FIXINGS, jsonFormat2(PriceFixingsIdentifier))
+  implicit val futuresVolsIdentifierFormat    = named(MarketData.FUTURES_VOLS, jsonFormat1(FuturesVolsIdentifier))
+  implicit val zeroRateIdentifierFormat       = named(MarketData.ZERO_RATES, jsonFormat1(ZeroRatesIdentifier))
+  implicit val spotFXIdentifierFormat       = named(MarketData.SPOT_FX, jsonFormat2(SpotFXIdentifier))
+  implicit val spotPricesIdentifierFormat     = named(MarketData.SPOT_PRICES, jsonFormat1(SpotPricesIdentifier))
+
+  implicit val marketDataIdentifierFormat : TraitFormat[MarketDataIdentifier] =
+    new TraitFormat[MarketDataIdentifier](
+      classOf[FuturesPricesIdentifier] -> futuresPricesIdentifierFormat,
+      classOf[PriceFixingsIdentifier] -> futuresPricesIdentifierFormat,
+      classOf[FuturesVolsIdentifier] -> futuresVolsIdentifierFormat,
+      classOf[ZeroRatesIdentifier] -> zeroRateIdentifierFormat,
+      classOf[SpotFXIdentifier] -> spotFXIdentifierFormat,
+      classOf[SpotPricesIdentifier] -> spotPricesIdentifierFormat
+    )
+
+  implicit val futuresPricesFormat = named(MarketData.FUTURES_PRICES, jsonFormat1(FuturesPriceData.apply))
+  implicit val priceFixingsFormat = named(MarketData.PRICE_FIXINGS, jsonFormat1(PriceFixingData.apply))
+  implicit val discountRateFormat = named(MarketData.ZERO_RATES, jsonFormat2(ZeroRateData.apply))
+  implicit val spotFXFormat = named(MarketData.SPOT_FX, jsonFormat1(SpotFXData.apply))
+  implicit val futuresVolFormat = named(MarketData.FUTURES_VOLS, jsonFormat1(FuturesVolData.apply))
+  implicit val spotPriceDataFormat = named(MarketData.SPOT_PRICES, jsonFormat1(SpotPriceData))
+
+  implicit val marketDataFormat = new TraitFormat[MarketData](
+    classOf[FuturesPriceData] -> futuresPricesFormat,
+    classOf[PriceFixingData] -> priceFixingsFormat,
+    classOf[FuturesVolData] -> futuresVolFormat,
+    classOf[ZeroRateData] -> discountRateFormat,
+    classOf[SpotFXData] -> spotFXFormat,
+    classOf[SpotPriceData] -> spotPriceDataFormat
   )
 }

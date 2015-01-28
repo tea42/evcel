@@ -7,7 +7,7 @@ class PositionTest extends ValuationTest with ValuationTestPimps{
 
   test("Test position of single swap"){
     val vc = createVC()
-    val richIndex = RichIndex(vc.refData, createSwap().index).R
+    val richIndex = RichIndex(vc.refData, createSwap().index, createSwap().level).R
     val observationDays = richIndex.observationDays(createSwap().averagingPeriod)
     val swap = createSwap(volume = Qty((observationDays.size * 13).toString, BBL))
     val positions = swap.positions(vc)

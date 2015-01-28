@@ -1,7 +1,6 @@
 import sbt._
 import Keys._
 
-import scoverage.ScoverageSbtPlugin._
 import scala.util.Properties
 
 object EVCelBuild extends Build {
@@ -12,7 +11,8 @@ object EVCelBuild extends Build {
   val buildScalaVersion = "2.10.4"
   val buildScalaMajorVersion = "2.10"
 
-  lazy val buildSettings = Defaults.defaultSettings ++ Seq(
+  lazy val buildSettings = Defaults.coreDefaultSettings ++ Seq(
+    updateOptions := updateOptions.value.withCachedResolution(cachedResoluton = true),
     organization := buildOrganisation,
     version := buildVersion,
     scalaVersion := buildScalaVersion,
@@ -48,7 +48,7 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  )
+  ).dependsOn(utils)
 
   lazy val quantity = module("quantity").settings(
     libraryDependencies ++= Seq(
@@ -104,15 +104,17 @@ object EVCelBuild extends Build {
     ),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(daterange, quantity)
+  ).dependsOn(daterange, quantity, utils % "test->test")
 
   lazy val curve = module("curve").settings(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.0" % "test"
     ),
     scalaSource in Compile := baseDirectory.value / "src",
-    scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(calendar, utils, quantity %  "compile->compile;test->test", daterange, referencedata % "compile->compile;test->test", utils % "test->test")
+    scalaSource in Test := baseDirectory.value / "tests",
+    resourceDirectory in Test := baseDirectory.value / "test-resources"
+  ).dependsOn(calendar, utils, quantity %  "compile->compile;test->test",
+      daterange, referencedata % "compile->compile;test->test", utils % "test->test")
 
   lazy val eventstore = module("eventstore").settings(
     libraryDependencies ++= Seq(
@@ -173,6 +175,7 @@ object EVCelBuild extends Build {
       id = name,
       base = file(name),
       settings = buildSettings
-    ).settings(instrumentSettings: _*)
+        ++ addCommandAlias("gen-idea-with-sources", ";update-classifiers;update-sbt-classifiers;gen-idea sbt-classifiers")
+    )
   }
 }

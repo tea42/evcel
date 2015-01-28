@@ -77,7 +77,7 @@ object SVDPositions{
       }
       solution match {
         case Left(fail) => 
-          hedgingInstruments.map{h => (h -> Left(fail))}(scala.collection.breakOut)
+          hedgingInstruments.map{h => h -> Left(fail)}(scala.collection.breakOut)
         case Right(matrix) => 
           hedgingInstruments.zipWithIndex.map {
             case (hedge, i) =>
@@ -105,12 +105,12 @@ object SVDPositions{
         }
 
         val combinedDailySwaps = swapHedges.groupBy{
-          case (swap, _) => (swap.averagingPeriod.asDay.containingMonth, swap.index)
+          case (swap, _) => (swap.averagingPeriod.asDay.containingMonth, swap.index, swap.level)
         }.map{
-          case ((month, index), swaps) => 
+          case ((month, index, level), swaps) =>
             // The 'right.get' looks dodgy, however to have constructed hedges using this index
             // we know the index must exist
-            val richIndex = RichIndex(vc.refData, index).right.get
+            val richIndex = RichIndex(vc.refData, index, level).right.get
             val totalDailyHedgeAmount = swaps.map{case (_, hedgeAmount) => hedgeAmount}.sum
             val totalMonthlyHedgeAmount = 
               totalDailyHedgeAmount * richIndex.volumeCalcRule.scaleHedgeAmountFromDaily(month)

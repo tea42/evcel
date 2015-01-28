@@ -5,9 +5,10 @@ import evcel.curve.curves.{FuturesVolIdentifier, DiscountRateIdentifier, Futures
 import evcel.daterange.DateRangeSugar.{Oct, Nov}
 import evcel.curve.environment.MarketDay._
 import evcel.daterange.Month
-import evcel.instrument.{CommoditySwap, FuturesOption, Index}
+import evcel.instrument.{CommoditySwap, FuturesOption}
 import evcel.maths.{EuropeanOption, Call}
 import evcel.quantity.Qty
+import evcel.referencedata.market.IndexLabel
 import org.scalatest.{ShouldMatchers, FunSuite}
 import evcel.quantity.UOM._
 import scala.language.reflectiveCalls
@@ -44,7 +45,7 @@ class ValuerTest extends FunSuite with ShouldMatchers with EitherTestPimps {
     val dec = nov.next
     val vc = UnitTestingEnvironment.Null((1 / Oct / 2014).endOfDay)
     val market = vc.futuresMarket("Nymex WTI").R
-    val index = Index.parse("Nymex WTI nearby 1")
+    val index = IndexLabel.parse("Nymex WTI nearby 1")
     val K = Qty("91", USD / BBL)
     val swap = new CommoditySwap(
       index, oct, K, Qty("1", BBL)
