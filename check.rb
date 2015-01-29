@@ -14,7 +14,7 @@ end
 
 class DateTime
   def is_workday_time?
-    wday >=1 && wday <= 5 && hour >= 7 && hour <= 19
+    wday >=1 && wday <= 5 && hour > 7 && hour < 19
   end
 end
 
