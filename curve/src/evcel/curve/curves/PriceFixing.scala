@@ -1,10 +1,12 @@
 package evcel.curve.curves
 
+import evcel.curve.{EnvironmentParams, ValuationContext, RichIndex}
 import evcel.curve.environment._
 import evcel.daterange.Day
 import evcel.quantity.Qty
 import evcel.referencedata.ReferenceData
 import evcel.referencedata.market.{Observable, FuturesFrontPeriodIndex, Index}
+import evcel.utils.EitherUtils._
 
 case class PriceFixing(fixing: Qty) extends Curve {
   def apply(point: Any): Either[AtomicEnvironmentFail, Qty] = {
@@ -29,9 +31,19 @@ case class PriceFixingIdentifier(index: Observable, observationDay: Day)
   override def forwardStateValue(
     refData: ReferenceData, original: AtomicEnvironment, forwardMarketDay: MarketDay
     ) = {
-    // TODO DC: need to discuss how to do this
-    original(this)
+    RichIndex(refData, index).flatMap{
+      ri => {
+        if (ri.hasFixed(observationDay, original.marketDay)) {
+          original(this)
+        } else if (ri.hasFixed(observationDay, forwardMarketDay)) {
+          // moved ahead of original environment, so we have no fixings for this observationDay
+          // but we can use forward prices (as we are still before forwardMarketDay).
+          val vc = ValuationContext(original, refData, EnvironmentParams.Default)
+          ri.price(vc, observationDay)
+        } else {
+          sys.error(s"Looking for a fixing for a day that hasn't fixed yet: $observationDay/$forwardMarketDay")
+        }
+      }
+    }
   }
 }
-
-

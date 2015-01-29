@@ -1,15 +1,14 @@
-package evcel.valuation
+package evcel.curve
 
-import evcel.curve.ValuationContext
-import evcel.referencedata.calendar.Calendar
 import evcel.daterange.{Day, Month}
-import scala.util.{Either, Left, Right}
-import evcel.utils.{EvcelFail, GeneralEvcelFail}
-import evcel.instrument.{Future, HedgeInstrument}
-import evcel.referencedata.{FuturesExpiryRule, ReferenceData}
-import evcel.referencedata.market.{FuturesContractIndexLabel, FuturesMarket, VolumeCalcRule}
 import evcel.quantity.{Qty, QtyConversions}
+import evcel.referencedata.calendar.Calendar
+import evcel.referencedata.market.{FuturesContractIndexLabel, FuturesMarket, VolumeCalcRule}
+import evcel.referencedata.{FuturesExpiryRule, ReferenceData}
 import evcel.utils.EitherUtils._
+import evcel.utils.{EvcelFail, GeneralEvcelFail}
+
+import scala.util.{Either, Left, Right}
 
 case class RichFuturesMarket(
   market : FuturesMarket,
@@ -52,12 +51,6 @@ case class RichFuturesMarket(
 
   def optionExpiryDay(month : Month) : Either[EvcelFail, Day] = expiryRule.optionExpiryDay(month)
   def lastTradingDay(month: Month) = expiryRule.futureExpiryDay(month)
-
-  def unitHedge(month : Month) = {
-    HedgeInstrument.intern(
-      Future(market.name, month, strike = Qty(0, priceUOM), volume = Qty(1, quotedVolumeUOM))
-    )
-  }
 }
 
 object RichFuturesMarket{

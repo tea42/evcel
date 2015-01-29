@@ -21,9 +21,11 @@ case class ValuationContext(atomic: AtomicEnvironment, refData: ReferenceData, p
   def discountRate(currency: UOM, day: Day) =
     atomic(DiscountRateIdentifier(currency, day))
   def fixing(index: Index, observationDay: Day): Either[EvcelFail, Qty] = {
-      index.observable(refData, observationDay).flatMap(
+    RichIndex(refData, index).flatMap { ri =>
+      ri.observable(refData, observationDay).flatMap(
         ndx => atomic(PriceFixingIdentifier(ndx, observationDay))
       )
+    }
   }
   def fixing(spotMarket: SpotMarket, observationDay: Day): Either[EvcelFail, Qty] =
     fixing(SpotIndex(spotMarket), observationDay)

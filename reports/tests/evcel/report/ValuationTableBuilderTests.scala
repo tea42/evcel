@@ -9,7 +9,7 @@ import evcel.quantity.{Qty, Percent}
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 import evcel.valuation._
-import evcel.curve.{UnitTestingEnvironment, ValuationContext}
+import evcel.curve.{RichFuturesMarket, RichIndex, UnitTestingEnvironment, ValuationContext}
 import evcel.curve.marketdata.{FuturesPriceData, MarketDataTest, Act365}
 import scala.language.reflectiveCalls
 import evcel.quantity.utils.QuantityTestUtils._

@@ -1,17 +1,16 @@
-package evcel.valuation
+package evcel.curve
 
 import evcel.curve.environment.MarketDay
-import evcel.referencedata.calendar.Calendar
-import evcel.daterange.{DateRange, Day, Month}
-import scala.util.{Either, Right}
-import evcel.utils.{EitherUtils, EvcelFail}
-import evcel.quantity.{UOM, Qty, QtyConversions}
-import evcel.referencedata.{Level, ReferenceData}
-import evcel.referencedata.market._
-import evcel.curve.ValuationContext
 import evcel.curve.environment.MarketDay._
+import evcel.daterange.{DateRange, Day, Month}
+import evcel.quantity.{Qty, QtyConversions, UOM}
+import evcel.referencedata.calendar.Calendar
+import evcel.referencedata.market._
+import evcel.referencedata.{Level, ReferenceData}
 import evcel.utils.EitherUtils._
-import evcel.instrument._
+import evcel.utils.{EitherUtils, EvcelFail}
+
+import scala.util.{Either, Right}
 
 trait RichIndex{
   def index : Index
@@ -31,22 +30,13 @@ trait RichIndex{
     }
   }
 
+  def observable(refData: ReferenceData, observationDay: Day): Either[EvcelFail, Observable]
+
   /**
    * hasFixed is defined here so we that can override for each index as MarketDay becomes more detailed
    */
   def hasFixed(fixingDay: Day, marketDay: MarketDay) = {
     (marketDay.day == fixingDay && marketDay.timeOfDay.fixingsShouldExist) || marketDay.day > fixingDay
-  }
-
-  def unitHedge(averagingPeriod : DateRange) = {
-    val swap = CommoditySwap(
-      index.label, averagingPeriod,
-      Qty(0, priceUOM),
-      Qty(1, quotedVolumeUOM), 
-      // TODO - should default biz days be reference data?
-      bizDaysToSettlement = None
-    )
-    HedgeInstrument.intern(swap)
   }
 }
 
@@ -112,6 +102,12 @@ case class RichFuturesFrontPeriodIndex(index: FuturesFrontPeriodIndex,
       )
     )
   }
+
+  override def observable(refData: ReferenceData, observationDay: Day): Either[EvcelFail, FuturesContractIndex] = {
+    observedMonth(observationDay).map(m =>
+      FuturesContractIndex(FuturesContractIndexLabel(market.name, m), market.market, index.level)
+    )
+  }
 }
 
 case class RichFuturesContractIndex(index: FuturesContractIndex,
@@ -137,6 +133,8 @@ case class RichFuturesContractIndex(index: FuturesContractIndex,
       }
     }
   }
+
+  override def observable(refData: ReferenceData, observationDay: Day): Either[EvcelFail, Observable] = Right(index)
 }
 
 object RichFuturesContractIndex {
@@ -183,38 +181,13 @@ case class RichSpotMarketIndex(index: SpotIndex, market : RichSpotMarket) extend
     else
       vc.spotPrice(market.market, observationDay)
   }
+
+  override def observable(refData: ReferenceData, observationDay: Day): Either[EvcelFail, Observable] = Right(index)
 }
 
 case class RichIndexSpread(index1 : RichIndex, index2 : RichIndex){
   def commonCalendar = new Calendar{
     def isHoliday(day : Day) = index1.calendar.isHoliday(day) || index2.calendar.isHoliday(day)
-  }
-  def spreadPrice(
-    vc : ValuationContext, 
-    rule : SwapSpreadPricingRule, 
-    period : DateRange, 
-    expectedUOM : UOM) : Either[EvcelFail, Qty] = {
-    val List(index1Calendar, index2Calendar) = rule match {
-      case CommonSwapPricingRule => 
-        val cal = CommonSwapPricingRule.calendar(index1.calendar, index2.calendar)
-        List(cal, cal)
-      case NonCommonSwapPricingRule => 
-        List(index1.calendar, index2.calendar)
-    }
-    val (obsDays1, obsDays2) = (
-      period.days.filter(index1Calendar.isBusinessDay), 
-      period.days.filter(index2Calendar.isBusinessDay)
-    )
-
-      
-    for {
-      p1 <- index1.averagePrice(vc, obsDays1)
-      p1_converted <- p1.in(expectedUOM, index1.marketConversions)
-      p2 <- index2.averagePrice(vc, obsDays2)
-      p2_converted <- p2.in(expectedUOM, index2.marketConversions)
-    }
-      yield
-        p1_converted - p2_converted
   }
 }
 

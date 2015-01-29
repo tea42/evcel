@@ -4,7 +4,7 @@ import evcel.curve.curves._
 import evcel.curve.environment.{SpotFXIdentifier, MarketDay}
 import evcel.curve.environment.MarketDay._
 import evcel.curve.marketdata.Act365
-import evcel.curve.{UnitTestingEnvironment, ValuationContext}
+import evcel.curve._
 import evcel.daterange.DateRangeSugar._
 import evcel.daterange._
 import evcel.instrument._

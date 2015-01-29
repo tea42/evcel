@@ -6,6 +6,8 @@ case class MarketDay(day: Day, timeOfDay: TimeOfDay) extends Ordered[MarketDay] 
     case 0 => timeOfDay.compare(that.timeOfDay)
     case o => o
   }
+
+  def nextDay = copy(day = day.next)
 }
 
 object MarketDay {

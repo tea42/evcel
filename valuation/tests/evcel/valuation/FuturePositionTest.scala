@@ -1,5 +1,6 @@
 package evcel.valuation
 
+import evcel.curve.RichFuturesMarket
 import evcel.daterange.PeriodLabel
 import evcel.valuation.Valuer._
 import evcel.quantity.UOM._
