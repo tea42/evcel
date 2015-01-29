@@ -25,7 +25,7 @@ object KafkaTestUtils{
       server.startup()
       // This pause prevents some of the harmless but noisy log error messages that Kafka produces
       // before it's quite ready to do its thing
-      Thread.sleep(100)
+      Thread.sleep(1000)
       fn(server)
     } finally {
       server.shutdown()
@@ -36,7 +36,7 @@ object KafkaTestUtils{
 
   def createTopic(server : KafkaServer, topic : String){
     AdminUtils.createTopic(server.zkClient, topic, partitions = 1, replicationFactor = 1)
-    Thread.sleep(200) // Prevents 'Failed to collate messages by topic' error message from Kafka,
+    Thread.sleep(2000) // Prevents 'Failed to collate messages by topic' error message from Kafka,
                       // which is just noise, as Kafka invariably retries successfully
   }
 
