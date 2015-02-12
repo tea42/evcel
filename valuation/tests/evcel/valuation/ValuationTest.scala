@@ -12,14 +12,14 @@ import evcel.quantity.UOM._
 import evcel.quantity.{BDQty, Percent, Qty}
 import evcel.referencedata.Level
 import evcel.referencedata.market.{IndexLabelSpread, IndexLabel}
-import org.scalatest.{FunSuite, ShouldMatchers}
+import org.scalatest.{FunSuite, Matchers}
 import scala.language.reflectiveCalls
 import scalaz.{Show, Equal}
 import scala.math.BigDecimal
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import evcel.utils.EitherTestPimps
 
-trait ValuationTest extends FunSuite with ShouldMatchers 
+trait ValuationTest extends FunSuite with Matchers
   with EitherTestPimps
 {
   implicit val valuer = new DefaultValuer

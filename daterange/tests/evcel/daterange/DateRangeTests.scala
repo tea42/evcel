@@ -1,11 +1,11 @@
 package evcel.daterange
 
 import evcel.daterange.DateRangeSugar.{Jul, Jan, Mar}
-import org.scalatest.{FunSuite, ShouldMatchers}
+import org.scalatest.{FunSuite, Matchers}
 
 import scala.language.reflectiveCalls
 
-class DateRangeTests extends FunSuite with ShouldMatchers {
+class DateRangeTests extends FunSuite with Matchers {
   test("days") {
     SimpleDateRange(1 / Mar / 2014, 1 / Mar / 2014).days.toList shouldEqual 1 / Mar / 2014 :: Nil
     SimpleDateRange(1 / Mar / 2014, 2 / Mar / 2014).days.toList shouldEqual 1 / Mar / 2014 :: 2 / Mar / 2014 :: Nil

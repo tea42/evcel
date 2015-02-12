@@ -1,8 +1,8 @@
 package evcel.referencedata.market
 
-import org.scalatest.{FunSuite, ShouldMatchers}
+import org.scalatest.{FunSuite, Matchers}
 
-class IndexLabelTest extends FunSuite with ShouldMatchers {
+class IndexLabelTest extends FunSuite with Matchers {
 
   test("test index parsing") {
     val indexes = List(

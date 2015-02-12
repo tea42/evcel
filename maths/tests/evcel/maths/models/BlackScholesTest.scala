@@ -3,9 +3,9 @@ package evcel.maths.models
 import evcel.maths._
 import evcel.maths.utils.DoubleTestUtils
 import org.apache.commons.math3.random.MersenneTwister
-import org.scalatest.{ShouldMatchers, FunSuite}
+import org.scalatest.{Matchers, FunSuite}
 
-class BlackScholesTest extends FunSuite with ShouldMatchers {
+class BlackScholesTest extends FunSuite with Matchers {
   // this is java code for BS converted to scala to test against. taken from
   //  http://www.espenhaug.com/black_scholes.html
   // this is the stock option model so we need to use r = 0.0 and discount the returned value

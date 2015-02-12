@@ -1,7 +1,9 @@
-<!-- The logback file used during the running of maker's own unit tests
+<!-- The logback file used during the running of maker/sbt's own unit tests
      Quietens the logging somewhat-->
 
-<configuration scan="true" scanPeriod="3 seconds">
+<configuration debug="false" >
+  <logger name="state.change.logger" level="OFF"/> 
+  <logger name="kafka.producer.async.DefaultEventHandler" level="OFF"/>
 
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
     <file>maker.log</file>
@@ -17,6 +19,10 @@
         
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
+      <!-- 
+          Add %logger to the log pattern to find the name of any 3rd party loggers
+          you want to exclude 
+      -->
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level - %msg%n</pattern>
       <immediateFlush>true</immediateFlush>
     </encoder>

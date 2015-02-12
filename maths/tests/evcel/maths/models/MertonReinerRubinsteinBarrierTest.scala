@@ -7,7 +7,7 @@ import evcel.maths.utils.DoubleTestUtils
 import org.apache.commons.math3.random.MersenneTwister
 import org.scalatest._
 
-class MertonReinerRubinsteinBarrierTest extends FunSuite with ShouldMatchers {
+class MertonReinerRubinsteinBarrierTest extends FunSuite with Matchers {
   test("against ss 1") {
     val S = 100
     val k = 3 // rebate

@@ -1,8 +1,8 @@
 package evcel.quantity
 
-import org.scalatest.{ ShouldMatchers, FunSuite }
+import org.scalatest.{ Matchers, FunSuite }
 
-class UOMRatioTest extends FunSuite with ShouldMatchers {
+class UOMRatioTest extends FunSuite with Matchers {
 
   test("test reduce") {
     val usd = UOMRatio(3, 1)

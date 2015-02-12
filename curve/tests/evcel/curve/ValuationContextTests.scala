@@ -9,14 +9,12 @@ import evcel.quantity.UOM._
 import evcel.quantity.{Percent, Qty}
 import evcel.quantity.Qty._
 import evcel.referencedata.market.{TestMarkets, FXPair}
-import org.scalatest.{FunSuite, FunSpecLike, ShouldMatchers}
+import org.scalatest.{Matchers, FunSuite, FunSpecLike}
 import evcel.quantity.utils.QuantityTestUtils._
 import scala.language.reflectiveCalls
 import evcel.utils.EitherTestPimps
-import org.scalatest.matchers.ShouldMatchers
 
-
-class ValuationContextTests extends FunSuite with MarketDataTest with ShouldMatchers with EitherTestPimps{
+class ValuationContextTests extends FunSuite with MarketDataTest with Matchers with EitherTestPimps{
 
   val vc = UnitTestingEnvironment.fromMarketData(
     (10 / Sep / 2014).endOfDay,
@@ -49,8 +47,8 @@ class ValuationContextTests extends FunSuite with MarketDataTest with ShouldMatc
         vc.discountRate(GBP, vc.marketDay.day + 2).R / vc.discountRate(USD, vc.marketDay.day + 2).R
 
     vc.todayFX(FXPair(GBP, EUR)).R should be
-      (vc.spotFX(FXPair(USD, GBP)).R.invert * vc.spotFX(FXPair(USD, EUR)).R *
-        vc.discountRate(GBP, vc.marketDay.day + 2).R / vc.discountRate(EUR, vc.marketDay.day + 2).R +- 1e-9)
+      vc.spotFX(FXPair(USD, GBP)).R.invert * vc.spotFX(FXPair(USD, EUR)).R *
+        vc.discountRate(GBP, vc.marketDay.day + 2).R / vc.discountRate(EUR, vc.marketDay.day + 2).R +- 1e-9
   }
 
   test("forward fx") {
@@ -63,9 +61,9 @@ class ValuationContextTests extends FunSuite with MarketDataTest with ShouldMatc
         vc.discountRate(GBP, day).R / vc.discountRate(USD, day).R
 
     vc.forwardFX(FXPair(GBP, EUR), day).R should be
-      (vc.spotFX(FXPair(USD, GBP)).R.invert * vc.spotFX(FXPair(USD, EUR)).R *
+      vc.spotFX(FXPair(USD, GBP)).R.invert * vc.spotFX(FXPair(USD, EUR)).R *
         vc.discountRate(GBP, vc.marketDay.day + 2).R / vc.discountRate(EUR, vc.marketDay.day + 2).R *
-        vc.discountRate(GBP, day).R / vc.discountRate(EUR, day).R +- 1e-9)
+        vc.discountRate(GBP, day).R / vc.discountRate(EUR, day).R +- 1e-9
   }
 
   test("forwardState for discount curve") {
