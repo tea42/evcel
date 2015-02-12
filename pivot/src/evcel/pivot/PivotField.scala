@@ -66,12 +66,15 @@ trait PivotField{
   // - good values are merged by the field
   protected def mergeGoodValues(seq : Iterable[GoodType]) : PivotValue 
   def merge(values : Iterable[PivotValue]) : PivotValue = {
+    // this shapeless import allows us to match against Iterable[GoodType]
+    // even though type erasure would normally mean we couldn't.
+    import shapeless.syntax.typeable._
+
     values.find(_.isInstanceOf[ExceptionPivotValue]).getOrElse{
       val goodValues = values.filterNot(_ == NullPivotValue).flatMap{
-        _.content match {
-          case goodValues : Seq[GoodType] => goodValues
-          case o => sys.error(s"Unexpected value $o for field $name")
-        }
+        e => e.content.cast[Iterable[GoodType]].getOrElse(
+          sys.error("Unexpected value in " + e.content)
+        )
       }
       if (goodValues.isEmpty)
         NullPivotValue
@@ -236,7 +239,7 @@ trait StringPivotFieldTrait extends PivotField with DistinctMerge{
     case (l : String, r : String) => l.compare(r)
   }
 }
-case class StringPivotField(val name : String) extends StringPivotFieldTrait
+case class StringPivotField(name : String) extends StringPivotFieldTrait
 
 // Same as StringPivotField - needed as a marker when collecting trade fields
 // during report creation. Users can create arbitrary meta fields, so couldn't

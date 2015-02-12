@@ -2,9 +2,9 @@ package evcel.maths.models
 
 import evcel.maths.Call
 import org.apache.commons.math3.random.MersenneTwister
-import org.scalatest.{FunSuite, ShouldMatchers}
+import org.scalatest.{FunSuite, Matchers}
 
-class MonteCarloTest extends FunSuite with ShouldMatchers {
+class MonteCarloTest extends FunSuite with Matchers {
 
   test("at expiry") {
     val params = MCParams(S = 100, vol = .25, T = 0, b = 0.0)

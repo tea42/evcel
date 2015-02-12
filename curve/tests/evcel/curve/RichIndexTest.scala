@@ -4,9 +4,9 @@ import evcel.daterange.{Day, Month}
 import evcel.referencedata.Level
 import evcel.referencedata.market.{FuturesContractIndex, FuturesContractIndexLabel, Index, TestMarkets}
 import evcel.utils.EitherTestPimps
-import org.scalatest.{FunSuite, ShouldMatchers}
+import org.scalatest.{FunSuite, Matchers}
 
-class RichIndexTest extends FunSuite with ShouldMatchers with EitherTestPimps{
+class RichIndexTest extends FunSuite with Matchers with EitherTestPimps{
 
    test("test FFPI to FCI") {
      val refData = TestMarkets.testRefData

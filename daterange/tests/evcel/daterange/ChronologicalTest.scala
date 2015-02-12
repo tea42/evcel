@@ -1,8 +1,8 @@
 package evcel.daterange
 
-import org.scalatest.{ShouldMatchers, FunSuite}
+import org.scalatest.{Matchers, FunSuite}
 
-class ChronologicalTest extends FunSuite with ShouldMatchers {
+class ChronologicalTest extends FunSuite with Matchers {
 
   test("ordering") {
     // we can sort Seq[DateRange] even though DateRange is not ordered

@@ -1,9 +1,9 @@
 package evcel.maths
 
 import evcel.daterange.{Chronological, Day, Month}
-import org.scalatest.{FunSuite, ShouldMatchers}
+import org.scalatest.{FunSuite, Matchers}
 
-class InterpolationTest extends FunSuite with ShouldMatchers {
+class InterpolationTest extends FunSuite with Matchers {
 
   test("linear interpolation for days") {
     val days = Vector(Day(2015, 1, 1), Day(2015, 1, 2), Day(2015, 1, 6), Day(2015, 1, 7), Day(2015, 1, 8))

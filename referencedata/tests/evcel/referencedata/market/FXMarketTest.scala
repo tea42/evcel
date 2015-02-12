@@ -5,9 +5,9 @@ import evcel.quantity.UOM._
 import evcel.referencedata.calendar.Calendar.Holidays
 import evcel.referencedata.calendar.{SimpleCalendar, Calendars, TestCalendars}
 import evcel.referencedata.{TestFuturesExpiryRules, ReferenceData}
-import org.scalatest.{ShouldMatchers, FunSuite}
+import org.scalatest.{Matchers, FunSuite}
 
-class FXMarketTest extends FunSuite with ShouldMatchers {
+class FXMarketTest extends FunSuite with Matchers {
   val rd = testRefData()
   val today = Day(2014, 11, 3) // monday
   val tomorrow = today + 1

@@ -9,13 +9,13 @@ import evcel.instrument.{CommoditySwap, FuturesOption}
 import evcel.maths.{EuropeanOption, Call}
 import evcel.quantity.Qty
 import evcel.referencedata.market.IndexLabel
-import org.scalatest.{ShouldMatchers, FunSuite}
+import org.scalatest.{Matchers, FunSuite}
 import evcel.quantity.UOM._
 import scala.language.reflectiveCalls
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import evcel.utils.EitherTestPimps
 
-class ValuerTest extends FunSuite with ShouldMatchers with EitherTestPimps {
+class ValuerTest extends FunSuite with Matchers with EitherTestPimps {
 
   test("test key recording for futures") {
     val vc = UnitTestingEnvironment.Null((1 / Oct / 2014).endOfDay)
