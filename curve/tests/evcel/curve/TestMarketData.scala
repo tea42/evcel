@@ -35,7 +35,7 @@ object TestMarketData extends EitherTestPimps {
         val mkt = refData.futuresMarket(market).right.getOrElse(sys.error(s"market: $market"))
         (mkt, Month.parse(month), Qty(price, mkt.priceUOM))
     }.toList.groupBy(_._1).map{
-      case (k, l) => k.name -> FuturesPriceData(l.map(e => (e._2, e._3)))
+      case (k, l) => k.name -> FuturesPriceData(l.map(e => (e._2, e._3))(scala.collection.breakOut))
     }.toList
 
     UnitTestingEnvironment.fromMarketData(md, fixingsData:::forwardPriceData :_*)

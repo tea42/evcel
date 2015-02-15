@@ -11,14 +11,13 @@ Properties.setProp("scala.usejavacp", "false")
 Properties.setProp("log4j.ignoreTCL", "true")
 Properties.clearProp("scala.home")
 Properties.setProp("logback.configurationFile", "config/logback-unit-tests.xml")
-val makerProps = MakerProps("LogbackTestConfigFile", "config/logback-unit-tests.xml")
 def module_(name : String, upstream : List[Module], testUpstream : List[Module]) : Module = {
   new Module(
     root = new File(name), 
+    projectRoot_ = new File("."),
     name = name, 
     immediateUpstreamModules = upstream,
-    immediateUpstreamTestModules = testUpstream,
-    props = makerProps
+    immediateUpstreamTestModules = testUpstream
     ) with ClassicLayout{
       override def scalacOptions = List("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
     }
@@ -43,12 +42,11 @@ val referencedatastore = module_("referencedatastore", List(referencedata, event
 val tradestore = module_("tradestore", List(instrument, eventstore), List(eventstore))
 val reports = module_("reports", List(pivot, valuation), List(curve, instrument, valuation))
 val xl = module("xl", reports)
-val server = module("server", referencedatastore, marketdatastore, tradestore, xl)
+val server = module_("server", List(referencedatastore, marketdatastore, tradestore, xl), List(eventstore, marketdatastore))
 
 val evcel = new Project(
   name = "evcel",
   root = new File("."),
-  immediateUpstreamModules = List(server),
-  props = makerProps
+  immediateUpstreamModules = List(server)
 )
 import evcel._

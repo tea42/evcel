@@ -1,29 +1,24 @@
 package evcel.report
 
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.{FunSpec, Matchers}
 import evcel.daterange.DateRangeSugar._
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 import evcel.instrument.trade.Trade
 import evcel.report.PivotTrade._
-import evcel.instrument.Future
+import evcel.instrument.{Future, Instrument}
 import scala.language.reflectiveCalls
 import evcel.curve.marketdata.MarketDataTest
-import evcel.curve.environment.MarketDay
-import evcel.curve.environment.MarketDay._
+import evcel.curve.environment.{MarketDay, MarketDayPimps}
 import evcel.curve.UnitTestingEnvironment
-import evcel.valuation.Valuer
-import evcel.valuation.DefaultValuer
-import evcel.instrument.Instrument
-import evcel.pivot.PivotTable
-import evcel.pivot.PivotField
+import evcel.valuation.{Valuer, DefaultValuer}
+import evcel.pivot.{PivotTable, PivotField}
 import evcel.referencedata.market.TestMarkets._
 import evcel.referencedata.market.FuturesMarket
 import evcel.daterange.Month
 import evcel.report.PivotValuer._
 
-class PivotReportTests extends FunSpec with Matchers with MarketDataTest{
+class PivotReportTests extends FunSpec with Matchers with MarketDataTest with MarketDayPimps {
   import PivotReportTests._
   val mkt = "Nymex WTI"
   val marketDay = (1 / Feb / 2014).endOfDay
@@ -71,7 +66,7 @@ class PivotReportTests extends FunSpec with Matchers with MarketDataTest{
         """|           ||  2014-09$
            |RiskMarket || Position$
            |-----------||---------$
-           | Nymex WTI || 50.0 BBL$""".stripMargin.replace("$", "")
+           | Nymex WTI || 50.0 bbl$""".stripMargin.replace("$", "")
  
       assert(actual === expected)
     }
@@ -89,7 +84,7 @@ class PivotReportTests extends FunSpec with Matchers with MarketDataTest{
         """|                          ||  2014-09$
            |Counterparty | RiskMarket || Position$
            |--------------------------||---------$
-           |        Acme |  Nymex WTI || 50.0 BBL$""".stripMargin.replace("$", "")
+           |        Acme |  Nymex WTI || 50.0 bbl$""".stripMargin.replace("$", "")
       assert(actual === expected)
     }
 
@@ -125,7 +120,7 @@ class PivotReportTests extends FunSpec with Matchers with MarketDataTest{
         """|                          ||        2014-09      $
            |Counterparty | RiskMarket ||    MTM    | Position$
            |--------------------------||---------------------$
-           |        Acme |  Nymex WTI || 100.0 USD | 50.0 BBL$""".stripMargin.replace("$", "")
+           |        Acme |  Nymex WTI || 100.0 USD | 50.0 bbl$""".stripMargin.replace("$", "")
         
       assert(actual === expected)
     }
@@ -148,9 +143,9 @@ class PivotReportTests extends FunSpec with Matchers with MarketDataTest{
         """|                          ||        2014-09       |         2014-10       $
            |Counterparty | RiskMarket ||    MTM    | Position |     MTM    |  Position$
            |--------------------------||----------------------------------------------$
-           |        Acme |  ICE Brent || 600.0 USD | 50.0 BBL |            |          $
-           |             |  Nymex WTI || 100.0 USD | 50.0 BBL |            |          $
-           |    OIL_R_US |  Nymex WTI ||           |          | 1400.0 USD | 100.0 BBL$""".stripMargin.replace("$", "")
+           |        Acme |  ICE Brent || 600.0 USD | 50.0 bbl |            |          $
+           |             |  Nymex WTI || 100.0 USD | 50.0 bbl |            |          $
+           |    OIL_R_US |  Nymex WTI ||           |          | 1400.0 USD | 100.0 bbl$""".stripMargin.replace("$", "")
 
       assert(actual === expected)
     }

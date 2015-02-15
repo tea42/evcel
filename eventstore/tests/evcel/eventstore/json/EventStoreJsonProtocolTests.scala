@@ -64,9 +64,7 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
     it("Market Data") {
       info("Futures Prices")
       val prices = FuturesPriceData(
-        List(
-          (Jun / 2014, Qty("100.0", USD / MT))
-        )
+        Map(Jun / 2014 -> Qty("100.0", USD / MT))
       )
       prices.toJson.prettyPrint.parseJson.convertTo[FuturesPriceData] should equal(prices)
 
@@ -100,8 +98,12 @@ class EventStoreJsonProtocolTests extends FunSpec with Matchers {
       )
       vols.toJson.prettyPrint.parseJson.convertTo[FuturesVolData] should equal(vols)
 
+      info("Spot prices")
+      val spotPrices = SpotPriceData(Map(1 / Jun / 2014  -> Qty("10", USD/MT)))
+      spotPrices.toJson.prettyPrint.parseJson.convertTo[SpotPriceData] should equal(spotPrices)
+
       info("Abstract MarketData")
-      val marketData : List[MarketData] = List(prices, fixings, zeros, vols)
+      val marketData : List[MarketData] = List(prices, fixings, zeros, vols, spotPrices)
       marketData.foreach{
         case md : MarketData => 
           md.toJson.prettyPrint.parseJson.convertTo[MarketData] should equal(md)

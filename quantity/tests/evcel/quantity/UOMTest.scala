@@ -1,7 +1,10 @@
 package evcel.quantity
 
-import org.scalatest.{ Matchers, FunSuite }
+import org.scalatest.{Matchers, FunSuite}
 import UOM._
+import scala.math.BigDecimal
+import java.io._
+import scala.util.Left
 
 class UOMTest extends FunSuite with Matchers {
 
@@ -14,8 +17,8 @@ class UOMTest extends FunSuite with Matchers {
       test(USD, USD) shouldEqual Right(None)
       test(USD, US_CENT) shouldEqual Right(Some(BigDecimal(100)))
       test(US_CENT, USD) shouldEqual Right(Some(BigDecimal(.01)))
-      test(US_CENT, BBL) shouldEqual Left("Can't add ¢ and BBL")
-      test(BBL, USD) shouldEqual Left("Can't add BBL and USD")
+      test(US_CENT, BBL) shouldEqual Left("Can't add ¢ and bbl")
+      test(BBL, USD) shouldEqual Left("Can't add bbl and USD")
     }
   }
 
@@ -23,7 +26,7 @@ class UOMTest extends FunSuite with Matchers {
     (USD * USD * BBL).div(US_CENT * GAL) match {
       case (USD, bd) => bd shouldEqual 100 * BigDecimal(42)
     }
-    USD.mult(BBL).toString shouldEqual "(BBLUSD,1.0)"
+    USD.mult(BBL).toString shouldEqual "(bblUSD,1.0)"
     USD.mult(USD).toString shouldEqual "(USD^2,1.0)"
     USD.div(US_CENT).toString shouldEqual "(,1.0E+2)"
     USD.mult(USD)._1.div(US_CENT).toString shouldEqual "(USD,1.0E+2)"
@@ -38,7 +41,7 @@ class UOMTest extends FunSuite with Matchers {
   test("asPrimeMap") {
     val first = USD / MT
     val second = MT
-    val newUOM = UOM(first.dimension * second.dimension, first.secondary * second.secondary)
+    val newUOM = UOM.buildUOM(first.dimension * second.dimension, first.secondary * second.secondary)
     newUOM.asPrimeMap shouldEqual Map(USD.secondary.num -> 1, MT.secondary.num -> 0)
   }
 
@@ -47,7 +50,7 @@ class UOMTest extends FunSuite with Matchers {
     SCALAR.toString shouldEqual ""
     USD.toString shouldEqual "USD"
     (USD * USD).toString shouldEqual "USD^2"
-    (BBL / (USD * USD)).toString shouldEqual "BBL/USD^2"
+    (BBL / (USD * USD)).toString shouldEqual "bbl/USD^2"
     (SCALAR / USD).toString shouldEqual "USD^-1"
     (SCALAR / (USD * USD)).toString shouldEqual "USD^-2"
     (USD / SCALAR).toString shouldEqual "USD"
@@ -124,5 +127,23 @@ class UOMTest extends FunSuite with Matchers {
     (GBP/USD).toString shouldEqual "USDGBP"
     (GBP/US_CENT).toString shouldEqual "¢GBP" // bit weird this one. but we should never see it unless we have a bug.
     (USD/GBP/DAY).toString shouldEqual "USD/DayGBP"
+  }
+
+  test("Arithmetic caching") {
+    USD.invert.invert should be theSameInstanceAs (USD)
+    (USD / MT) should be theSameInstanceAs ((MT / USD).invert)
+    ((USD / MT) * MT) should be theSameInstanceAs (USD)
+  }
+
+  // This fails due to UON's private constructor.... hmmm
+  ignore("readResolve"){
+    val baos = new ByteArrayOutputStream()
+    val oos = new ObjectOutputStream(baos)
+    oos.writeObject(USD)
+    oos.close
+
+    val byteArray = baos.toByteArray
+    val obj = new ObjectInputStream(new ByteArrayInputStream(byteArray)).readObject
+    obj should be theSameInstanceAs (USD)
   }
 }

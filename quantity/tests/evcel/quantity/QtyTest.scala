@@ -124,9 +124,9 @@ class QtyTest extends FunSuite with Matchers {
 
   test("to string") {
     Qty(2, USD).toString shouldEqual "2.0 USD"
-    Qty(2, USD / BBL).toString shouldEqual "2.0 USD/BBL"
-    Qty(2, USD * USD / BBL).toString shouldEqual "2.0 USD^2/BBL"
-    Qty(-2, USD * USD / (BBL * BBL)).toString shouldEqual "-2.0 USD^2/BBL^2"
+    Qty(2, USD / BBL).toString shouldEqual "2.0 USD/bbl"
+    Qty(2, USD * USD / BBL).toString shouldEqual "2.0 USD^2/bbl"
+    Qty(-2, USD * USD / (BBL * BBL)).toString shouldEqual "-2.0 USD^2/bbl^2"
     (Qty(100, PERCENT) * Qty(100, PERCENT)).toString shouldEqual "100.0 %"
     (Qty(100, PERCENT) * Qty(1, PERCENT)).toString shouldEqual "1.0 %"
     (Qty(100, PERCENT) / Qty(1, PERCENT)).toString shouldEqual "10000.0 %"

@@ -3,6 +3,7 @@ package evcel.eventstore
 import java.net.ConnectException
 import java.util.{TreeMap => JavaTreeMap, UUID}
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.LoggerFactory
 import scala.collection.JavaConversions._
@@ -36,11 +37,11 @@ import scala.language.postfixOps
   *  
   *    The write API is
   *  
-  *       def write(entities : Map[K, V]) : Promise[Offset].
+  *       def write(entities : Map[K, V]) : Promise[Offset]
   *  
-  *    The read API is (ignoring error handling)
+  *    The read API is 
   *  
-  *       def read(offset : Offset, key : Key) : V.
+  *       def read(offset : Offset, key : Key) : Either[NotFound, V]
   *  
   *     The promises returned from writes will not complete until the entity has been written to Kafka, 
   *     read back out again, and inserted into memory.
@@ -91,7 +92,18 @@ abstract class EventStore[K, V](topic : String, kafkaPort : Int){
   /**
     * History is updated only after writes have successfully been written to the Kafka store
     */
-  private val history = new ConcurrentHashMap[K, JavaTreeMap[Offset, V]]()
+  protected val history = new ConcurrentHashMap[K, ConcurrentSkipListMap[Offset, V]]()
+
+  /*
+   * This is used for exactly one purpose - to allow spot price data to be
+   * replaced (in memory) with equivalent but smaller data. It is not uncommon 
+   * to see spot prices written as daily prices, with the same price for each month.
+   * Since the SpotPrices curve object uses left constant interpolation it
+   * makes it unnecessary to hold anythin other than the first of these
+   */ 
+  protected def replaceInMemoryValue(offset : Offset, key : K, v : V){
+    history.get(key).put(offset, v)
+  }
 
   private val haveCompletedInitialLoad = new AtomicBoolean(false)
 
@@ -329,7 +341,7 @@ abstract class EventStore[K, V](topic : String, kafkaPort : Int){
         case Right((uuid, updates)) => 
           updates.foreach{
             case (key, value) => 
-              history.putIfAbsent(key, new JavaTreeMap[Offset, V]())
+              history.putIfAbsent(key, new ConcurrentSkipListMap[Offset, V]())
               history.get(key).put(offset, value)
           }
           latestOffsetInHistory.set(offset)

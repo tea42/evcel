@@ -1,7 +1,6 @@
 package evcel.curve
 
-import evcel.curve.environment.MarketDay
-import evcel.curve.environment.MarketDay._
+import evcel.curve.environment.{MarketDay, MarketDayPimps}
 import evcel.daterange.{DateRange, Day, Month}
 import evcel.quantity.{Qty, QtyConversions, UOM}
 import evcel.referencedata.calendar.Calendar
@@ -9,10 +8,10 @@ import evcel.referencedata.market._
 import evcel.referencedata.{Level, ReferenceData}
 import evcel.utils.EitherUtils._
 import evcel.utils.{EitherUtils, EvcelFail}
-
 import scala.util.{Either, Right}
 
-trait RichIndex{
+
+trait RichIndex extends MarketDayPimps{
   def index : Index
   def volumeCalcRule : VolumeCalcRule
   def calendar : Calendar

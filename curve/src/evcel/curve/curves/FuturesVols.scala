@@ -8,7 +8,6 @@ import evcel.daterange.Month
 import evcel.maths.Call
 import evcel.maths.models.BlackScholes
 import evcel.quantity.{Percent, Qty}
-import evcel.curve.environment.MarketDay._
 import scala.util.{Either, Right}
 import evcel.utils.EvcelFail
 import evcel.utils.EitherUtils._
@@ -76,7 +75,7 @@ case class FuturesVolIdentifier(
   month: Month,
   strike: Qty,
   forwardPrice: Qty)
-    extends AtomicDatumIdentifier {
+    extends AtomicDatumIdentifier with MarketDayPimps{
   def curveIdentifier = FuturesVolsIdentifier(market.name)
   def point = (month, strike, forwardPrice)
   override def nullValue = Percent(10)

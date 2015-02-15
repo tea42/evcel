@@ -3,13 +3,12 @@ package evcel.report
 import evcel.referencedata.market.IndexLabel
 import org.scalatest.{FunSpec, Matchers}
 import evcel.daterange.DateRangeSugar._
-import evcel.curve.environment.MarketDay._
 import evcel.instrument._
 import evcel.quantity.{Qty, Percent}
 import evcel.quantity.Qty._
 import evcel.quantity.UOM._
 import evcel.valuation._
-import evcel.curve.{RichFuturesMarket, RichIndex, UnitTestingEnvironment, ValuationContext}
+import evcel.curve._
 import evcel.curve.marketdata.{FuturesPriceData, MarketDataTest, Act365}
 import scala.language.reflectiveCalls
 import evcel.quantity.utils.QuantityTestUtils._
@@ -18,7 +17,7 @@ import evcel.instrument.trade.Trade
 import evcel.valuation.Valuer._
 import evcel.pivot.{PivotField, PivotTable, PivotRow}
 import evcel.referencedata.{Level, TestFuturesExpiryRules}
-import evcel.curve.environment.{MarketDay, TimeOfDay}
+import evcel.curve.environment.{MarketDay, TimeOfDay, MarketDayPimps}
 import evcel.maths.models.BlackScholes
 import evcel.maths.{Call, EuropeanOption}
 import evcel.quantity.utils.QuantityTestUtils
@@ -26,7 +25,8 @@ import evcel.report.PivotValuer._
 import scala.math.BigDecimal
 import evcel.utils.EitherTestPimps
 
-class ValuationTableBuilderTests extends FunSpec with MarketDataTest with Matchers with EitherTestPimps{
+class ValuationTableBuilderTests extends FunSpec with MarketDataTest with Matchers with 
+  EitherTestPimps with MarketDayPimps {
   val valuer = new DefaultValuer()
   val market = "Nymex WTI"
   val F = Qty("100", USD / BBL)

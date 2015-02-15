@@ -3,7 +3,6 @@ package evcel.curve.curves
 import evcel.curve.ValuationContext
 import evcel.referencedata.ReferenceData
 import evcel.curve.environment._
-import evcel.curve.environment.MarketDay._
 import evcel.daterange.Month
 import evcel.quantity.Qty
 import evcel.utils.EitherUtils._
@@ -23,7 +22,7 @@ case class FuturesPrices(market: String, marketDay: MarketDay, prices: Map[Month
   }
 }
 
-case class FuturesPriceIdentifier(market: FuturesMarket, month: Month) extends PriceIdentifier {
+case class FuturesPriceIdentifier(market: FuturesMarket, month: Month) extends PriceIdentifier with MarketDayPimps{
   val curveIdentifier = FuturesPricesIdentifier(market.name)
   val point = month
   override def nullValue = {

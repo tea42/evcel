@@ -7,15 +7,14 @@ target/
 test-output/
 #maker stuff
 scala-libs
-*/.maker
-*/module-vim-compile-output
+**/.maker
+*/*vim*compile*
 */target-maker
 */lib_managed
 .maker.vim/
 *-classpath.sh
-*/logback-vim.xml
+**/logback-vim.xml
 */lib_src_managed/
-*/module-vim-test-compile-output
 tags
 *.pid
 kafka-test-data

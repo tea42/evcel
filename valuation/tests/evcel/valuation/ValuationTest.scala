@@ -1,8 +1,7 @@
 package evcel.valuation
 
 import evcel.curve.curves._
-import evcel.curve.environment.{SpotFXIdentifier, MarketDay}
-import evcel.curve.environment.MarketDay._
+import evcel.curve.environment.{SpotFXIdentifier, MarketDay, MarketDayPimps}
 import evcel.curve.marketdata.Act365
 import evcel.curve._
 import evcel.daterange.DateRangeSugar._
@@ -19,8 +18,8 @@ import scala.math.BigDecimal
 import org.scalatest.Matchers
 import evcel.utils.EitherTestPimps
 
-trait ValuationTest extends FunSuite with Matchers
-  with EitherTestPimps
+trait ValuationTest extends FunSuite with Matchers 
+  with EitherTestPimps with MarketDayPimps
 {
   implicit val valuer = new DefaultValuer
   implicit val refData = UnitTestingEnvironment.testRefData
