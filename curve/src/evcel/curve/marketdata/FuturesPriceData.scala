@@ -24,25 +24,22 @@ case class FuturesPriceData(uom : Option[UOM], months : Array[Month], compressed
   override def equals(rhs : Any) = Option(rhs) match {
     case Some(FuturesPriceData(uom2, months2, compressedPrices2)) =>
       uom2 == uom && 
-        months.toList == months2.toList && 
-        compressedPrices.toList == compressedPrices2.toList
+        months.sameElements(months2) && 
+        compressedPrices.sameElements(compressedPrices2)
     case _ => false
   }
 
   override def hashCode = uom.hashCode + 
     17 * months.toList.hashCode + 
     17 * 17 * compressedPrices.toList.hashCode
+
 }
 
 object FuturesPriceData extends CompressMarketData{
-  def apply(prices : List[(Month, BDQty)]) : FuturesPriceData = {
-    if (prices.isEmpty)
-      FuturesPriceData(None, Array[Month](), Array[String]())
-    else {
-      val uom = prices.head._2.uom
-      val months = prices.map(_._1).toArray
-      val priceStrings = prices.map(_._2.bdValue).compressed
-      FuturesPriceData(Some(uom), months, priceStrings)
-    }
+  def apply(prices : Map[Month, BDQty]) : FuturesPriceData = {
+    val months = prices.keys.toArray
+    val priceArray = months.map(prices(_).bdValue)
+    val uom = months.headOption.map(prices(_).uom)
+    FuturesPriceData(uom, months, priceArray.compressed)
   }
 }

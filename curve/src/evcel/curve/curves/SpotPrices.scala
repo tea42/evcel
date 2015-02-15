@@ -24,15 +24,16 @@ case class SpotPrices(market: String, marketDay: MarketDay, prices: JavaTreeMap[
     point match {
       case day: Day =>
         checkDayIsValid(day)
-        val maybeValue : Option[Qty] = Option(
-          prices.headMap(day, /* inclusive = */ true)
-        ).flatMap{
-          tailMap => 
-            Option(tailMap.lastEntry).map(_.getValue)
+        if (prices.isEmpty)
+          Left(GeneralAtomicEnvironmentFail(s"No prices for market $market on $marketDay"))
+        else {
+          // Last price on or before day if one exists - otherwise first price.
+          val price = Option(prices.headMap(day, /* inclusive = */ true).lastEntry).getOrElse(prices.firstEntry).getValue
+          Right(price)
         }
-        maybeValue.toRight(GeneralAtomicEnvironmentFail(s"No spot prices for $market, $marketDay, day: $day"))
         
-      case _ => Left(GeneralAtomicEnvironmentFail(s"Unexpected point $point"))
+      case _ => 
+          Left(GeneralAtomicEnvironmentFail(s"Unexpected point $point used to ask prices for market $market on $marketDay"))
     }
   }
 }

@@ -20,7 +20,7 @@ import kafka.admin.AdminUtils
  */
 object KafkaTestUtils {
 
-  def withTestKafka(fn: KafkaServer => Unit) {
+  def withTestKafka[T](fn: KafkaServer => T) : T = {
     val zookeeperPort = choosePort
     val zookeeper = new EmbeddedZookeeper(zookeeperPort)
     val kafkaLogDir = tempDir("kafka-test")

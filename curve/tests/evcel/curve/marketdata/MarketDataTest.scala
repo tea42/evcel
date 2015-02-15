@@ -9,7 +9,7 @@ import evcel.daterange.Day
   */
 trait MarketDataTest{
   def futuresPrices(prices : (Month, BDQty)*) = {
-    FuturesPriceData(prices.toList)
+    FuturesPriceData(prices.toMap)
   }
 
   def futuresVols(

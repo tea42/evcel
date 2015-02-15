@@ -1,7 +1,10 @@
 package evcel.quantity
 
-import org.scalatest.{ Matchers, FunSuite }
+import org.scalatest.{Matchers, FunSuite}
 import UOM._
+import scala.math.BigDecimal
+import java.io._
+import scala.util.Left
 
 class UOMTest extends FunSuite with Matchers {
 
@@ -130,5 +133,17 @@ class UOMTest extends FunSuite with Matchers {
     USD.invert.invert should be theSameInstanceAs (USD)
     (USD / MT) should be theSameInstanceAs ((MT / USD).invert)
     ((USD / MT) * MT) should be theSameInstanceAs (USD)
+  }
+
+  // This fails due to UON's private constructor.... hmmm
+  ignore("readResolve"){
+    val baos = new ByteArrayOutputStream()
+    val oos = new ObjectOutputStream(baos)
+    oos.writeObject(USD)
+    oos.close
+
+    val byteArray = baos.toByteArray
+    val obj = new ObjectInputStream(new ByteArrayInputStream(byteArray)).readObject
+    obj should be theSameInstanceAs (USD)
   }
 }

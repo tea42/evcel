@@ -7,10 +7,13 @@ import java.util.{TreeMap => JavaTreeMap}
 import evcel.daterange.Day
 import evcel.quantity.Qty
 import evcel.quantity.UOM._
-import scala.language.reflectiveCalls
-import scala.language.postfixOps
+import scala.language.{reflectiveCalls, postfixOps}
+import evcel.utils.EitherTestPimps
 
-class SpotPricesTests extends FreeSpec with Matchers with MarketDayPimps with EitherValues{
+class SpotPricesTests extends FreeSpec with Matchers 
+  with MarketDayPimps with EitherValues 
+  with EitherTestPimps 
+{
 
   "SpotPrices" - {
     
@@ -26,18 +29,12 @@ class SpotPricesTests extends FreeSpec with Matchers with MarketDayPimps with Ei
         spotPrices(1 / Jan / 2014 endOfDay)(1 / Jan / 2014)
       }
     }
-    "Should return a left when asked for a day before the first price" in {
-      spotPrices(
-        1 / Jan / 2014 endOfDay, 
-        10 / Jan / 2014 -> 12.5
-      )(5 / Jan / 2014) should be ('left)
-    }
 
     "Should return a right when asked for a day on the first price" in {
       spotPrices(
         1 / Jan / 2014 endOfDay, 
         5 / Jan / 2014 -> 12.5
-      )(5 / Jan / 2014).right.value should be (Qty(12.5, USD/MT))
+      )(5 / Jan / 2014).R should be (Qty(12.5, USD/MT))
     }
 
     "Should do left constant interpolation" in {
@@ -47,13 +44,13 @@ class SpotPricesTests extends FreeSpec with Matchers with MarketDayPimps with Ei
         20 / Jan / 2014 -> 20.0, 
         30 / Jan / 2014 -> 30.0)
 
-      prices(10 / Jan / 2014).right.value should be (Qty(10.0, USD/MT))
-      prices(19 / Jan / 2014).right.value should be (Qty(10.0, USD/MT))
+      prices(10 / Jan / 2014).R should be (Qty(10.0, USD/MT))
+      prices(19 / Jan / 2014).R should be (Qty(10.0, USD/MT))
 
-      prices(20 / Jan / 2014).right.value should be (Qty(20.0, USD/MT))
-      prices(29 / Jan / 2014).right.value should be (Qty(20.0, USD/MT))
+      prices(20 / Jan / 2014).R should be (Qty(20.0, USD/MT))
+      prices(29 / Jan / 2014).R should be (Qty(20.0, USD/MT))
 
-      prices(30 / Jan / 2014).right.value should be (Qty(30.0, USD/MT))
+      prices(30 / Jan / 2014).R should be (Qty(30.0, USD/MT))
     }
 
     "Should extrapolate constantly beyond the last point" in {
@@ -62,7 +59,15 @@ class SpotPricesTests extends FreeSpec with Matchers with MarketDayPimps with Ei
         1 / Jan / 2014 endOfDay, 
         10 / Jan / 2014 -> 10.0
       )
-      prices(15 / Apr / 2020).right.value should be (Qty(10.0, USD/MT))
+      prices(15 / Apr / 2020).R should be (Qty(10.0, USD/MT))
+    }
+
+    "Should extrapolate to the left for valid days before the first price" in {
+      val prices = spotPrices(
+        1 / Jan / 2014 endOfDay, 
+        10 / Jan / 2014 -> 10.0
+      )
+      prices(5 / Jan / 2014).R should be (Qty(10.0, USD/MT))
     }
   }
 

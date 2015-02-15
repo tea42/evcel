@@ -11,7 +11,7 @@ import scala.math.BigDecimal
 import scala.util.{Either, Left, Right}
 import scala.collection.immutable.Nil
 
-case class UOM private (dimension: UOMRatio, secondary: UOMRatio) {
+case class UOM private(dimension: UOMRatio, secondary: UOMRatio) {
   /**
    * @return Some(magnitude) or None if not a valid addition.
    *         magnitude is the value to divide the second component by.
@@ -186,6 +186,10 @@ case class UOM private (dimension: UOMRatio, secondary: UOMRatio) {
       require(primes.size == 1 && primes.values.head == 1, "Not valid on compound UOMs: " + this)
       UOM.symbols(primes.keys.head)
     }
+  }
+
+  def readResolve = {
+    intern
   }
 }
 

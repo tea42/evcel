@@ -31,16 +31,16 @@ case class SpotPriceData (uom : Option[UOM], periods : Array[DateRange], compres
 
   checkDataValidity
 
+  private def asMap : Map[DateRange, BDQty] = {
+    val prices = compressedPrices.uncompressed.map(Qty(_, uom.get))
+    periods.zip(prices)(scala.collection.breakOut)
+  }
+
   def buildCurve(market: String, marketDay: MarketDay): Either[CantBuildCurve, SpotPrices] = {
-    val sortedPrices = {
-      val prices = compressedPrices.uncompressed.map(Qty(_, uom.get))
-      val days = periods.map(_.firstDay)
-      val map = new JavaTreeMap[Day, Qty]()
-      days.zip(prices).foreach{
-        case (d, p) => 
-          map.put(d, p)
-      }
-      map
+    val sortedPrices = new JavaTreeMap[Day, Qty]()
+    asMap.foreach{
+      case (period, price) => 
+        sortedPrices.put(period.firstDay, price)
     }
 
     Right(SpotPrices(market, marketDay, sortedPrices))
@@ -49,17 +49,15 @@ case class SpotPriceData (uom : Option[UOM], periods : Array[DateRange], compres
   override def equals(rhs : Any) = Option(rhs) match {
     case Some(SpotPriceData(uom2, periods2, compressedPrices2)) =>
       uom2 == uom && 
-      periods.toList == periods2.toList &&
-      compressedPrices.toList == compressedPrices2.toList
+      periods.sameElements(periods2) &&
+      compressedPrices.sameElements(compressedPrices2)
     case _ => false
   }
 
   override def hashCode = uom.hashCode + 
     17 * periods.toList.hashCode + 
     17 * 17 * compressedPrices.toList.hashCode
-}
 
-object SpotPriceData extends CompressMarketData{
   /*
    * User provided data may contain superfluous prices, a common practise being to provide 
    * all daily prices for each month, with the same price for each day. As reluctant as I am to 
@@ -69,27 +67,29 @@ object SpotPriceData extends CompressMarketData{
    * Note that as we use left constant interpolation this cannot cause any change to the resulting
    * SpotPrices curve object.
    */
-  private def removeRepeatedPrices(prices : Map[DateRange, BDQty]) : Map[DateRange, BDQty] = {
-    var map = Map[DateRange, BDQty]()
+  def removeRedundantPrices() = {
+    val pricesByPeriod = asMap
+    var nonRedundantPrices = Map[DateRange, BDQty]()
     var lastPrice : Option[BDQty] = None
-    val sortedPeriods = prices.keys.toList.sortWith(_.firstDay < _.firstDay)
-    sortedPeriods.foreach{
+    periods.sortWith(_.firstDay < _.firstDay).foreach{
       period => 
-        if (prices.get(period) != lastPrice){
-          lastPrice = prices.get(period)
-          map += ((period, lastPrice.get))
+        if (pricesByPeriod.get(period) != lastPrice){
+          lastPrice = pricesByPeriod.get(period)
+          nonRedundantPrices += ((period, lastPrice.get))
         }
     }
-    map
+    SpotPriceData(nonRedundantPrices)
   }
+}
+
+object SpotPriceData extends CompressMarketData{
 
   def apply(prices : Map[DateRange, BDQty]) : SpotPriceData = {
     if (prices.isEmpty)
       SpotPriceData(None, Array[DateRange](), Array[String]())
     else {
-      val pricesSansRepeats = removeRepeatedPrices(prices)
-      val periods = pricesSansRepeats.keys.toArray
-      val priceValues = periods.toVector.map(pricesSansRepeats(_).bdValue)
+      val periods = prices.keys.toArray
+      val priceValues = periods.map(prices(_).bdValue)
 
       SpotPriceData(
         Some(prices.head._2.uom),

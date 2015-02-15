@@ -5,7 +5,7 @@ import scala.math.BigDecimal
 import scala.collection.immutable.VectorBuilder
 
 /**
-  * Storing market data using arays of BigDecimals is more memory efficient then, e.g., 
+  * Storing market data using arrays of BigDecimals is more memory efficient than, e.g., 
   * using Maps with Quantity values. Significant further improvements can be achieved 
   * by using interned Strings to represent the BigDecimal, as long as the interning cache 
   * is kept small.
@@ -23,7 +23,7 @@ trait CompressMarketData{
   import CompressMarketData.SEPARATOR
   val decimalPoint = '.'
 
-  implicit class Compressor(bigDecimals : Seq[BigDecimal]) {
+  implicit class Compressor(bigDecimals : Array[BigDecimal]) {
     def compressed : Array[String] = {
       val buffer = new ArrayBuffer[String]()
       bigDecimals.foreach{

@@ -7,21 +7,21 @@ class CompressMarketDataTests extends FreeSpec with Matchers with CompressMarket
   import CompressMarketData.SEPARATOR
 
   "An empty Seq should compress to an empty Array" in {
-    Vector[BigDecimal]().compressed should equal (Array[String]())
+    Array[BigDecimal]().compressed should equal (Array[String]())
   }
 
   "A simple big decimal should split at the point" in {
-    Vector(BigDecimal("1.23")).compressed should equal (Array("1", "23", SEPARATOR))
+    Array(BigDecimal("1.23")).compressed should equal (Array("1", "23", SEPARATOR))
   }
 
   "BigDecimals without decimals in their representation should not spilt" in {
-    Vector(BigDecimal("123")).compressed should equal (Array("123", SEPARATOR))
-    Vector(BigDecimal("1E-9")).compressed should equal (Array("1E-9", SEPARATOR))
+    Array(BigDecimal("123")).compressed should equal (Array("123", SEPARATOR))
+    Array(BigDecimal("1E-9")).compressed should equal (Array("1E-9", SEPARATOR))
   }
 
   "Same sequence should be returned after round trip" in {
     def roundTrip(numbers : String*){
-      val seq = numbers.map(BigDecimal(_)).toVector
+      val seq = numbers.map(BigDecimal(_)).toArray
       seq.compressed.uncompressed should equal (seq)
     }
 

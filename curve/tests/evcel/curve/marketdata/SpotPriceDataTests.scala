@@ -17,7 +17,7 @@ class SpotPriceDataTests extends FreeSpec with Matchers{
         Mar / 14 -> Qty("1", USD/MT),
         Apr / 14 -> Qty("2", USD/MT)
       )
-    )
+    ).removeRedundantPrices()
 
     val pricesWithoutRepeats = SpotPriceData(
       Map(
