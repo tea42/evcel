@@ -1,0 +1,46 @@
+-@ val title: String
+-@ val body: String
+-@ val javascript: String
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+head
+  meta(charset="utf-8")
+  meta(http-equiv="X-UA-Compatible" content="IE=edge,chrome=1")
+  title =title
+  meta(name="viewport" content="width=device-width, initial-scale=1")
+
+  link(rel="stylesheet" href="/assets/vendor/jquery-ui-1.11.2/jquery-ui.min.css")
+  link(rel="stylesheet" href="/assets/vendor/normalize-1.1.3.css")
+  link(rel="stylesheet" href="/assets/main.css")
+  script(src="/assets/vendor/modernizr-2.6.2-respond-1.1.0.min.js")
+
+body
+  <!--[if lt IE 7]>
+  <p class="browsehappy"> You are using an **outdated** browser. Please [upgrade your browser](http://browsehappy.com/) to improve your experience.</p>
+  <![endif]-->
+
+  div
+    #pagetime Loading...
+    #header
+      //from https://www.iconfinder.com/icons/175698/grid_icon#size=128
+      img(src="/assets/images/grid-filled.png")
+      #evcel
+        | Evcel
+
+    #body
+      !~~ body
+
+  script(src="/assets/vendor/jquery-1.11.1.min.js")
+  script(src="/assets/vendor/jquery-ui-1.11.2/jquery-ui.min.js")
+  script(src="/assets/vendor/jquery-atmosphere.js")
+  script(src="/assets/vendor/mithril-0.1.30.min.js")
+  script(src="/assets/vendor/velocity-1.2.1.min.js")
+  script(src="/assets/main.js")
+  script(src="/code/webshared.js")
+  script(src="/code/webjs.js")
+
+  script =javascript

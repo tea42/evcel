@@ -2,6 +2,13 @@ import sbt._
 import Keys._
 
 import scala.util.Properties
+import org.scalatra.sbt._
+import org.scalatra.sbt.PluginKeys._
+import com.mojolly.scalate.ScalatePlugin._
+import ScalateKeys._
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+//import com.earldouglas.xsbtwebplugin.PluginKeys.webappResources
 
 object EVCelBuild extends Build {
 
@@ -31,8 +38,10 @@ object EVCelBuild extends Build {
     libraryDependencies ++= Seq(
       "org.apache.commons" % "commons-math3" % "3.3",
       "org.scalatest" %% "scalatest" % "2.2.0" % "test",
-      "com.opengamma" % "og-analytics" % "2.0.0-alpha-12",
-      "com.opengamma" % "og-util" % "2.0.0-alpha-12",
+      "com.opengamma" % "og-analytics" % "2.0.0-alpha-12" notTransitive(),
+      "com.opengamma" % "og-util" % "2.0.0-alpha-12" notTransitive(),
+      "commons-lang" % "commons-lang" % "2.6" notTransitive(),
+      "com.google.guava" % "guava" % "12.0" notTransitive(),
       "org.scalanlp" %% "breeze" % "0.10",
       "org.scalanlp" %% "breeze-natives" % "0.10"
     ),
@@ -139,7 +148,7 @@ object EVCelBuild extends Build {
     libraryDependencies ++= Seq(),
     scalaSource in Compile := baseDirectory.value / "src",
     scalaSource in Test := baseDirectory.value / "tests"
-  ).dependsOn(maths, daterange, quantity, eventstore, calendar, tradestore, referencedatastore, xl, instrument, marketdatastore)
+  ).dependsOn(maths, daterange, quantity, eventstore, calendar, tradestore, referencedatastore, xl, instrument, marketdatastore, webjs)
 
   def module(name: String) = {
     Project(
@@ -152,4 +161,70 @@ object EVCelBuild extends Build {
         scalaSource in Test := baseDirectory.value / "tests"
       )
   }
+
+  lazy val webshared = module("webshared").settings(
+    scalaSource in Compile := baseDirectory.value / "src"
+  ).enablePlugins(ScalaJSPlugin)
+
+  lazy val webjs = module("webjs").settings(
+      scalaSource in Compile := baseDirectory.value / "src",
+      resolvers += "bintray/non" at "http://dl.bintray.com/non/maven", //for upickle
+      libraryDependencies ++= Seq(
+        "org.scala-js" %%% "scalajs-dom" % "0.8.0",
+        "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
+        "com.lihaoyi" %%% "upickle" % "0.2.6"
+      )
+  ).dependsOn(webshared).enablePlugins(ScalaJSPlugin)
+
+  lazy val webjvm = {
+    val ScalatraVersion = "2.3.0"
+    val JettyVersion = "9.1.3.v20140225"
+    module("webjvm").settings(
+        /* ScalatraPlugin.scalatraSettings ++
+           the above line enables sbt web integration but requires removing jetty classes from the classpath
+           which are needed for websocket support when running JettyLauncher
+         */
+        (scalateSettings ++ Seq(
+        scalaSource in Compile := baseDirectory.value / "src",
+        //webappResources in Compile := Seq(baseDirectory.value / "webapp"),
+        resourceDirectory in Compile := baseDirectory.value / "resources",
+        name := "A name",
+        resolvers += Classpaths.typesafeReleases,
+        resolvers += "bintray/non" at "http://dl.bintray.com/non/maven", //for upickle
+        libraryDependencies ++= Seq(
+          "org.scalatra" %% "scalatra" % ScalatraVersion,
+          "org.scalatra" %% "scalatra-scalate" % ScalatraVersion,
+          "org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
+          "ch.qos.logback" % "logback-core" % "1.1.2" % "runtime",
+          "ch.qos.logback" % "logback-classic" % "1.1.2" % "runtime",
+          "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "compile",
+          "org.eclipse.jetty" % "jetty-plus" % JettyVersion % "compile;provided",
+          "javax.servlet" % "javax.servlet-api" % "3.1.0" % "compile;provided;test",
+
+          "org.scalatra" %% "scalatra-atmosphere" % ScalatraVersion ,
+          "org.scalatra" %% "scalatra-json" % ScalatraVersion ,
+          "org.json4s"   %% "json4s-jackson" % "3.2.9",
+          "org.eclipse.jetty.websocket" % "websocket-server" % JettyVersion % "compile;provided",
+
+          "com.lihaoyi" %%% "upickle" % "0.2.6",
+
+          "commons-codec" % "commons-codec" % "1.6" notTransitive(),
+          "commons-io" % "commons-io" % "2.0.1" notTransitive()
+        ),
+        scalateTemplateConfig in Compile <<= (sourceDirectory in Compile){ base =>
+          Seq(
+            TemplateConfig(
+              base / "webapp" / "WEB-INF" / "templates",
+              Seq.empty,  /* default imports should be added here */
+              Seq(
+                Binding("context", "_root_.org.scalatra.scalate.ScalatraRenderContext", importMembers = true, isImplicit = true)
+              ),  /* add extra bindings here */
+              Some("templates")
+            )
+          )
+        }
+      )) :_*
+    ).dependsOn(server, webshared)
+  }
+
 }
