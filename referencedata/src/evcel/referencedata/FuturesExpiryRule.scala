@@ -19,6 +19,6 @@ case class FuturesExpiryRule(
 
 case class FuturesExpiryRuleIdentifier(market : String) extends ReferenceDataIdentifier
 
-class FuturesExpiryRules(rules: Map[String, FuturesExpiryRule]) {
+class FuturesExpiryRules(val rules: Map[String, FuturesExpiryRule]) {
   def expiryRule(market: String) = rules.get(market).toRight(GeneralEvcelFail(s"No expiry rule for $market"))
 }

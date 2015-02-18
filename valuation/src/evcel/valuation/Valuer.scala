@@ -80,7 +80,7 @@ class DefaultValuer extends Valuer{
     }
 
     val mtm : Either[EvcelFail, Qty] = instr match {
-      case Future(marketLabel, period, strike, quotedVolume) => 
+      case Future(marketLabel, period, strike, quotedVolume) =>
         for {
           market <- RichFuturesMarket(vc.refData, marketLabel)
           price <- market.price(vc, period)

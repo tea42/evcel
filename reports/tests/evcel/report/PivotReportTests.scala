@@ -43,11 +43,10 @@ class PivotReportTests extends FunSpec with Matchers with MarketDataTest with Ma
   }
 
   private def buildReport(trades : Seq[Trade], layout : PivotReportLayout) : PivotReport = {
-    PivotReport.build(
+    new TradePivotReportBuilder(
       trades,
-      Some(vc), Some(new DefaultValuer()),
-      layout
-    )
+      Some(vc), Some(new DefaultValuer())
+    ).build(layout)
   }
 
 

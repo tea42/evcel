@@ -39,6 +39,8 @@ trait PivotField{
   }
   def name: String
 
+  def isMeasure:Boolean = false
+
   def formatSingleValue(g : GoodType) = g.toString
   def formatMultipleValues(gs : Seq[GoodType]) = gs.size match {
       case 0 => ""
@@ -91,7 +93,7 @@ trait PivotField{
   //    - single values are sorted by the field
   //    - multiple values are sorted by size - lexicographically if sizes match
   // - last are null values
-  protected def singleValueComparator : PartialFunction[(Any, Any), Int] 
+  protected def singleValueComparator : PartialFunction[(Any, Any), Int]
   val ordering = new Ordering[PivotValue](){
     def compare(l : PivotValue, r : PivotValue) = {
       (l, r) match {
@@ -105,7 +107,7 @@ trait PivotField{
               singleValueComparator((l, r))
             } catch {
               case _ : MatchError => 
-                sys.error("Unexpected pivot value contents, $l, $r for this field $this")
+                sys.error(s"Unexpected pivot value contents, $l(${l.getClass}), $r(${r.getClass}) for this field $name")
             }
           case (l, r) => 
             if (l.size == r.size){
@@ -155,6 +157,8 @@ case class SummingQtyField(name : String) extends PivotField {
   protected def mergeGoodValues(qs : Iterable[Qty]) = {
     Value(QtyField.netByUOM(qs))
   }
+
+  override def isMeasure = true
 }
 
 /**
@@ -176,6 +180,8 @@ case class IdSummingQtyField(name : String) extends PivotField with DistinctMerg
     case ((lId : Long, lQty : Qty), (rId : Long, rQty : Qty)) => 
       QtyField.singleValueComparator((lQty, rQty))
   }
+
+  override def isMeasure: Boolean = true
 
   override def formatSingleValue(idQty : (Long, Qty)) = idQty._2.toString
   override def formatMultipleValues(qs : Seq[(Long, Qty)]) = QtyField.netByUOM(qs.map(_._2)) match {
@@ -230,6 +236,13 @@ case class PeriodField(name : String) extends PivotField with DistinctMerge{
   type GoodType = PeriodLabel
   protected val singleValueComparator : PartialFunction[(Any, Any), Int] = {
     case (l : PeriodLabel, r : PeriodLabel) => PeriodLabel.ordering.compare(l, r)
+  }
+}
+
+case class DateRangeField(name : String) extends PivotField with DistinctMerge{
+  type GoodType = DateRange
+  protected val singleValueComparator : PartialFunction[(Any, Any), Int] = {
+    case (l : DateRange, r : DateRange) => l.firstDay.compare(r.firstDay)
   }
 }
 

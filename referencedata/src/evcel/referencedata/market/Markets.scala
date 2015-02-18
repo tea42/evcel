@@ -7,7 +7,7 @@ import scala.util.{Left, Right, Either}
 class Markets(
   futuresMarkets: Map[String, FuturesMarket],
   spotMarkets: Map[String, SpotMarket],
-  currencies: Map[UOM, Currency]
+  val currencies: Map[UOM, Currency]
   ) {
   def futuresMarket(label: String) : Either[EvcelFail, FuturesMarket] = 
     futuresMarkets.get(label).toRight(GeneralEvcelFail(s"Futures market $label is unknown"))
@@ -17,4 +17,7 @@ class Markets(
 
   def currency(uom: UOM): Either[EvcelFail, Currency] = 
     currencies.get(uom).toRight(GeneralEvcelFail(s"No refernce data for currency $uom"))
+
+  def currencyList = currencies.keySet.toList.sortBy(_.toString)
+  def futuresMarketsList = futuresMarkets.values.toList
 }

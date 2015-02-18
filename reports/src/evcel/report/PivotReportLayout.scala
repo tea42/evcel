@@ -30,5 +30,11 @@ case class ColumnFieldsTree(
 
 }
 
-
+object ColumnFieldsTree {
+  def simple(columns:List[PivotField], measures:List[PivotField]) = {
+    var trees = measures.map(f => ColumnFieldsTree(f, true, Nil))
+    columns.reverse.foreach { c => trees = ColumnFieldsTree(c, false, trees) :: Nil}
+    trees
+  }
+}
 

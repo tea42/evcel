@@ -287,6 +287,8 @@ object UOM extends Enumerate[UOM](classOf[UOM], _.allNames){
     (instances.keys.toList.flatMap(
       uom => List(uom.dimension.num.toInt, uom.secondary.num.toInt)) ++ UnitDimension.primesUsed)
       .filter(_ > 1).distinct.sortWith(_ > _)
+
+  def fromText(text:String) = baseCurrenciesMap.keys.find(_.string == text).get
 }
 
 /*

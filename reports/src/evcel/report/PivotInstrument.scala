@@ -20,7 +20,7 @@ object PivotInstrument{
 
   val MARKET_FIELD = StringPivotField("Market")
   val INDEX_FIELD = StringPivotField("Index")
-  val PERIOD_FIELD = PeriodField("Period")
+  val PERIOD_FIELD = DateRangeField("Period")
   val STRIKE_FIELD = PriceQtyField("Strike")
   val VOLUME_FIELD = SummingQtyField("Volume")
   val DAYS_TO_SETTLEMENT = OptionIntField("Days to settlement")
